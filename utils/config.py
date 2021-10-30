@@ -18,7 +18,7 @@ class Config:
         if self.owner_id is None:
             self.setup_error("OWNER_ID")
 
-        logger.info(f"GIR will be running in: {self.guild_id}")
+        logger.info(f"Bloo will be running in: {self.guild_id}")
         logger.info(f"OWNED BY: {self.owner_id}")
 
     def setup_error(self, k: str):

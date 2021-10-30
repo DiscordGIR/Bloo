@@ -13,7 +13,7 @@ from discord.ext import commands
 from discord.role import Role
 from utils.checks import whisper
 from utils.config import cfg
-from utils.context import GIRContext
+from utils.context import BlooContext
 
 
 class Stats(commands.Cog):
@@ -23,7 +23,7 @@ class Stats(commands.Cog):
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Pong!")
-    async def ping(self, ctx: GIRContext) -> None:
+    async def ping(self, ctx: BlooContext) -> None:
         embed = Embed(
             title="Pong!", color=Color.blurple())
         embed.set_thumbnail(url=self.bot.user.display_avatar)
@@ -41,7 +41,7 @@ class Stats(commands.Cog):
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get number of users of a role")
-    async def roleinfo(self, ctx: GIRContext, role: Option(Role, description="Role to view info of")) -> None:
+    async def roleinfo(self, ctx: BlooContext, role: Option(Role, description="Role to view info of")) -> None:
         embed = Embed(title="Role Statistics")
         embed.description = f"{len(role.members)} members have role {role.mention}"
         embed.color = role.color
@@ -51,7 +51,7 @@ class Stats(commands.Cog):
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Statistics about the bot")
-    async def stats(self, ctx: GIRContext) -> None:
+    async def stats(self, ctx: BlooContext) -> None:
         process = psutil.Process(os.getpid())
 
         embed = Embed(
@@ -67,7 +67,7 @@ class Stats(commands.Cog):
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Displays info about the server")
-    async def serverinfo(self, ctx: GIRContext):
+    async def serverinfo(self, ctx: BlooContext):
         guild = ctx.guild
         embed = Embed(title="Server Information")
         embed.color = Color.blurple()

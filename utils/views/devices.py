@@ -1,5 +1,5 @@
 from discord import ButtonStyle, Interaction, SelectOption, ui
-from utils.context import GIRContext
+from utils.context import BlooContext
 
 
 class Select(ui.Select):
@@ -23,7 +23,7 @@ class FirmwareDropdown(ui.View):
         self.firmware_list = firmware_list
         self.current_dropdown = Select(firmware_list[:25])
 
-    async def start(self, ctx: GIRContext):
+    async def start(self, ctx: BlooContext):
         self.ctx = ctx
         self.add_item(self.current_dropdown)
         await ctx.respond_or_edit(content="Choose a firmware for your device", view=self, ephemeral=True)
@@ -59,7 +59,7 @@ class FirmwareDropdown(ui.View):
 
 
 class Confirm(ui.View):
-    def __init__(self, ctx: GIRContext, true_response, false_response):
+    def __init__(self, ctx: BlooContext, true_response, false_response):
         super().__init__()
         self.ctx = ctx
         self.value = None

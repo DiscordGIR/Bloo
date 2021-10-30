@@ -21,7 +21,7 @@ class PromptData:
         return PromptData(self.value_name, self.description, self.convertor, self.title, self.reprompt)
 
 
-class GIRContext(context.ApplicationContext):
+class BlooContext(context.ApplicationContext):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.whisper = False

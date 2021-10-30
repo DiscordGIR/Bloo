@@ -12,7 +12,7 @@ from discord.embeds import Embed
 from discord.ext import commands
 from utils.checks import PermissionsFailure, ensure_invokee_role_lower_than_bot, always_whisper, whisper
 from utils.config import cfg
-from utils.context import GIRContext
+from utils.context import BlooContext
 from utils.views.devices import Confirm, FirmwareDropdown
 from utils.autocompleters.devices import device_autocomplete
 
@@ -28,7 +28,7 @@ class Devices(commands.Cog):
     @ensure_invokee_role_lower_than_bot()
     @always_whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Add device to nickname")
-    async def adddevice(self, ctx: GIRContext, device: Option(str, description="Name of your device", autocomplete=device_autocomplete)) -> None:
+    async def adddevice(self, ctx: BlooContext, device: Option(str, description="Name of your device", autocomplete=device_autocomplete)) -> None:
         """Add device name to your nickname, i.e `SlimShadyIAm [iPhone 12, 14.2]`. See !listdevices to see the list of possible devices.
 
         Example usage
@@ -173,7 +173,7 @@ class Devices(commands.Cog):
     @ensure_invokee_role_lower_than_bot()
     @always_whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Remove device from nickname")
-    async def removedevice(self, ctx: GIRContext) -> None:
+    async def removedevice(self, ctx: BlooContext) -> None:
         """Removes device from your nickname
 
         Example usage
@@ -194,7 +194,7 @@ class Devices(commands.Cog):
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="List all devices you can set your nickname to")
-    async def listdevices(self, ctx: GIRContext) -> None:
+    async def listdevices(self, ctx: BlooContext) -> None:
     #     """List all possible devices you can set your nickname to.
 
     #     Example usage
@@ -243,7 +243,7 @@ class Devices(commands.Cog):
     @removedevice.error
     @adddevice.error
     @listdevices.error
-    async def info_error(self,  ctx: GIRContext, error):
+    async def info_error(self,  ctx: BlooContext, error):
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)
             or isinstance(error, commands.BadArgument)

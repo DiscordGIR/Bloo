@@ -1,4 +1,4 @@
-# GIR
+# Bloo
 
 ## Setup instructions
 These instructions assume you are on macOS or Linux. Windows users, good luck.
@@ -17,7 +17,7 @@ You will need the following installed:
 5. VSCode should build the Docker image and open it automatically; this may take a couple of minutes as it has to install some extensions as well.
 6. Set up the `.env` file as shown [here](#env-file).
 7. Make sure the database is set up.
-8. Open the integrated terminal in VSCode and run the `gir` command to start the bot with hot reload!
+8. Open the integrated terminal in VSCode and run the `bloo` command to start the bot with hot reload!
 
 > Note that if you make changes to the `Dockerfile`, `.devcontainer.json`, or need to install a new requirement, you need to rebuild the Docker image. You can do this through the Command Pallette again, run "Remote-Containers: Rebuild Container".
 
@@ -40,7 +40,7 @@ You will need the following installed:
 If not using Docker, you can change `DB_HOST` to `localhost` instead. `host.docker.internal` works on macOS and Windows, on Linux you can use `172.17.0.1`.
 
 ```
-GIR_TOKEN="your token here"
+BLOO_TOKEN="your token here"
 
 MAIN_GUILD_ID=12345
 OWNER_ID=12345

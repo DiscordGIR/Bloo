@@ -10,7 +10,7 @@ from discord.file import File
 from utils.autocompleters.tags import tags_autocomplete
 from utils.checks import PermissionsFailure, mod_and_up, whisper, genius_or_submod_and_up
 from utils.config import cfg
-from utils.context import GIRContext, PromptData
+from utils.context import BlooContext, PromptData
 from utils.slash_perms import slash_perms
 from discord.utils import MISSING
 from discord.ext import commands
@@ -20,7 +20,7 @@ class Tags(commands.Cog):
         self.bot = bot
 
     @slash_command(guild_ids=[cfg.guild_id], description="Make bot say something")
-    async def tag(self, ctx: GIRContext, name: Option(str, description="Tag name", autocomplete=tags_autocomplete)):
+    async def tag(self, ctx: BlooContext, name: Option(str, description="Tag name", autocomplete=tags_autocomplete)):
         name = name.lower()
         tag = guild_service.get_tag(name)
 
@@ -44,7 +44,7 @@ class Tags(commands.Cog):
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Add a new tag", permissions=slash_perms.genius_or_submod_and_up())
-    async def addtag(self, ctx: GIRContext, name: str) -> None:
+    async def addtag(self, ctx: BlooContext, name: str) -> None:
         """Add a tag. Optionally attach an iamge. (Genius only)
 
         Example usage
@@ -108,7 +108,7 @@ class Tags(commands.Cog):
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Delete a tag", permissions=slash_perms.genius_or_submod_and_up())
-    async def deltag(self, ctx: GIRContext, name: Option(str, description="Name of tag to delete", autocomplete=tags_autocomplete)):
+    async def deltag(self, ctx: BlooContext, name: Option(str, description="Name of tag to delete", autocomplete=tags_autocomplete)):
         """Delete tag (geniuses only)
 
         Example usage
@@ -161,7 +161,7 @@ class Tags(commands.Cog):
     # @taglist.error
     # @deltag.error
     @addtag.error
-    async def info_error(self, ctx: GIRContext, error):
+    async def info_error(self, ctx: BlooContext, error):
         await ctx.message.delete(delay=5)
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)

@@ -13,7 +13,7 @@ from discord.member import Member
 from discord.utils import format_dt
 from utils.checks import PermissionsFailure, whisper
 from utils.config import cfg
-from utils.context import GIRContext
+from utils.context import BlooContext
 from utils.permissions import permissions
 
 
@@ -24,7 +24,7 @@ class UserInfo(commands.Cog):
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get avatar of another user or yourself.")
-    async def avatar(self, ctx: GIRContext, user: Option(Member, description="User to get avatar of", required=False)) -> None:
+    async def avatar(self, ctx: BlooContext, user: Option(Member, description="User to get avatar of", required=False)) -> None:
         if not user:
             user = ctx.user
         embed = Embed(title=f"{user}'s Avatar", color=Color.random())
@@ -34,7 +34,7 @@ class UserInfo(commands.Cog):
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info of another user or yourself.")
-    async def userinfo(self, ctx: GIRContext, user: Option(Member, description="User to get info of", required=False)) -> None:
+    async def userinfo(self, ctx: BlooContext, user: Option(Member, description="User to get info of", required=False)) -> None:
         # TODO when pycord fixes this behavior: handle external members
 
         if user:
@@ -72,7 +72,7 @@ class UserInfo(commands.Cog):
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's XP")
-    async def xp(self, ctx: GIRContext, user: Option(Member, description="Member to show xp of", required=False)):
+    async def xp(self, ctx: BlooContext, user: Option(Member, description="Member to show xp of", required=False)):
         """Show your or another user's XP
 
         Example usage
@@ -107,7 +107,7 @@ class UserInfo(commands.Cog):
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's warnpoints")
-    async def warnpoints(self, ctx: GIRContext, user: Option(Member, description="Member to show warnpoints of", required=False)):
+    async def warnpoints(self, ctx: BlooContext, user: Option(Member, description="Member to show warnpoints of", required=False)):
         """Show a user's warnpoints (mod only)
 
         Example usage
@@ -149,7 +149,7 @@ class UserInfo(commands.Cog):
     @warnpoints.error
     @xp.error
     # @xptop.error
-    async def info_error(self, ctx: GIRContext, error):
+    async def info_error(self, ctx: BlooContext, error):
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)
             or isinstance(error, commands.BadArgument)

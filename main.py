@@ -17,6 +17,7 @@ initial_extensions = [
         "cogs.commands.info.devices",
         "cogs.commands.info.userinfo",
         "cogs.commands.info.tags",
+        "cogs.commands.info.jailbreaks",
     ]
 intents = discord.Intents.default()
 intents.members = True

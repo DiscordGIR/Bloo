@@ -12,11 +12,9 @@ async def mods_and_above_member_resolver(ctx: BlooContext, argument):
 
 
 async def mods_and_above_external_resolver(ctx: BlooContext, argument):
-    try:
-        user = await commands.MemberConverter().convert(ctx, argument)
-    except PermissionsFailure as e:
-        raise e   
-    except Exception:
+    if isinstance(argument, Member):
+        user = argument
+    else:
         try:
             argument = int(argument)
             user = await ctx.bot.fetch_user(argument)

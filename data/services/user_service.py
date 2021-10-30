@@ -93,4 +93,20 @@ class UserService:
         self.cases(_id)
         Cases.objects(_id=_id).update_one(push__cases=case)
 
+    def set_warn_kicked(self, _id: int) -> None:
+        """Set the `was_warn_kicked` field in the User object of the user, whose ID is given by `_id`,
+        to True. (this happens when a user reaches 400+ points for the first time and is kicked).
+        If the user doesn't have a User document in the database, first create that.
+
+        Parameters
+        ----------
+        _id : int
+            The user's ID who we want to set `was_warn_kicked` for.
+        """
+
+        # first we ensure this user has a User document in the database before continuing
+        self.get_user(_id)
+        User.objects(_id=_id).update_one(set__was_warn_kicked=True)
+
+
 user_service = UserService()

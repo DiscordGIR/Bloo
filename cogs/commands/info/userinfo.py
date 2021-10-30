@@ -1,6 +1,5 @@
 import traceback
 from datetime import datetime
-
 from math import floor
 
 from data.services.user_service import user_service
@@ -10,10 +9,12 @@ from discord.commands.commands import Option
 from discord.embeds import Embed
 from discord.ext import commands
 from discord.member import Member
+from discord.user import User
 from discord.utils import format_dt
 from utils.checks import PermissionsFailure, whisper
 from utils.config import cfg
 from utils.context import BlooContext
+from utils.converters import user_resolver
 from utils.permissions import permissions
 
 
@@ -35,20 +36,35 @@ class UserInfo(commands.Cog):
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info of another user or yourself.")
     async def userinfo(self, ctx: BlooContext, user: Option(Member, description="User to get info of", required=False)) -> None:
-        # TODO when pycord fixes this behavior: handle external members
+        is_mod = permissions.has(ctx.guild, ctx.author, 5)
+        if user is None:
+            user = ctx.author
+        elif isinstance(user, str) or isinstance(user, int):
+            user = await user_resolver(ctx, user)
 
-        if user:
-            if not permissions.has(ctx.guild, ctx.author, 6):
-                raise PermissionsFailure(
-                    "You do not have permission to access another user's userinfo.")
-        else:
-            user = ctx.user
+        # is the invokee in the guild?
+        if isinstance(user, User) and not is_mod:
+            raise commands.BadArgument("You do not have permission to use this command.")
 
+        # non-mods are only allowed to request their own userinfo
+        if not is_mod and user.id != ctx.author.id:
+            raise commands.BadArgument(
+                "You do not have permission to use this command.")
+
+        # begin to prepare userinfo embed
+        
+        # prepare list of roles and join date
         roles = ""
-        reversed_roles = user.roles
-        reversed_roles.reverse()
-        for role in reversed_roles[:-1]:
-            roles += role.mention + " "
+        if isinstance(user, Member) and user.joined_at is not None:
+            reversed_roles = user.roles
+            reversed_roles.reverse()
+
+            for role in reversed_roles[:-1]:
+                roles += role.mention + " "
+            joined = f"{format_dt(user.joined_at, style='F')} ({format_dt(user.joined_at, style='R')})"
+        else:
+            roles = "No roles."
+            joined = f"User not in {ctx.guild}"
 
         results = user_service.get_user(user.id)
 
@@ -64,7 +80,7 @@ class UserInfo(commands.Cog):
         embed.add_field(
             name="Roles", value=roles if roles else "None", inline=False)
         embed.add_field(
-            name="Join date", value=f"{format_dt(user.joined_at, style='F')} ({format_dt(user.joined_at, style='R')})", inline=True)
+            name="Join date", value=joined, inline=True)
         embed.add_field(name="Account creation date",
                         value=f"{format_dt(user.created_at, style='F')} ({format_dt(user.created_at, style='R')})", inline=True)
         embed.set_footer(text=f"Requested by {ctx.author}")

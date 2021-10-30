@@ -1,13 +1,15 @@
+from discord.user import User
 from discord.commands import Option, slash_command
 from discord.ext import commands
 from discord.member import Member
 from discord.utils import escape_markdown
 from data.model.case import Case
-from data.services import guild_service, user_service
+from data.services.guild_service import guild_service
+from data.services.user_service import user_service
 from utils.checks import mod_and_up, whisper
-import utils.checks as checks
 from utils.config import cfg
 from utils.context import BlooContext
+from utils.converters import user_resolver
 from utils.slash_perms import slash_perms
 from utils.mod_logs import prepare_warn_log
 
@@ -20,12 +22,11 @@ in main.py
 class ModActions(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        print(checks.Member.__name__)
 
     @whisper()
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Warn a user", permissions=slash_perms.mod_and_up())
-    async def warn(self, ctx: BlooContext, user: Option(checks.Member, description="User to warn"), points:Option(int, description="Amount of points to warn for"), reason: Option(str, description="Reason for warn", required=False) = "No reason."):
+    async def warn(self, ctx: BlooContext, user: Option(Member, description="User to warn"), points:Option(int, description="Amount of points to warn for"), reason: Option(str, description="Reason for warn", required=False) = "No reason."):
         """Warn a user (mod only)
 
         Example usage
@@ -42,6 +43,10 @@ class ModActions(commands.Cog):
             "Reason for warning, by default 'No reason.'"
 
         """
+
+        if isinstance(user, str) or isinstance(user, int):
+            user = await user_resolver(ctx, user)
+        
         if points < 1:  # can't warn for negative/0 points
             raise commands.BadArgument(message="Points can't be lower than 1.")
 
@@ -62,7 +67,7 @@ class ModActions(commands.Cog):
         # increment case ID in database for next available case ID
         guild_service.inc_caseid()
         # add new case to DB
-        user.add_case(user.id, case)
+        user_service.add_case(user.id, case)
         # add warnpoints to the user in DB
         user_service.inc_points(user.id, points)
 
@@ -89,7 +94,7 @@ class ModActions(commands.Cog):
 
         elif cur_points >= 400 and not results.was_warn_kicked and isinstance(user, Member):
             # kick user if >= 400 points and wasn't previously kicked
-            await ctx.settings.set_warn_kicked(user.id)
+            user_service.set_warn_kicked(user.id)
 
             try:
                 await user.send(f"You were kicked from {ctx.guild.name} for reaching 400 or more points. Please note that you will be banned at 600 points.", embed=log)
@@ -107,8 +112,7 @@ class ModActions(commands.Cog):
                     dmed = False
 
         # also send response in channel where command was called
-        await ctx.respond(embed=log)
-        # await ctx.message.delete(delay=10)
+        await ctx.respond(embed=log, delete_after=10)
 
         public_chan = ctx.guild.get_channel(
             guild.channel_public)

@@ -179,7 +179,7 @@ async def remove_mute(id: int) -> None:
                 u.is_muted = False
                 u.save()
 
-                log = await prepare_unmute_log(BOT_GLOBAL.user, user, case)
+                log = prepare_unmute_log(BOT_GLOBAL.user, user, case)
 
                 log.remove_author()
                 log.set_thumbnail(url=user.display_avatar)

@@ -53,7 +53,7 @@ async def add_kick_case(ctx: BlooContext, user, reason, db_guild):
     # add new case to DB
     user_service.add_case(user.id, case)
 
-    return await prepare_kick_log(ctx.author, user, case)
+    return prepare_kick_log(ctx.author, user, case)
 
 
 async def notify_user(user, text, log):
@@ -120,4 +120,4 @@ async def add_ban_case(ctx: BlooContext, user: User, reason, db_guild: Guild = N
     # add case to db
     user_service.add_case(user.id, case)
     # prepare log embed to send to #public-mod-logs, user and context
-    return await prepare_ban_log(ctx.author, user, case)
+    return prepare_ban_log(ctx.author, user, case)

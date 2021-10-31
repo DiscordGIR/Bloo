@@ -1,14 +1,13 @@
 import traceback
 from datetime import datetime, timedelta
-from typing import Union
-from discord import guild
+
 from discord.errors import NotFound
 from discord.object import Object
 
 import humanize
 import pytimeparse
 from data.model.case import Case
-from data.model.guild import Guild
+
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 from discord.commands import Option, slash_command
@@ -21,7 +20,7 @@ from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.converters  import (mods_and_above_external_resolver,
                               mods_and_above_member_resolver, user_resolver)
-from utils.mod_logs import prepare_kick_log, prepare_mute_log, prepare_unban_log, prepare_unmute_log, prepare_warn_log
+from utils.mod_logs import prepare_mute_log, prepare_unban_log, prepare_unmute_log, prepare_warn_log
 from utils.permissions.slash_perms  import slash_perms
 from utils.modactions_helpers import add_ban_case, add_kick_case, notify_user, submit_public_log
 
@@ -34,7 +33,6 @@ class ModActions(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @whisper()
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Warn a user", permissions=slash_perms.mod_and_up())
     async def warn(self, ctx: BlooContext, user: Option(Member, description="User to warn"), points:Option(int, description="Amount of points to warn for"), reason: Option(str, description="Reason for warn", required=False) = "No reason."):
@@ -85,7 +83,7 @@ class ModActions(commands.Cog):
         cur_points = db_user.warn_points
 
         # prepare log embed, send to #public-mod-logs, user, channel where invoked
-        log = await prepare_warn_log(ctx.author, user, case)
+        log = prepare_warn_log(ctx.author, user, case)
         log.add_field(name="Current points", value=cur_points, inline=True)
 
         # also send response in channel where command was called
@@ -93,7 +91,6 @@ class ModActions(commands.Cog):
         await ctx.respond(embed=log, delete_after=10)
         await self.submit_public_log(ctx, db_guild, user, log, dmed)
 
-    @whisper()
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Kick a user", permissions=slash_perms.mod_and_up())
     async def kick(self, ctx: BlooContext, member: Option(Member, description="User to kick"), *, reason: Option(str, description="Reason for kick", required=False) = "No reason.") -> None:
@@ -127,6 +124,36 @@ class ModActions(commands.Cog):
         await ctx.respond(embed=log, delete_after=10)
         await submit_public_log(ctx, db_guild, member, log)
 
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Kick a user", permissions=slash_perms.mod_and_up())
+    async def roblox(self, ctx: BlooContext, member: Option(Member, description="User to kick")) -> None:
+        """Kick a user (mod only)
+
+        Example usage
+        --------------
+        !kick <@user/ID> <reason (optional)>
+
+        Parameters
+        ----------
+        user : discord.Member
+            "User to kick"
+        reason : str, optional
+            "Reason for kick, by default 'No reason.'"
+
+        """
+
+        member = await mods_and_above_member_resolver(ctx, member)
+        reason = "This Discord server is for iOS jailbreaking, not Roblox. Please join https://discord.gg/jailbreak instead, thank you!"
+        
+        db_guild = guild_service.get_guild()
+
+        log = await add_kick_case(ctx, member, reason, db_guild)
+        await notify_user(member, f"You were kicked from {ctx.guild.name}", log)
+
+        await member.kick(reason=reason)
+
+        await ctx.respond(embed=log, delete_after=10)
+        await submit_public_log(ctx, db_guild, member, log)
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Mute a user", permissions=slash_perms.mod_and_up())
@@ -201,7 +228,7 @@ class ModActions(commands.Cog):
 
         await member.add_roles(mute_role)
 
-        log = await prepare_mute_log(ctx.author, member, case)
+        log = prepare_mute_log(ctx.author, member, case)
         await ctx.respond(embed=log, delete_after=10)
 
         log.remove_author()
@@ -253,7 +280,7 @@ class ModActions(commands.Cog):
         guild_service.inc_caseid()
         user_service.add_case(member.id, case)
 
-        log = await prepare_unmute_log(ctx.author, member, case)
+        log = prepare_unmute_log(ctx.author, member, case)
 
         await ctx.respond(embed=log, delete_after=10)
 
@@ -350,11 +377,36 @@ class ModActions(commands.Cog):
         guild_service.inc_caseid()
         user_service.add_case(user.id, case)
 
-        log = await prepare_unban_log(ctx.author, user, case)
+        log = prepare_unban_log(ctx.author, user, case)
         await ctx.respond(embed=log, delete_after=10)
 
         await submit_public_log(ctx, db_guild, user, log)
 
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Purge channel messages", permissions=slash_perms.mod_and_up())
+    async def purge(self, ctx: BlooContext, limit: Option(int, description="Number of messages to remove") = 0) -> None:
+        """Purge messages from current channel (mod only)
+
+        Example usage
+        --------------
+        !purge <number of messages>
+
+        Parameters
+        ----------
+        limit : int, optional
+            "Number of messages to purge, must be > 0, by default 0 for error handling"
+        """
+
+        if limit <= 0:
+            raise commands.BadArgument(
+                "Number of messages to purge must be greater than 0")
+        elif limit >= 100:
+            limit = 100
+
+        msgs = await ctx.channel.history(limit=limit).flatten()
+
+        await ctx.channel.purge(limit=limit)
+        await ctx.respond(f'Purged {len(msgs)} messages.', delete_after=10)
 
     # @lock.error
     # @unlock.error
@@ -362,15 +414,15 @@ class ModActions(commands.Cog):
     # @unfreezeable.error
     # @freeze.error
     # @unfreeze.error
-    # @unmute.error
+    @unmute.error
     @mute.error
     # @liftwarn.error
-    # @unban.error
-    # @ban.error
+    @unban.error
+    @ban.error
     @warn.error
-    # @purge.error
+    @purge.error
     @kick.error
-    # @roblox.error
+    @roblox.error
     # @editreason.error
     # @removepoints.error
     async def info_error(self,  ctx: BlooContext, error):

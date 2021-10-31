@@ -1,11 +1,14 @@
 import traceback
 from datetime import datetime
 from math import floor
+from typing import Union
+
+from discord.message import Message
 
 from data.services.user_service import user_service
 from discord.colour import Color
-from discord.commands import slash_command
-from discord.commands.commands import Option
+from discord.commands import errors, slash_command
+from discord.commands.commands import Option, message_command, user_command
 from discord.embeds import Embed
 from discord.ext import commands
 from discord.member import Member
@@ -34,8 +37,19 @@ class UserInfo(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @whisper()
+    @message_command(guild_ids=[cfg.guild_id], name="Userinfo")
     @slash_command(guild_ids=[cfg.guild_id], description="Get info of another user or yourself.")
     async def userinfo(self, ctx: BlooContext, user: Option(Member, description="User to get info of", required=False)) -> None:
+        if isinstance(user, Message):
+            user = user.author
+        await self.handle_userinfo(ctx, user)
+    
+    @whisper()
+    @user_command(guild_ids=[cfg.guild_id], name="Userinfo")
+    async def userinfo_ctx(self, ctx: BlooContext, user: Member) -> None:
+        await self.handle_userinfo(ctx, user)
+
+    async def handle_userinfo(self, ctx: BlooContext, user: Union[User, Member]):
         is_mod = permissions.has(ctx.guild, ctx.author, 5)
         if user is None:
             user = ctx.author
@@ -51,8 +65,6 @@ class UserInfo(commands.Cog):
             raise commands.BadArgument(
                 "You do not have permission to use this command.")
 
-        # begin to prepare userinfo embed
-        
         # prepare list of roles and join date
         roles = ""
         if isinstance(user, Member) and user.joined_at is not None:
@@ -161,6 +173,7 @@ class UserInfo(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     # @cases.error
+    @userinfo_ctx.error
     @userinfo.error
     @warnpoints.error
     @xp.error
@@ -169,6 +182,7 @@ class UserInfo(commands.Cog):
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)
             or isinstance(error, commands.BadArgument)
+            or isinstance(error, errors.ApplicationCommandInvokeError)
             or isinstance(error, commands.BadUnionArgument)
             or isinstance(error, commands.MissingPermissions)
                 or isinstance(error, commands.NoPrivateMessage)):

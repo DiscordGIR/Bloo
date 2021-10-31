@@ -1,14 +1,16 @@
 from discord.errors import NotFound
 from discord.ext import commands
+from discord.ext.commands.errors import BadArgument
 from discord.member import Member
 from utils.checks import PermissionsFailure
 from utils.context import BlooContext
 
 
 async def mods_and_above_member_resolver(ctx: BlooContext, argument):
-    user = await commands.MemberConverter().convert(ctx, argument)
-    await check_invokee(ctx, user)
-    return user
+    if not isinstance(argument, Member):
+        raise BadArgument("User must be in the guild.")
+    await check_invokee(ctx, argument)
+    return argument
 
 
 async def mods_and_above_external_resolver(ctx: BlooContext, argument):

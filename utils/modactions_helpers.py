@@ -1,23 +1,43 @@
+import asyncio
 from typing import Union
-from discord.member import Member
-from discord.user import User
+
 from data.model.case import Case
 from data.model.guild import Guild
-from utils.config import cfg
-from utils.context import BlooContext
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
+from discord.member import Member
+from discord.user import User
 
+from utils.config import cfg
+from utils.context import BlooContext
 from utils.mod_logs import prepare_ban_log, prepare_kick_log
 
-BAN_CACHE = set()
 
-async def fetch_ban_cache(bot):
+class BanCache:
+    def __init__(self, bot):
+        self.bot = bot
+        self.cache = set()
+        self.fetch_ban_cache()
+
+    def fetch_ban_cache(self):
+        asyncio.ensure_future(fetch_ban_cache(self.bot, self))
+
+    def is_banned(self, user_id):
+        return user_id in self.cache
+
+    def ban(self, user_id):
+        self.cache.add(user_id)
+
+    def unban(self, user_id):
+        self.cache.discard(user_id)
+
+
+async def fetch_ban_cache(bot, ban_cache: BanCache):
     guild = bot.get_guild(cfg.guild_id)
-    global BAN_CACHE
     the_list = await guild.bans()
-    BAN_CACHE = {user.id for _, user in the_list}
-    
+    ban_cache.cache = {entry.user.id for entry in the_list}
+
+
 async def add_kick_case(ctx: BlooContext, user, reason, db_guild):
     # prepare case for DB
     case = Case(
@@ -35,6 +55,7 @@ async def add_kick_case(ctx: BlooContext, user, reason, db_guild):
 
     return await prepare_kick_log(ctx.author, user, case)
 
+
 async def notify_user(user, text, log):
     try:
         await user.send(text, embed=log)
@@ -42,10 +63,11 @@ async def notify_user(user, text, log):
         return False
     return True
 
+
 async def notify_user_warn(ctx: BlooContext, user: User, db_user, db_guild, cur_points: int, log):
     log_kickban = None
     dmed = True
-    
+
     if cur_points >= 600:
         # automatically ban user if more than 600 points
         dmed = await notify_user(user, f"You were banned from {ctx.guild.name} for reaching 600 or more points.", log)
@@ -69,6 +91,7 @@ async def notify_user_warn(ctx: BlooContext, user: User, db_user, db_guild, cur_
 
     return dmed
 
+
 async def submit_public_log(ctx: BlooContext, db_guild: Guild, user: Union[Member, User], log, dmed: bool = None):
     public_chan = ctx.guild.get_channel(
         db_guild.channel_public)
@@ -79,6 +102,7 @@ async def submit_public_log(ctx: BlooContext, db_guild: Guild, user: Union[Membe
             await public_chan.send(user.mention if not dmed else "", embed=log)
         else:
             await public_chan.send(embed=log)
+
 
 async def add_ban_case(ctx: BlooContext, user: User, reason, db_guild: Guild = None):
     # prepare the case to store in DB

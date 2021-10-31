@@ -134,21 +134,6 @@ class Tasks():
         self.tasks.add_job(reminder_callback, 'date', id=str(
             id+random.randint(5, 100)), next_run_time=date, args=[id, reminder], misfire_grace_time=3600)
 
-    def schedule_remove_raid_phrase(self, phrase: str, date: datetime) -> None:
-        """Create a task to remove a raid phrase
-
-        Parameters
-        ----------
-        phrase : str
-            Phrase to remove
-        date : datetime.datetime
-            When to remove the phrase
-        """
-
-        self.tasks.add_job(remove_raid_phrase, 'date', id=str(random.getrandbits(
-            64)), next_run_time=date, args=[phrase], misfire_grace_time=3600)
-
-
 def unmute_callback(id: int) -> None:
     """Callback function for actually unmuting. Creates asyncio task
     to do the actual unmute.

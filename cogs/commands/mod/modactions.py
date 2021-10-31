@@ -18,7 +18,7 @@ from utils.config import cfg
 from utils.context import BlooContext
 from utils.converters import (mods_and_above_external_resolver,
                               mods_and_above_member_resolver, user_resolver)
-from utils.mod_logs import prepare_kick_log, prepare_mute_log, prepare_warn_log
+from utils.mod_logs import prepare_kick_log, prepare_mute_log, prepare_unmute_log, prepare_warn_log
 from utils.slash_perms import slash_perms
 
 """
@@ -130,7 +130,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Mute a user", permissions=slash_perms.mod_and_up())
-    async def mute(self, ctx: BlooContext, member: Option(Member, description="User to mute"), dur: Option(str, description="Duration for mute", required=False), reason: Option(str, description="Reason for mute", required=False) = "No reason.") -> None:
+    async def mute(self, ctx: BlooContext, member: Option(Member, description="User to mute"), dur: Option(str, description="Duration for mute", required=False) = "", reason: Option(str, description="Reason for mute", required=False) = "No reason.") -> None:
         """Mute a user (mod only)
 
         Example usage
@@ -209,6 +209,55 @@ class ModActions(commands.Cog):
         dmed = await self.notify_user(member, f"You have been muted in {ctx.guild.name}", log)
         await self.submit_public_log(ctx, guild_service.get_guild(), member, log, dmed)
 
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Unmute a user", permissions=slash_perms.mod_and_up())
+    async def unmute(self, ctx: BlooContext, member: Option(Member, description="User to mute"), reason: Option(str, description="Reason for mute", required=False) = "No reason.") -> None:
+        """Unmute a user (mod only)
+
+        Example usage
+        --------------
+        !unmute <@user/ID> <reason (optional)>
+
+        Parameters
+        ----------
+        user : discord.Member
+            "Member to unmute"
+        reason : str, optional
+            "Reason for unmute, by default 'No reason.'"
+        """
+
+        member = await mods_and_above_member_resolver(ctx, member)
+
+        db_guild = guild_service.get_guild()
+        mute_role = db_guild.role_mute
+        mute_role = ctx.guild.get_role(mute_role)
+        await member.remove_roles(mute_role)
+
+        u = user_service.get_user(id=member.id)
+        u.is_muted = False
+        u.save()
+
+        try:
+            ctx.tasks.cancel_unmute(member.id)
+        except Exception:
+            pass
+
+        case = Case(
+            _id=db_guild.case_id,
+            _type="UNMUTE",
+            mod_id=ctx.author.id,
+            mod_tag=str(ctx.author),
+            reason=reason,
+        )
+        guild_service.inc_caseid()
+        user_service.add_case(member.id, case)
+
+        log = await prepare_unmute_log(ctx.author, member, case)
+
+        await ctx.respond(embed=log, delete_after=10)
+
+        dmed = await self.notify_user(member, f"You have been unmuted in {ctx.guild.name}", log)
+        await self.submit_public_log(ctx, guild_service.get_guild(), member, log, dmed)
 
     async def add_kick_case(self, ctx: BlooContext, user, reason, db_guild):
         # prepare case for DB

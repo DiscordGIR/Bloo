@@ -8,10 +8,10 @@ from discord.commands import Option, slash_command
 from discord.ext import commands
 from discord.file import File
 from utils.autocompleters.tags import tags_autocomplete
-from utils.checks import PermissionsFailure, mod_and_up, whisper, genius_or_submod_and_up
+from utils.permissions.checks import PermissionsFailure, mod_and_up, whisper, genius_or_submod_and_up
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
-from utils.slash_perms import slash_perms
+from utils.permissions.slash_perms  import slash_perms
 from discord.utils import MISSING
 from discord.ext import commands
 

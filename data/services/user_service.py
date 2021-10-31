@@ -1,3 +1,5 @@
+from data.model.case import Case
+from data.model.cases import Cases
 from data.model.user import User
 
 class UserService:
@@ -32,5 +34,78 @@ class UserService:
         overall = users().count()
         rank = users(xp__gte=xp).count()
         return (rank, overall)
+    
+    def inc_points(self, _id: int, points: int) -> None:
+        """Increments the warnpoints by `points` of a user whose ID is given by `_id`.
+        If the user doesn't have a User document in the database, first create that.
+
+        Parameters
+        ----------
+        _id : int
+            The user's ID to whom we want to add/remove points
+        points : int
+            The amount of points to increment the field by, can be negative to remove points
+        """
+
+        # first we ensure this user has a User document in the database before continuing
+        self.get_user(_id)
+        User.objects(_id=_id).update_one(inc__warn_points=points)
+    
+    def get_cases(self, id: int) -> Cases:
+        """Return the Document representing the cases of a user, whose ID is given by `id`
+        If the user doesn't have a Cases document in the database, first create that.
+
+        Parameters
+        ----------
+        id : int
+            The user whose cases we want to look up.
+
+        Returns
+        -------
+        Cases
+            [description]
+        """
+
+        cases = Cases.objects(_id=id).first()
+        # first we ensure this user has a Cases document in the database before continuing
+        if cases is None:
+            cases = Cases()
+            cases._id = id
+            cases.save()
+        return cases
+    
+    def add_case(self, _id: int, case: Case) -> None:
+        """Cases holds all the cases for a particular user with id `_id` as an
+        EmbeddedDocumentListField. This function appends a given case object to
+        this list. If this user doesn't have any previous cases, we first add
+        a new Cases document to the database.
+
+        Parameters
+        ----------
+        _id : int
+            ID of the user who we want to add the case to.
+        case : Case
+            The case we want to add to the user.
+        """
+
+        # ensure this user has a cases document before we try to append the new case
+        self.get_cases(_id)
+        Cases.objects(_id=_id).update_one(push__cases=case)
+
+    def set_warn_kicked(self, _id: int) -> None:
+        """Set the `was_warn_kicked` field in the User object of the user, whose ID is given by `_id`,
+        to True. (this happens when a user reaches 400+ points for the first time and is kicked).
+        If the user doesn't have a User document in the database, first create that.
+
+        Parameters
+        ----------
+        _id : int
+            The user's ID who we want to set `was_warn_kicked` for.
+        """
+
+        # first we ensure this user has a User document in the database before continuing
+        self.get_user(_id)
+        User.objects(_id=_id).update_one(set__was_warn_kicked=True)
+
 
 user_service = UserService()

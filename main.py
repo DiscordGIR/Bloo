@@ -3,14 +3,14 @@ import os
 import discord
 from discord.ext import commands
 from discord.interactions import Interaction
-from dotenv.main import load_dotenv
 
-from data.model.guild import Guild
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import db
-from utils.permissions import permissions
+from utils.modactions_helpers import BanCache
+from utils.permissions.permissions import permissions
 from utils.logger import logger
+from utils.tasks import Tasks
 
 initial_extensions = [
         "cogs.commands.info.stats",
@@ -18,6 +18,7 @@ initial_extensions = [
         "cogs.commands.info.userinfo",
         "cogs.commands.info.tags",
         "cogs.commands.info.jailbreaks",
+        "cogs.commands.mod.modactions",
     ]
 intents = discord.Intents.default()
 intents.members = True
@@ -29,6 +30,7 @@ mentions = discord.AllowedMentions(everyone=False, users=True, roles=False)
 class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.tasks = Tasks(self)
 
         # force the config object and database connection to be loaded
         if cfg and db and permissions:
@@ -41,6 +43,7 @@ bot = Bot(intents=intents, allowed_mentions=mentions)
 
 @bot.event
 async def on_ready():
+    bot.ban_cache = BanCache(bot)
     logger.info("""
             88          88                          
             88          88                          

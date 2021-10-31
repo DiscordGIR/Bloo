@@ -1,20 +1,24 @@
 import traceback
 from datetime import datetime
-
 from math import floor
+from typing import Union
+
+from discord.message import Message
 
 from data.services.user_service import user_service
 from discord.colour import Color
-from discord.commands import slash_command
-from discord.commands.commands import Option
+from discord.commands import errors, slash_command
+from discord.commands.commands import Option, message_command, user_command
 from discord.embeds import Embed
 from discord.ext import commands
 from discord.member import Member
+from discord.user import User
 from discord.utils import format_dt
-from utils.checks import PermissionsFailure, whisper
+from utils.permissions.checks import PermissionsFailure, whisper
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.permissions import permissions
+from utils.permissions.converters  import user_resolver
+from utils.permissions.permissions import permissions
 
 
 class UserInfo(commands.Cog):
@@ -33,22 +37,46 @@ class UserInfo(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @whisper()
+    @message_command(guild_ids=[cfg.guild_id], name="Userinfo")
     @slash_command(guild_ids=[cfg.guild_id], description="Get info of another user or yourself.")
     async def userinfo(self, ctx: BlooContext, user: Option(Member, description="User to get info of", required=False)) -> None:
-        # TODO when pycord fixes this behavior: handle external members
+        if isinstance(user, Message):
+            user = user.author
+        await self.handle_userinfo(ctx, user)
+    
+    @whisper()
+    @user_command(guild_ids=[cfg.guild_id], name="Userinfo")
+    async def userinfo_ctx(self, ctx: BlooContext, user: Member) -> None:
+        await self.handle_userinfo(ctx, user)
 
-        if user:
-            if not permissions.has(ctx.guild, ctx.author, 6):
-                raise PermissionsFailure(
-                    "You do not have permission to access another user's userinfo.")
-        else:
-            user = ctx.user
+    async def handle_userinfo(self, ctx: BlooContext, user: Union[User, Member]):
+        is_mod = permissions.has(ctx.guild, ctx.author, 5)
+        if user is None:
+            user = ctx.author
+        elif isinstance(user, str) or isinstance(user, int):
+            user = await user_resolver(ctx, user)
 
+        # is the invokee in the guild?
+        if isinstance(user, User) and not is_mod:
+            raise commands.BadArgument("You do not have permission to use this command.")
+
+        # non-mods are only allowed to request their own userinfo
+        if not is_mod and user.id != ctx.author.id:
+            raise commands.BadArgument(
+                "You do not have permission to use this command.")
+
+        # prepare list of roles and join date
         roles = ""
-        reversed_roles = user.roles
-        reversed_roles.reverse()
-        for role in reversed_roles[:-1]:
-            roles += role.mention + " "
+        if isinstance(user, Member) and user.joined_at is not None:
+            reversed_roles = user.roles
+            reversed_roles.reverse()
+
+            for role in reversed_roles[:-1]:
+                roles += role.mention + " "
+            joined = f"{format_dt(user.joined_at, style='F')} ({format_dt(user.joined_at, style='R')})"
+        else:
+            roles = "No roles."
+            joined = f"User not in {ctx.guild}"
 
         results = user_service.get_user(user.id)
 
@@ -64,7 +92,7 @@ class UserInfo(commands.Cog):
         embed.add_field(
             name="Roles", value=roles if roles else "None", inline=False)
         embed.add_field(
-            name="Join date", value=f"{format_dt(user.joined_at, style='F')} ({format_dt(user.joined_at, style='R')})", inline=True)
+            name="Join date", value=joined, inline=True)
         embed.add_field(name="Account creation date",
                         value=f"{format_dt(user.created_at, style='F')} ({format_dt(user.created_at, style='R')})", inline=True)
         embed.set_footer(text=f"Requested by {ctx.author}")
@@ -145,6 +173,7 @@ class UserInfo(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     # @cases.error
+    @userinfo_ctx.error
     @userinfo.error
     @warnpoints.error
     @xp.error
@@ -153,6 +182,7 @@ class UserInfo(commands.Cog):
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)
             or isinstance(error, commands.BadArgument)
+            or isinstance(error, errors.ApplicationCommandInvokeError)
             or isinstance(error, commands.BadUnionArgument)
             or isinstance(error, commands.MissingPermissions)
                 or isinstance(error, commands.NoPrivateMessage)):

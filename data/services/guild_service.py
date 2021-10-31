@@ -31,6 +31,13 @@ class GuildService:
         tag.use_count += 1
         self.edit_tag(tag)
         return tag
+    
+    def inc_caseid(self) -> None:
+        """Increments Guild.case_id, which keeps track of the next available ID to
+        use for a case.
+        """
+
+        Guild.objects(_id=cfg.guild_id).update_one(inc__case_id=1)
 
 
 guild_service = GuildService()

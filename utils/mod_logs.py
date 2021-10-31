@@ -111,30 +111,3 @@ async def prepare_unmute_log(author, user, case):
     embed.set_footer(text=f"Case #{case._id} | {user.id}")
     embed.timestamp = case.date
     return embed
-
-def logging(logger):
-    async def container(func):
-        async def decorator(ctx, *args, **kwargs):
-            case = await func(ctx, *args, **kwargs)
-            user = ctx.args.user
-            
-            dmed = True
-            # prepare log embed, send to #public-mod-logs, user, channel where invoked
-            log = await logger(ctx.author, user, case)
-            try:
-                await user.send(f"Your warn was lifted in {ctx.guild.name}.", embed=log)
-            except Exception:
-                dmed = False
-
-            await ctx.message.reply(embed=log, delete_after=10)
-            await ctx.message.delete(delay=10)
-
-            public_chan = ctx.guild.get_channel(
-                ctx.bot.settings.guild().channel_public)
-            if public_chan:
-                log.remove_author()
-                log.set_thumbnail(url=user.avatar)
-                await public_chan.send(user.mention if not dmed else "", embed=log)
-
-        return decorator
-    return container

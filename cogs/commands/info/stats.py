@@ -11,7 +11,7 @@ from discord.commands.commands import Option
 from discord.embeds import Embed
 from discord.ext import commands
 from discord.role import Role
-from utils.checks import whisper
+from utils.permissions.checks import whisper
 from utils.config import cfg
 from utils.context import BlooContext
 

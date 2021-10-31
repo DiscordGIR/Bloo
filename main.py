@@ -9,7 +9,7 @@ from data.model.guild import Guild
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import db
-from utils.permissions import permissions
+from utils.permissions.permissions import permissions
 from utils.logger import logger
 from utils.tasks import Tasks
 

@@ -2,7 +2,7 @@ from discord.errors import NotFound
 from discord.ext import commands
 from discord.ext.commands.errors import BadArgument
 from discord.member import Member
-from utils.checks import PermissionsFailure
+from utils.permissions.checks import PermissionsFailure
 from utils.context import BlooContext
 
 

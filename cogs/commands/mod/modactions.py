@@ -13,13 +13,13 @@ from discord.ext import commands
 from discord.member import Member
 from discord.user import User
 from discord.utils import escape_markdown, escape_mentions
-from utils.checks import PermissionsFailure, mod_and_up, whisper
+from utils.permissions.checks import PermissionsFailure, mod_and_up, whisper
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.converters import (mods_and_above_external_resolver,
+from utils.permissions.converters  import (mods_and_above_external_resolver,
                               mods_and_above_member_resolver, user_resolver)
 from utils.mod_logs import prepare_kick_log, prepare_mute_log, prepare_unmute_log, prepare_warn_log
-from utils.slash_perms import slash_perms
+from utils.permissions.slash_perms  import slash_perms
 
 """
 Make sure to add the cog to the initial_extensions list

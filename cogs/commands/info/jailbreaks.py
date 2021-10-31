@@ -11,8 +11,8 @@ from discord.commands.commands import Option
 from discord.embeds import Embed
 from discord.ext import commands
 from discord.member import Member
-from utils.permissions import permissions
-from utils.checks import PermissionsFailure, whisper
+from utils.permissions.permissions import permissions
+from utils.permissions.checks import PermissionsFailure, whisper
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.autocompleters.jailbreaks import apps_autocomplete

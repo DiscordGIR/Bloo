@@ -4,7 +4,7 @@ from discord.member import Member
 from data.services.guild_service import guild_service
 from utils.context import BlooContext
 
-from utils.permissions import permissions
+from utils.permissions.permissions import permissions
 
 
 class PermissionsFailure(commands.BadArgument):

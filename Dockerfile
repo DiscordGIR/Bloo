@@ -8,7 +8,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # system dependencies
 ENV NODE_VERSION=16.8.0
-RUN apt-get update
+RUN apt update
 RUN apt install -y curl git gcc python3-dev
 RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.34.0/install.sh | bash
 ENV NVM_DIR=/root/.nvm

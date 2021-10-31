@@ -46,8 +46,8 @@ class Tasks():
         global BOT_GLOBAL
         BOT_GLOBAL = bot
 
-        logging.basicConfig()
-        logging.getLogger('apscheduler').setLevel(logging.DEBUG)
+        # logging.basicConfig()
+        # logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
         self.tasks = AsyncIOScheduler(
             jobstores=jobstores, executors=executors, job_defaults=job_defaults, event_loop=bot.loop)
@@ -179,7 +179,7 @@ async def remove_mute(id: int) -> None:
                 u.is_muted = False
                 u.save()
 
-                log = await prepare_unmute_log(BOT_GLOBAL.user, user, case)
+                log = prepare_unmute_log(BOT_GLOBAL.user, user, case)
 
                 log.remove_author()
                 log.set_thumbnail(url=user.display_avatar)

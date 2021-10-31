@@ -14,11 +14,11 @@ from discord.ext import commands
 from discord.member import Member
 from discord.user import User
 from discord.utils import format_dt
-from utils.checks import PermissionsFailure, whisper
+from utils.permissions.checks import PermissionsFailure, whisper
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.converters import user_resolver
-from utils.permissions import permissions
+from utils.permissions.converters  import user_resolver
+from utils.permissions.permissions import permissions
 
 
 class UserInfo(commands.Cog):

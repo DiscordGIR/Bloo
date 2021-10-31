@@ -51,7 +51,7 @@ class UserService:
         self.get_user(_id)
         User.objects(_id=_id).update_one(inc__warn_points=points)
     
-    def cases(self, id: int) -> Cases:
+    def get_cases(self, id: int) -> Cases:
         """Return the Document representing the cases of a user, whose ID is given by `id`
         If the user doesn't have a Cases document in the database, first create that.
 
@@ -73,7 +73,6 @@ class UserService:
             cases._id = id
             cases.save()
         return cases
-
     
     def add_case(self, _id: int, case: Case) -> None:
         """Cases holds all the cases for a particular user with id `_id` as an
@@ -90,7 +89,7 @@ class UserService:
         """
 
         # ensure this user has a cases document before we try to append the new case
-        self.cases(_id)
+        self.get_cases(_id)
         Cases.objects(_id=_id).update_one(push__cases=case)
 
     def set_warn_kicked(self, _id: int) -> None:

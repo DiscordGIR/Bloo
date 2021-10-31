@@ -1,6 +1,9 @@
 import traceback
+from datetime import datetime, timedelta
 from typing import Union
 
+import humanize
+import pytimeparse
 from data.model.case import Case
 from data.model.guild import Guild
 from data.services.guild_service import guild_service
@@ -15,7 +18,7 @@ from utils.config import cfg
 from utils.context import BlooContext
 from utils.converters import (mods_and_above_external_resolver,
                               mods_and_above_member_resolver, user_resolver)
-from utils.mod_logs import prepare_kick_log, prepare_warn_log
+from utils.mod_logs import prepare_kick_log, prepare_mute_log, prepare_warn_log
 from utils.slash_perms import slash_perms
 
 """
@@ -122,7 +125,90 @@ class ModActions(commands.Cog):
         await member.kick(reason=reason)
 
         await ctx.respond(embed=log, delete_after=10)
-        await self.submit_public_kickban_log(ctx, member, log, db_guild)
+        await self.submit_public_log(ctx, db_guild, member, log)
+
+
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Mute a user", permissions=slash_perms.mod_and_up())
+    async def mute(self, ctx: BlooContext, member: Option(Member, description="User to mute"), dur: Option(str, description="Duration for mute", required=False), reason: Option(str, description="Reason for mute", required=False) = "No reason.") -> None:
+        """Mute a user (mod only)
+
+        Example usage
+        --------------
+        !mute <@user/ID> <duration> <reason (optional)>
+
+        Parameters
+        ----------
+        user : discord.Member
+            "Member to mute"
+        dur : str
+            "Duration of mute (i.e 1h, 10m, 1d)"
+        reason : str, optional
+            "Reason for mute, by default 'No reason.'"
+
+        """
+        member = await mods_and_above_member_resolver(ctx, member)
+
+        reason = escape_markdown(reason)
+        reason = escape_mentions(reason)
+
+        now = datetime.now()
+        delta = pytimeparse.parse(dur)
+
+        if delta is None:
+            if reason == "No reason." and dur == "":
+                reason = "No reason."
+            elif reason == "No reason.":
+                reason = dur
+            else:
+                reason = f"{dur} {reason}"
+
+        mute_role = guild_service.get_guild().role_mute
+        mute_role = ctx.guild.get_role(mute_role)
+
+        if mute_role in member.roles:
+            raise commands.BadArgument("This user is already muted.")
+
+        case = Case(
+            _id=guild_service.get_guild().case_id,
+            _type="MUTE",
+            date=now,
+            mod_id=ctx.author.id,
+            mod_tag=str(ctx.author),
+            reason=reason,
+        )
+
+        if delta:
+            try:
+                time = now + timedelta(seconds=delta)
+                case.until = time
+                case.punishment = humanize.naturaldelta(
+                    time - now, minimum_unit="seconds")
+                ctx.tasks.schedule_unmute(member.id, time)
+            except Exception as e:
+                print(e)
+                raise commands.BadArgument(
+                    "An error occured, this user is probably already muted")
+        else:
+            case.punishment = "PERMANENT"
+
+        guild_service.inc_caseid()
+        user_service.add_case(member.id, case)
+        u = user_service.get_user(id=member.id)
+        u.is_muted = True
+        u.save()
+
+        await member.add_roles(mute_role)
+
+        log = await prepare_mute_log(ctx.author, member, case)
+        await ctx.respond(embed=log, delete_after=10)
+
+        log.remove_author()
+        log.set_thumbnail(url=member.display_avatar)
+
+        dmed = await self.notify_user(member, f"You have been muted in {ctx.guild.name}", log)
+        await self.submit_public_log(ctx, guild_service.get_guild(), member, log, dmed)
+
 
     async def add_kick_case(self, ctx: BlooContext, user, reason, db_guild):
         # prepare case for DB
@@ -140,6 +226,13 @@ class ModActions(commands.Cog):
         user_service.add_case(user.id, case)
 
         return await prepare_kick_log(ctx.author, user, case)
+    
+    async def notify_user(self, user, text, log):
+        try:
+            await user.send(text, embed=log)
+        except Exception:
+            return False
+        return True
 
     async def notify_user_warn(self, ctx: BlooContext, user: User, db_user, db_guild, cur_points: int, log):
         log_kickban = None
@@ -147,11 +240,7 @@ class ModActions(commands.Cog):
         
         if cur_points >= 600:
             # automatically ban user if more than 600 points
-            try:
-                await user.send(f"You were banned from {ctx.guild.name} for reaching 600 or more points.", embed=log)
-            except Exception:
-                dmed = False
-
+            dmed = await self.notify_user(user, f"You were banned from {ctx.guild.name} for reaching 600 or more points.", log)
             log_kickban = await self.add_ban_case(ctx, user, "600 or more warn points reached.")
             await user.ban(reason="600 or more warn points reached.")
 
@@ -159,40 +248,29 @@ class ModActions(commands.Cog):
             # kick user if >= 400 points and wasn't previously kicked
             user_service.set_warn_kicked(user.id)
 
-            try:
-                await user.send(f"You were kicked from {ctx.guild.name} for reaching 400 or more points. Please note that you will be banned at 600 points.", embed=log)
-            except Exception:
-                dmed = False
-
+            dmed = await self.notify_user(user, f"You were kicked from {ctx.guild.name} for reaching 400 or more points. Please note that you will be banned at 600 points.", log)
             log_kickban = await self.add_kick_case(ctx, user, "400 or more warn points reached.")
             await user.kick(reason="400 or more warn points reached.")
 
         else:
             if isinstance(user, Member):
-                try:
-                    await user.send(f"You were warned in {ctx.guild.name}. Please note that you will be kicked at 400 points and banned at 600 points.", embed=log)
-                except Exception:
-                    dmed = False
-        
+                dmed = await self.notify_user(user, f"You were warned in {ctx.guild.name}. Please note that you will be kicked at 400 points and banned at 600 points.", log)
+
         if log_kickban:
-            await self.submit_public_kickban_log(ctx, user, log_kickban, db_guild)
+            await self.submit_public_log(ctx, db_guild, user, log_kickban)
 
         return dmed
 
-    async def submit_public_log(self, ctx: BlooContext, db_guild: Guild, user: Union[Member, User], log, dmed: bool):
+    async def submit_public_log(self, ctx: BlooContext, db_guild: Guild, user: Union[Member, User], log, dmed: bool = None):
         public_chan = ctx.guild.get_channel(
             db_guild.channel_public)
         if public_chan:
             log.remove_author()
             log.set_thumbnail(url=user.display_avatar)
-            await public_chan.send(user.mention if not dmed else "", embed=log)
-
-    async def submit_public_kickban_log(self, ctx: BlooContext, user: Union[Member, User], log, db_guild: Guild):
-        public_chan = ctx.guild.get_channel(
-            db_guild.channel_public)
-        log.remove_author()
-        log.set_thumbnail(url=user.display_avatar)
-        await public_chan.send(embed=log)
+            if dmed is not None:
+                await public_chan.send(user.mention if not dmed else "", embed=log)
+            else:
+                await public_chan.send(embed=log)
 
     # @lock.error
     # @unlock.error
@@ -201,7 +279,7 @@ class ModActions(commands.Cog):
     # @freeze.error
     # @unfreeze.error
     # @unmute.error
-    # @mute.error
+    @mute.error
     # @liftwarn.error
     # @unban.error
     # @ban.error
@@ -212,7 +290,6 @@ class ModActions(commands.Cog):
     # @editreason.error
     # @removepoints.error
     async def info_error(self,  ctx: BlooContext, error):
-        await ctx.message.delete(delay=5)
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)
             or isinstance(error, commands.BadArgument)

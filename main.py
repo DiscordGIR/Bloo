@@ -9,6 +9,7 @@ from data.model.guild import Guild
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import db
+from utils.modactions_helpers import BAN_CACHE, fetch_ban_cache
 from utils.permissions.permissions import permissions
 from utils.logger import logger
 from utils.tasks import Tasks
@@ -44,6 +45,8 @@ bot = Bot(intents=intents, allowed_mentions=mentions)
 
 @bot.event
 async def on_ready():
+    await fetch_ban_cache(bot)
+    logger.info(f"Fetched {len(BAN_CACHE)} bans")
     logger.info("""
             88          88                          
             88          88                          

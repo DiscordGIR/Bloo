@@ -46,8 +46,8 @@ class Tasks():
         global BOT_GLOBAL
         BOT_GLOBAL = bot
 
-        logging.basicConfig()
-        logging.getLogger('apscheduler').setLevel(logging.DEBUG)
+        # logging.basicConfig()
+        # logging.getLogger('apscheduler').setLevel(logging.DEBUG)
 
         self.tasks = AsyncIOScheduler(
             jobstores=jobstores, executors=executors, job_defaults=job_defaults, event_loop=bot.loop)

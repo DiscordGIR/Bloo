@@ -1,6 +1,7 @@
 import traceback
 from datetime import datetime, timedelta
 from typing import Union
+from discord.object import Object
 
 import humanize
 import pytimeparse
@@ -20,6 +21,7 @@ from utils.permissions.converters  import (mods_and_above_external_resolver,
                               mods_and_above_member_resolver, user_resolver)
 from utils.mod_logs import prepare_kick_log, prepare_mute_log, prepare_unmute_log, prepare_warn_log
 from utils.permissions.slash_perms  import slash_perms
+from utils.modactions_helpers import add_ban_case, add_kick_case, BAN_CACHE, notify_user, submit_public_log
 
 """
 Make sure to add the cog to the initial_extensions list
@@ -115,17 +117,13 @@ class ModActions(commands.Cog):
         
         db_guild = guild_service.get_guild()
 
-        log = await self.add_kick_case(ctx, member, reason, db_guild)
-
-        try:
-            await member.send(f"You were kicked from {ctx.guild.name}", embed=log)
-        except Exception:
-            pass
+        log = await add_kick_case(ctx, member, reason, db_guild)
+        await notify_user(member, f"You were kicked from {ctx.guild.name}", log)
 
         await member.kick(reason=reason)
 
         await ctx.respond(embed=log, delete_after=10)
-        await self.submit_public_log(ctx, db_guild, member, log)
+        await submit_public_log(ctx, db_guild, member, log)
 
 
     @mod_and_up()
@@ -206,8 +204,8 @@ class ModActions(commands.Cog):
         log.remove_author()
         log.set_thumbnail(url=member.display_avatar)
 
-        dmed = await self.notify_user(member, f"You have been muted in {ctx.guild.name}", log)
-        await self.submit_public_log(ctx, guild_service.get_guild(), member, log, dmed)
+        dmed = await notify_user(member, f"You have been muted in {ctx.guild.name}", log)
+        await submit_public_log(ctx, guild_service.get_guild(), member, log, dmed)
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Unmute a user", permissions=slash_perms.mod_and_up())
@@ -256,70 +254,52 @@ class ModActions(commands.Cog):
 
         await ctx.respond(embed=log, delete_after=10)
 
-        dmed = await self.notify_user(member, f"You have been unmuted in {ctx.guild.name}", log)
-        await self.submit_public_log(ctx, guild_service.get_guild(), member, log, dmed)
+        dmed = await notify_user(member, f"You have been unmuted in {ctx.guild.name}", log)
+        await submit_public_log(ctx, guild_service.get_guild(), member, log, dmed)
 
-    async def add_kick_case(self, ctx: BlooContext, user, reason, db_guild):
-        # prepare case for DB
-        case = Case(
-            _id=db_guild.case_id,
-            _type="KICK",
-            mod_id=ctx.author.id,
-            mod_tag=str(ctx.author),
-            reason=reason,
-        )
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Unmute a user", permissions=slash_perms.mod_and_up())
+    async def ban(self, ctx: BlooContext, user: Option(Member, description="User to ban"), reason: Option(str, description="Reason for ban", required=False) = "No reason."):
+        """Ban a user (mod only)
 
-        # increment max case ID for next case
-        guild_service.inc_caseid()
-        # add new case to DB
-        user_service.add_case(user.id, case)
+        Example usage
+        --------------
+        !ban <@user/ID> <reason (optional)>
 
-        return await prepare_kick_log(ctx.author, user, case)
-    
-    async def notify_user(self, user, text, log):
-        try:
-            await user.send(text, embed=log)
-        except Exception:
-            return False
-        return True
+        Parameters
+        ----------
+        user : typing.Union[discord.Member, int]
+            "The user to be banned, doesn't have to be part of the guild"
+        reason : str, optional
+            "Reason for ban, by default 'No reason.'"
+        """
 
-    async def notify_user_warn(self, ctx: BlooContext, user: User, db_user, db_guild, cur_points: int, log):
-        log_kickban = None
-        dmed = True
+        user = await mods_and_above_external_resolver(ctx, user)
+
+        reason = escape_markdown(reason)
+        reason = escape_mentions(reason)
+        db_guild = guild_service.get_guild()
+
+        member_is_external = isinstance(user, User)
+
+        # if the ID given is of a user who isn't in the guild, try to fetch the profile
+        if member_is_external:
+            async with ctx.typing():
+                if user.id in BAN_CACHE:
+                    raise commands.BadArgument("That user is already banned!")
         
-        if cur_points >= 600:
-            # automatically ban user if more than 600 points
-            dmed = await self.notify_user(user, f"You were banned from {ctx.guild.name} for reaching 600 or more points.", log)
-            log_kickban = await self.add_ban_case(ctx, user, "600 or more warn points reached.")
-            await user.ban(reason="600 or more warn points reached.")
+        BAN_CACHE.add(user.id)
+        log = await add_ban_case(ctx, user, reason, db_guild)
 
-        elif cur_points >= 400 and not db_user.was_warn_kicked and isinstance(user, Member):
-            # kick user if >= 400 points and wasn't previously kicked
-            user_service.set_warn_kicked(user.id)
-
-            dmed = await self.notify_user(user, f"You were kicked from {ctx.guild.name} for reaching 400 or more points. Please note that you will be banned at 600 points.", log)
-            log_kickban = await self.add_kick_case(ctx, user, "400 or more warn points reached.")
-            await user.kick(reason="400 or more warn points reached.")
-
+        if not member_is_external:
+            await notify_user(user, f"You have been banned from {ctx.guild.name}", log)
+            await user.ban(reason=reason)
         else:
-            if isinstance(user, Member):
-                dmed = await self.notify_user(user, f"You were warned in {ctx.guild.name}. Please note that you will be kicked at 400 points and banned at 600 points.", log)
+            # hackban for user not currently in guild
+            await ctx.guild.ban(Object(id=user.id))
 
-        if log_kickban:
-            await self.submit_public_log(ctx, db_guild, user, log_kickban)
-
-        return dmed
-
-    async def submit_public_log(self, ctx: BlooContext, db_guild: Guild, user: Union[Member, User], log, dmed: bool = None):
-        public_chan = ctx.guild.get_channel(
-            db_guild.channel_public)
-        if public_chan:
-            log.remove_author()
-            log.set_thumbnail(url=user.display_avatar)
-            if dmed is not None:
-                await public_chan.send(user.mention if not dmed else "", embed=log)
-            else:
-                await public_chan.send(embed=log)
+        await ctx.respond(embed=log, delete_after=10)
+        await submit_public_log(ctx, guild_service.get_guild(), user, log)
 
     # @lock.error
     # @unlock.error

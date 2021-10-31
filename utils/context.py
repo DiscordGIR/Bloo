@@ -6,6 +6,8 @@ from discord.ext.commands import BadArgument
 from datetime import datetime, timedelta
 import pytimeparse
 
+from utils.tasks import Tasks
+
 
 class PromptData:
     def __init__(self, value_name, description, convertor, timeout=120, title="", reprompt=False, raw=False):
@@ -25,10 +27,14 @@ class BlooContext(context.ApplicationContext):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.whisper = False
+        self.tasks: Tasks = self.bot.tasks
 
     async def respond_or_edit(self, *args, **kwargs):
         if self.interaction.response.is_done():
-            del kwargs["ephemeral"]
+            if kwargs.get("ephemeral") is not None:
+                del kwargs["ephemeral"]
+            if kwargs.get("delete_after") is not None:
+                del kwargs["delete_after"]
             await self.edit(*args, **kwargs)
         else:
             await self.respond(*args, **kwargs)
@@ -42,8 +48,8 @@ class BlooContext(context.ApplicationContext):
         await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=MISSING)
     
     async def send_error(self, description):
-        embed = Embed(title=":(\nYour command ran into a problem", description=description,  color=Color.orange())
-        await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=MISSING)
+        embed = Embed(title=":(\nYour command ran into a problem", description=description,  color=Color.red())
+        await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=MISSING)
         
     async def prompt(self, info: PromptData):
         def wait_check(m):

@@ -11,6 +11,7 @@ from utils.context import BlooContext
 from utils.database import db
 from utils.permissions import permissions
 from utils.logger import logger
+from utils.tasks import Tasks
 
 initial_extensions = [
         "cogs.commands.info.stats",
@@ -30,6 +31,7 @@ mentions = discord.AllowedMentions(everyone=False, users=True, roles=False)
 class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.tasks = Tasks(self)
 
         # force the config object and database connection to be loaded
         if cfg and db and permissions:

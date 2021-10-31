@@ -1,11 +1,13 @@
 import traceback
 from datetime import datetime, timedelta
+from discord.embeds import Embed
 
 from discord.errors import NotFound
 from discord.object import Object
 
 import humanize
 import pytimeparse
+from data.model import guild
 from data.model.case import Case
 
 from data.services.guild_service import guild_service
@@ -20,9 +22,9 @@ from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.converters  import (mods_and_above_external_resolver,
                               mods_and_above_member_resolver, user_resolver)
-from utils.mod_logs import prepare_mute_log, prepare_unban_log, prepare_unmute_log, prepare_warn_log
+from utils.mod_logs import prepare_editreason_log, prepare_liftwarn_log, prepare_mute_log, prepare_removepoints_log, prepare_unban_log, prepare_unmute_log, prepare_warn_log
 from utils.permissions.slash_perms  import slash_perms
-from utils.modactions_helpers import add_ban_case, add_kick_case, notify_user, submit_public_log
+from utils.modactions_helpers import add_ban_case, add_kick_case, notify_user, notify_user_warn, submit_public_log
 
 """
 Make sure to add the cog to the initial_extensions list
@@ -87,9 +89,9 @@ class ModActions(commands.Cog):
         log.add_field(name="Current points", value=cur_points, inline=True)
 
         # also send response in channel where command was called
-        dmed = await self.notify_user_warn(ctx, user, db_user, db_guild, cur_points, log)
+        dmed = await notify_user_warn(ctx, user, db_user, db_guild, cur_points, log)
         await ctx.respond(embed=log, delete_after=10)
-        await self.submit_public_log(ctx, db_guild, user, log, dmed)
+        await submit_public_log(ctx, db_guild, user, log, dmed)
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Kick a user", permissions=slash_perms.mod_and_up())
@@ -408,6 +410,203 @@ class ModActions(commands.Cog):
         await ctx.channel.purge(limit=limit)
         await ctx.respond(f'Purged {len(msgs)} messages.', delete_after=10)
 
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Lift a warn", permissions=slash_perms.mod_and_up())
+    async def liftwarn(self, ctx: BlooContext, user: Option(Member, description="User to lift warn of"), case_id: Option(int), reason: Option(str, required=False) = "No reason.") -> None:
+        """Mark a warn as lifted and remove points. (mod only)
+
+        Example usage
+        --------------
+        !liftwarn <@user/ID> <case ID> <reason (optional)>
+
+        Parameters
+        ----------
+        user : discord.Member
+            "User to remove warn from"
+        case_id : int
+            "The ID of the case for which we want to remove points"
+        reason : str, optional
+            "Reason for lifting warn, by default 'No reason.'"
+
+        """
+        
+        user = await mods_and_above_external_resolver(ctx, user)
+
+        # retrieve user's case with given ID
+        cases = user_service.get_cases(user.id)
+        case = cases.cases.filter(_id=case_id).first()
+
+        reason = escape_markdown(reason)
+        reason = escape_mentions(reason)
+
+        # sanity checks
+        if case is None:
+            raise commands.BadArgument(
+                message=f"{user} has no case with ID {case_id}")
+        elif case._type != "WARN":
+            raise commands.BadArgument(
+                message=f"{user}'s case with ID {case_id} is not a warn case.")
+        elif case.lifted:
+            raise commands.BadArgument(
+                message=f"Case with ID {case_id} already lifted.")
+
+        u = user_service.get_user(id=user.id)
+        if u.warn_points - int(case.punishment) < 0:
+            raise commands.BadArgument(
+                message=f"Can't lift Case #{case_id} because it would make {user.mention}'s points negative.")
+
+        # passed sanity checks, so update the case in DB
+        case.lifted = True
+        case.lifted_reason = reason
+        case.lifted_by_tag = str(ctx.author)
+        case.lifted_by_id = ctx.author.id
+        case.lifted_date = datetime.now()
+        cases.save()
+
+        # remove the warn points from the user in DB
+        user_service.inc_points(user.id, -1 * int(case.punishment))
+        dmed = True
+        # prepare log embed, send to #public-mod-logs, user, channel where invoked
+        log = prepare_liftwarn_log(ctx.author, user, case)
+        dmed = await notify_user(user, f"Your warn has been lifted in {ctx.guild}.", log)
+
+        await ctx.respond(embed=log, delete_after=10)
+        await submit_public_log(ctx, guild_service.get_guild(), user, log, dmed)
+
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Edit case reason", permissions=slash_perms.mod_and_up())
+    async def editreason(self, ctx: BlooContext, user: Option(Member), case_id: Option(int), new_reason: Option(str)) -> None:
+        """Edit case reason and the embed in #public-mod-logs. (mod only)
+
+        Example usage
+        --------------
+        !editreason <@user/ID> <case ID> <reason>
+
+        Parameters
+        ----------
+        user : discord.Member
+            "User to edit case of"
+        case_id : int
+            "The ID of the case for which we want to edit reason"
+        new_reason : str
+            "New reason"
+
+        """
+        
+        user = await mods_and_above_external_resolver(ctx, user)
+
+        # retrieve user's case with given ID
+        cases = user_service.get_cases(user.id)
+        case = cases.cases.filter(_id=case_id).first()
+
+        new_reason = escape_markdown(new_reason)
+        new_reason = escape_mentions(new_reason)
+
+        # sanity checks
+        if case is None:
+            raise commands.BadArgument(
+                message=f"{user} has no case with ID {case_id}")
+            
+        old_reason = case.reason
+        case.reason = new_reason
+        case.date = datetime.now()
+        cases.save()
+        
+        dmed = True
+        log = prepare_editreason_log(ctx.author, user, case, old_reason)
+
+        dmed = await notify_user(user, f"Your case was updated in {ctx.guild.name}.", log)
+
+        public_chan = ctx.guild.get_channel(
+            guild_service.get_guild().channel_public)
+
+        found = False
+        async with ctx.typing():
+            async for message in public_chan.history(limit=200):
+                if message.author.id != ctx.me.id:
+                    continue
+                if len(message.embeds) == 0:
+                    continue
+                embed = message.embeds[0]
+
+                if embed.footer.text == Embed.Empty:
+                    continue
+                if len(embed.footer.text.split(" ")) < 2:
+                    continue
+                
+                if f"#{case_id}" == embed.footer.text.split(" ")[1]:
+                    for i, field in enumerate(embed.fields):
+                        if field.name == "Reason":
+                            embed.set_field_at(i, name="Reason", value=new_reason)
+                            await message.edit(embed=embed)
+                            found = True
+        if found:
+            await ctx.respond(f"We updated the case and edited the embed in {public_chan.mention}.", embed=log, delete_after=10)
+        else:
+            await ctx.respond(f"We updated the case but weren't able to find a corresponding message in {public_chan.mention}!", embed=log, delete_after=10)
+            log.remove_author()
+            log.set_thumbnail(url=user.avatar_url)
+            await public_chan.send(user.mention if not dmed else "", embed=log)
+
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Edit case reason", permissions=slash_perms.mod_and_up())
+    async def removepoints(self, ctx: BlooContext, user: Option(Member), points: Option(int), reason: Option(str, required=False) = "No reason.") -> None:
+        """Remove warnpoints from a user. (mod only)
+
+        Example usage
+        --------------
+        !removepoints <@user/ID> <points> <reason (optional)>
+
+        Parameters
+        ----------
+        user : discord.Member
+            "User to remove warn from"
+        points : int
+            "Amount of points to remove"
+        reason : str, optional
+            "Reason for lifting warn, by default 'No reason.'"
+
+        """
+
+        user = await mods_and_above_external_resolver(ctx, user)
+
+        reason = escape_markdown(reason)
+        reason = escape_mentions(reason)
+
+        if points < 1:
+            raise commands.BadArgument("Points can't be lower than 1.")
+
+        u = user_service.get_user(id=user.id)
+        if u.warn_points - points < 0:
+            raise commands.BadArgument(
+                message=f"Can't remove {points} points because it would make {user.mention}'s points negative.")
+
+        # passed sanity checks, so update the case in DB
+        # remove the warn points from the user in DB
+        user_service.inc_points(user.id, -1 * points)
+
+        db_guild = guild_service.get_guild()
+        case = Case(
+            _id=db_guild.case_id,
+            _type="REMOVEPOINTS",
+            mod_id=ctx.author.id,
+            mod_tag=str(ctx.author),
+            punishment=str(points),
+            reason=reason,
+        )
+
+        # increment DB's max case ID for next case
+        guild_service.inc_caseid()
+        # add case to db
+        user_service.add_case(user.id, case)
+
+        # prepare log embed, send to #public-mod-logs, user, channel where invoked
+        log = prepare_removepoints_log(ctx.author, user, case)
+        dmed = await notify_user(user, f"Your points were removed in {ctx.guild.name}.", log)
+
+        await ctx.respond(embed=log, delete_after=10)
+        await submit_public_log(ctx, db_guild, user, log, dmed)
+
     # @lock.error
     # @unlock.error
     # @freezeable.error
@@ -416,15 +615,15 @@ class ModActions(commands.Cog):
     # @unfreeze.error
     @unmute.error
     @mute.error
-    # @liftwarn.error
+    @liftwarn.error
     @unban.error
     @ban.error
     @warn.error
     @purge.error
     @kick.error
     @roblox.error
-    # @editreason.error
-    # @removepoints.error
+    @editreason.error
+    @removepoints.error
     async def info_error(self,  ctx: BlooContext, error):
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)

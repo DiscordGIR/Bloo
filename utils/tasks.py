@@ -7,17 +7,12 @@ import discord
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.jobstores.mongodb import MongoDBJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from data.model.case import Case
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 
-from utils.mod_logs import prepare_unmute_log
 from utils.config import cfg
-
-from data.model.case import Case
-
-jobstores = {
-    'default': MongoDBJobStore(database="botty", collection="jobs", host=os.environ.get("DB_HOST"), port=int(os.environ.get("DB_PORT"))),
-}
+from utils.mod_logs import prepare_unmute_log
 
 executors = {
     'default': ThreadPoolExecutor(20)
@@ -48,6 +43,15 @@ class Tasks():
 
         # logging.basicConfig()
         # logging.getLogger('apscheduler').setLevel(logging.DEBUG)
+
+        if os.environ.get("DB_CONNECTION_STRING") is None:
+            jobstores = {
+                'default': MongoDBJobStore(database="botty", collection="jobs", host=os.environ.get("DB_HOST"), port=int(os.environ.get("DB_PORT"))),
+            }
+        else:
+            jobstores = {
+                'default': MongoDBJobStore(database="botty", collection="jobs", host=os.environ.get("DB_CONNECTION_STRING")),
+            }
 
         self.tasks = AsyncIOScheduler(
             jobstores=jobstores, executors=executors, job_defaults=job_defaults, event_loop=bot.loop)
@@ -133,6 +137,7 @@ class Tasks():
 
         self.tasks.add_job(reminder_callback, 'date', id=str(
             id+random.randint(5, 100)), next_run_time=date, args=[id, reminder], misfire_grace_time=3600)
+
 
 def unmute_callback(id: int) -> None:
     """Callback function for actually unmuting. Creates asyncio task

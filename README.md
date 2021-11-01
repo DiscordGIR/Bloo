@@ -7,7 +7,7 @@ These instructions assume you are on macOS or Linux. Windows users, good luck.
 You will need the following installed:
 - Docker
 - Visual Studio Code to run the development container
-- MongoDB running on the host machine.
+- MongoDB running on the host machine or [MongoDB Atlas](https://www.mongodb.com/atlas/database).
 
 #### Steps
 1. Clone the repository and open the folder in Visual Studio Code
@@ -25,7 +25,7 @@ You will need the following installed:
 You will need the following installed:
 - `python3.9+`
 - `venv` (Python's virtualenv module)
-- MongoDB
+- MongoDB running on the host machine or [MongoDB Atlas](https://www.mongodb.com/atlas/database).
 
 #### Steps
 1. Inside the root folder of the project, run `python3 -m venv venv/`
@@ -38,6 +38,9 @@ You will need the following installed:
 ## `.env` file
 
 If not using Docker, you can change `DB_HOST` to `localhost` instead. `host.docker.internal` works on macOS and Windows, on Linux you can use `172.17.0.1`.
+
+Optionally, you can use [MongoDB Atlas](https://www.mongodb.com/atlas/database) instead of a local Mongo server, or you can ask SlimShadyIAm on Discord for accesss to the shared test database. In that case, you use:
+`DB_CONNECTION_STRING=mongodb+srv://.....` instead of `DB_HOST` and `DB_PORT`.
 
 ```
 BLOO_TOKEN="your token here"

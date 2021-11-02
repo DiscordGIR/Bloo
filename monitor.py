@@ -1,4 +1,4 @@
-import subprocess, sys, platform, psutil
+import subprocess, sys, platform, psutil, os
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
@@ -25,29 +25,30 @@ else:
         BOLD = '\033[1m'
         UNDERLINE = '\033[4m'
         
-global proc
+global proc, pidlist
+pidlist = []
 
-def kill(proc_pid):
-    process = psutil.Process(proc_pid)
-    for proc in process.children(recursive=True):
-        proc.kill()
-    process.kill()
-
-if platform.system() == "Windows":
-    proc = subprocess.Popen(['python', './main.py'], shell=True)
-else:
-    proc = subprocess.Popen('python ./main.py', shell=True)
+def kill():
+    global pidlist
+    for proc in psutil.process_iter():
+        if proc.pid in pidlist:
+            print(f"{bcolors.FAIL}[monitor] Terminating old process...{bcolors.ENDC}")
+            process = psutil.Process(proc.pid)
+            for proc in process.children(recursive=True):
+                proc.terminate()
+            process.kill()
+            print(proc.status())
 
 def startProc():
-    global proc
+    global proc, pidlist
     if platform.system() == "Windows":
         proc = subprocess.Popen(['python', './main.py'], shell=True)
     else:
         proc = subprocess.Popen('python ./main.py', shell=True)
-    
+    pidlist.append(proc.pid)
+
 def restartProc():
-    print(f"{bcolors.FAIL}[monitor] Terminating old process...{bcolors.ENDC}")
-    kill(proc.pid)
+    kill()
     print(f"{bcolors.OKGREEN}[monitor] Starting new process...{bcolors.ENDC}")
     startProc()
 
@@ -86,6 +87,7 @@ class EventHandler(FileSystemEventHandler):
 
 if __name__ == "__main__":
     print(f"{bcolors.OKGREEN}[monitor] Starting process...{bcolors.ENDC}")
+    startProc()
     event_handler = EventHandler()
     observer = Observer()
     observer.schedule(event_handler, '.', recursive=True)
@@ -95,7 +97,7 @@ if __name__ == "__main__":
             pass
     except KeyboardInterrupt:
         print(f"\n{bcolors.FAIL}[monitor] Stopping process...{bcolors.ENDC}")
-        kill(proc.pid)
+        kill()
         observer.stop()
         exit(0)
     observer.join()

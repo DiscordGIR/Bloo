@@ -1,23 +1,17 @@
 import discord
-from discord import guild
 from discord.colour import Color
 from discord.embeds import Embed
 from data.services.guild_service import guild_service
-from discord import components
 from discord.commands import Option, slash_command
 from discord.enums import ButtonStyle
 from discord.ext import commands
-from discord.interactions import MISSING, Interaction, InteractionMessage
-from utils.permissions.checks import PermissionsFailure, admin_and_up, mod_and_up, whisper
+from discord.interactions import Interaction
+from utils.permissions.checks import PermissionsFailure, admin_and_up
 from utils.config import cfg
 from utils.context import BlooContext, PromptData, PromptDataReaction
 from utils.permissions.slash_perms  import slash_perms
 from discord import ui
 import traceback
-"""
-Make sure to add the cog to the initial_extensions list
-in main.py
-"""
 
 
 class ReactionRoleButton(ui.Button):
@@ -37,7 +31,7 @@ class ReactionRoleButton(ui.Button):
             await user.remove_roles(role)
             await interaction.response.send_message(f"{self.emoji} You have been removed the role {role.mention}", ephemeral=True)
 
-class ReactionRoles(commands.Cog):
+class RoleAssignButtons(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         
@@ -56,25 +50,25 @@ class ReactionRoles(commands.Cog):
             self.bot.add_view(view)
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Post the button role messages", permissions=slash_perms.admin_and_up())
-    async def postreact(self, ctx: BlooContext):
+    @slash_command(guild_ids=[cfg.guild_id], description="Post the button role assignment message", permissions=slash_perms.admin_and_up())
+    async def postbuttonmessage(self, ctx: BlooContext):
         # timeout is None because we want this view to be persistent
         channel = ctx.guild.get_channel(guild_service.get_guild().channel_reaction_roles)
         if channel is None:
-            raise commands.BadArgument("Reaction role channel not found!")
+            raise commands.BadArgument("Role assignment channel not found!")
 
         embed = Embed(description="Click the buttons to opt-in to notifications of your choice. ", color=Color.blurple())
         await channel.send(embed=embed)
         await ctx.send_success(f"Posted in {channel.mention}!")
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Prompt to add multiple reaction roles to a message", permissions=slash_perms.admin_and_up())
-    async def setreactions(self, ctx: BlooContext, message_id: str):
+    @slash_command(guild_ids=[cfg.guild_id], description="Prompt to add role assignment buttons to a message", permissions=slash_perms.admin_and_up())
+    async def setbuttons(self, ctx: BlooContext, message_id: str):
         """Prompt to add multiple reaction roles to a message (admin only)
 
         Example usage
         -------------
-        !setreactions <message ID>
+        !setbuttons <message ID>
 
         Parameters
         ----------
@@ -132,13 +126,13 @@ class ReactionRoles(commands.Cog):
         await ctx.send_success(title="Reaction roles set!", description=resulting_reactions_list)
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Add one new reaction to a given message", permissions=slash_perms.admin_and_up())
-    async def newreaction(self, ctx: BlooContext, message_id: str):
+    @slash_command(guild_ids=[cfg.guild_id], description="Add a new role assignment button to a message", permissions=slash_perms.admin_and_up())
+    async def addbutton(self, ctx: BlooContext, message_id: str):
         """Add one new reaction to a given message
 
         Example usage
         -------------
-        !newreaction <message ID>
+        !addbutton <message ID>
 
         Parameters
         ----------
@@ -231,8 +225,8 @@ class ReactionRoles(commands.Cog):
         return await ctx.prompt(prompt_role)
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Move reactions from one message to another", permissions=slash_perms.admin_and_up())
-    async def movereactions(self, ctx: BlooContext, before: Option(str, description="ID of the old message"), after: Option(str, description="ID of the new message")):
+    @slash_command(guild_ids=[cfg.guild_id], description="Move buttons from one message to another", permissions=slash_perms.admin_and_up())
+    async def movebuttons(self, ctx: BlooContext, before: Option(str, description="ID of the old message"), after: Option(str, description="ID of the new message")):
         """Move reactions from one message to another.
 
         Example use
@@ -290,7 +284,7 @@ class ReactionRoles(commands.Cog):
 
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Repost all buttons", permissions=slash_perms.admin_and_up())
-    async def repostreactions(self, ctx: BlooContext):
+    async def repostbuttons(self, ctx: BlooContext):
         """Repost all reactions to messages with reaction roles (admin only)
         """
 
@@ -318,11 +312,11 @@ class ReactionRoles(commands.Cog):
         await ctx.send_success("Done!")
 
 
-    @movereactions.error
-    @newreaction.error
-    @setreactions.error
-    @postreact.error
-    @repostreactions.error
+    @movebuttons.error
+    @addbutton.error
+    @setbuttons.error
+    @postbuttonmessage.error
+    @repostbuttons.error
     async def info_error(self,  ctx: BlooContext, error):
         error = error.original
         if (isinstance(error, commands.MissingRequiredArgument)
@@ -340,4 +334,4 @@ class ReactionRoles(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(ReactionRoles(bot))
+    bot.add_cog(RoleAssignButtons(bot))

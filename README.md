@@ -33,7 +33,7 @@ You will need the following installed:
 3. `pip3 install -r requirements.txt`
 4. Set up the .env file as shown [here](#env-file).
 5. Make sure the database is set up.
-6. `python3 main.py`
+6. `python3 monitor.py`
 
 ## `.env` file
 

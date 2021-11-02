@@ -193,7 +193,6 @@ class ReactionRoles(commands.Cog):
                 text += f"\n{r} <@&{reactions[r]}>"
 
         prompt_reaction_message = await ctx.send_success(description=text, title="Reaction roles")
-        print(type(prompt_reaction_message))
         prompt_reaction = PromptDataReaction(
             message=prompt_reaction_message, 
             reactions=[], 

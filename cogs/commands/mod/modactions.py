@@ -625,17 +625,20 @@ class ModActions(commands.Cog):
     @editreason.error
     @removepoints.error
     async def info_error(self,  ctx: BlooContext, error):
+        if isinstance(error, ApplicationCommandInvokeError):
+            error = error.original
+        
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)
             or isinstance(error, commands.BadArgument)
             or isinstance(error, commands.BadUnionArgument)
-            or isinstance(error, commands.BotMissingPermissions)
             or isinstance(error, commands.MissingPermissions)
+            or isinstance(error, commands.BotMissingPermissions)
             or isinstance(error, commands.MaxConcurrencyReached)
                 or isinstance(error, commands.NoPrivateMessage)):
             await ctx.send_error(error)
         else:
-            await ctx.send_error(error)
+            await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
             traceback.print_exc()
 
 

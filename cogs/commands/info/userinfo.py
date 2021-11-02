@@ -178,13 +178,17 @@ class UserInfo(commands.Cog):
     @warnpoints.error
     @xp.error
     # @xptop.error
-    async def info_error(self, ctx: BlooContext, error):
+    async def info_error(self,  ctx: BlooContext, error):
+        if isinstance(error, errors.ApplicationCommandInvokeError):
+            error = error.original
+        
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)
             or isinstance(error, commands.BadArgument)
-            or isinstance(error, errors.ApplicationCommandInvokeError)
             or isinstance(error, commands.BadUnionArgument)
             or isinstance(error, commands.MissingPermissions)
+            or isinstance(error, commands.BotMissingPermissions)
+            or isinstance(error, commands.MaxConcurrencyReached)
                 or isinstance(error, commands.NoPrivateMessage)):
             await ctx.send_error(error)
         else:

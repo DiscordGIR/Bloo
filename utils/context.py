@@ -115,11 +115,9 @@ class BlooContext(context.ApplicationContext):
             await info.message.add_reaction(reaction)
             
         def wait_check(reaction, user):
-            print("TRIGGGER")
             res = (user.id != self.bot.user.id
                 and reaction.message.id == info.message.id)
             
-            print(info.reactions)
             if info.reactions:
                 res = res and str(reaction.emoji) in info.reactions
             
@@ -136,7 +134,6 @@ class BlooContext(context.ApplicationContext):
                         return "TERMINATE", None
         else:
             try:
-                print("here")
                 reaction, reactor = await self.bot.wait_for('reaction_add', timeout=info.timeout, check=wait_check)
             except asyncio.TimeoutError:
                 try:

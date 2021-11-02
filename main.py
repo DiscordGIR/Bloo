@@ -23,7 +23,7 @@ initial_extensions = [
         "cogs.commands.info.tags",
         "cogs.commands.info.jailbreaks",
         "cogs.commands.mod.modactions",
-        "cogs.monitors.reactionroles",
+        "cogs.monitors.role_assignment_buttons",
     ]
 intents = discord.Intents.default()
 intents.members = True

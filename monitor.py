@@ -1,15 +1,25 @@
 import subprocess
+import os
+import platform
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 
-proc = subprocess.Popen(['python main.py'], shell=True)
+proc = "N/A"
+
+if platform.system() == "Windows":
+    proc = subprocess.Popen(['python', './main.py'], shell=True)
+else:
+    proc = subprocess.Popen('python ./main.py', shell=True)
 
 def termProc():
     proc.terminate()
     
 def restartProc():
     termProc()
-    proc = subprocess.Popen(['python main.py'], shell=True)
+    if platform.system() == "Windows":
+        proc = subprocess.Popen(['python', './main.py'], shell=True)
+    else:
+        proc = subprocess.Popen('python ./main.py', shell=True)
 
 class EventHandler(FileSystemEventHandler):
     def on_any_event(self, event):

@@ -25,7 +25,7 @@ class ReactionRoleButton(ui.Button):
     
     async def callback(self, interaction: Interaction):
         user = interaction.user
-        role = interaction.gui846383888053567513ld.get_role(int(self.custom_id))
+        role = interaction.guild.get_role(int(self.custom_id))
         if role is None:
             return
         
@@ -52,6 +52,7 @@ class ReactionRoles(commands.Cog):
         await channel.send(embed=embed)
         await ctx.send_success(f"Posted in {channel.mention}!")
 
+    @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Prompt to add multiple reaction roles to a message", permissions=slash_perms.admin_and_up())
     async def setreactions(self, ctx: BlooContext, message_id: str):
         """Prompt to add multiple reaction roles to a message (admin only)
@@ -85,7 +86,7 @@ class ReactionRoles(commands.Cog):
             reaction = await self.prompt_for_reaction(ctx, reaction_mapping[message.id])
             
             if reaction is None:
-                await ctx.send_warning("Timed out waiting for reaction, cancelling.", delete_after=5)
+                await ctx.send_warning("Timed out waiting for reaction, cancelling.")
                 return
             elif str(reaction.emoji) == "✅":
                 break
@@ -95,7 +96,7 @@ class ReactionRoles(commands.Cog):
             
             role = await self.prompt_for_role(ctx, reaction, reaction_mapping[message.id])
             if role is None:
-                await ctx.send_warning("Cancelled setting reactions.", delete_after=5)
+                await ctx.send_warning("Cancelled setting reactions.")
                 return
             
             reaction_mapping[message.id][str(reaction.emoji)] = role.id
@@ -106,7 +107,6 @@ class ReactionRoles(commands.Cog):
         guild_service.add_rero_mapping(reaction_mapping)
 
         view = ui.View(timeout=None)
-
         resulting_reactions_list = ""
         async with ctx.channel.typing():
             for r in reaction_mapping[message.id]:
@@ -115,6 +115,75 @@ class ReactionRoles(commands.Cog):
             await message.edit(view=view)
 
         await ctx.send_success(title="Reaction roles set!", description=resulting_reactions_list)
+
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Add one new reaction to a given message", permissions=slash_perms.admin_and_up())
+    async def newreaction(self, ctx: BlooContext, message_id: str):
+        """Add one new reaction to a given message
+
+        Example usage
+        -------------
+        !newreaction <message ID>
+
+        Parameters
+        ----------
+        message : int
+            "Message to add reaction to"
+        """
+
+        message_id = int(message_id)
+
+        channel = ctx.guild.get_channel(guild_service.get_guild().channel_reaction_roles)
+
+        if channel is None:
+            return
+
+        reaction_mapping = dict(guild_service.get_rero_mapping(str(message_id)))
+        if reaction_mapping is None:
+            raise commands.BadArgument(f"Message with ID {message_id} had no reactions set in database. Use `!setreactions` first.")
+
+        message = None
+        try:
+            message = await channel.fetch_message(message_id)
+        except Exception:
+            raise commands.BadArgument("Message not found.")
+        
+        await ctx.defer()
+        while True:
+            reaction = await self.prompt_for_reaction(ctx, reaction_mapping)
+            
+            if reaction is None:
+                await ctx.send_warning("Timed out waiting for reaction, cancelling.")
+                return
+            elif str(reaction.emoji) in reaction_mapping:
+                raise commands.BadArgument(f"Reaction {str(reaction)} is already in use on that message.")
+            elif str(reaction.emoji) == "✅":
+                await ctx.send_warning("Cancelled adding new reaction.")
+                return
+            elif isinstance(reaction.emoji, discord.PartialEmoji) or (isinstance(reaction.emoji, discord.Emoji) and not reaction.emoji.available):
+                await ctx.send_warning("That emoji is not available to me :(",)
+                continue
+            
+            role = await self.prompt_for_role(ctx, reaction, reaction_mapping)
+            if role is None:
+                await ctx.send_warning("Cancelled setting reactions.")
+                return
+            elif role.id in reaction_mapping.values():
+                raise commands.BadArgument(f"There is already a reaction for {role.mention} on that message.")
+            
+            reaction_mapping[str(reaction.emoji)] = role.id
+            break
+
+        guild_service.append_rero_mapping(message_id, reaction_mapping)
+        
+        view = ui.View(timeout=None)
+        resulting_reactions_list = ""
+        async with ctx.channel.typing():
+            for r in reaction_mapping:
+                resulting_reactions_list += f"Reaction {r} will give role <@&{reaction_mapping[r]}>\n"
+                view.add_item(ReactionRoleButton(ctx.guild.get_role(reaction_mapping[r]), r))
+            await message.edit(view=view)
+        await ctx.send_success(title="Added new reaction!", description=resulting_reactions_list)
 
     async def prompt_for_reaction(self, ctx, reactions):
         text = "Please add the reaction to this message that you want to watch for (or :white_check_mark: to finish or cancel if nothing set so far)"
@@ -166,9 +235,11 @@ class ReactionRoles(commands.Cog):
         # add the view to the bot so it will watch for reactions
         # self.bot.add_view(view)
         
+    @newreaction.error
     @setreactions.error
     @postreact.error
     async def info_error(self,  ctx: BlooContext, error):
+        error = error.original
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)
             or isinstance(error, commands.BadArgument)

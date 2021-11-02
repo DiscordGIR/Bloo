@@ -24,8 +24,8 @@ else:
         ENDC = '\033[0m'
         BOLD = '\033[1m'
         UNDERLINE = '\033[4m'
-
-proc = "N/A"
+        
+global proc
 
 def kill(proc_pid):
     process = psutil.Process(proc_pid)
@@ -39,6 +39,7 @@ else:
     proc = subprocess.Popen('python ./main.py', shell=True)
 
 def startProc():
+    global proc
     if platform.system() == "Windows":
         proc = subprocess.Popen(['python', './main.py'], shell=True)
     else:

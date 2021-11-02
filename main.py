@@ -1,4 +1,8 @@
 import os
+import signal
+import sys
+
+signal.signal(signal.SIGINT, lambda x, y: sys.exit(0))
 
 import discord
 from discord.ext import commands

@@ -1,4 +1,5 @@
 import discord
+from discord import guild
 from discord.colour import Color
 from discord.embeds import Embed
 from data.services.guild_service import guild_service
@@ -6,7 +7,7 @@ from discord import components
 from discord.commands import Option, slash_command
 from discord.enums import ButtonStyle
 from discord.ext import commands
-from discord.interactions import Interaction, InteractionMessage
+from discord.interactions import MISSING, Interaction, InteractionMessage
 from utils.permissions.checks import PermissionsFailure, admin_and_up, mod_and_up, whisper
 from utils.config import cfg
 from utils.context import BlooContext, PromptData, PromptDataReaction
@@ -39,6 +40,20 @@ class ReactionRoleButton(ui.Button):
 class ReactionRoles(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        
+    @commands.Cog.listener()
+    async def on_ready(self):
+        # this function is run when the bot is started.
+        # we recreate the view as we did in the /post command
+        guild = self.bot.get_guild(cfg.guild_id)
+        rero_mappings = guild_service.all_rero_mappings()
+        for _, mapping in rero_mappings.items():
+            view = ui.View(timeout=None)
+            for emoji, role in mapping.items():
+                role = guild.get_role(role)
+                view.add_item(ReactionRoleButton(role, emoji))
+
+            self.bot.add_view(view)
 
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Post the button role messages", permissions=slash_perms.admin_and_up())
@@ -214,29 +229,100 @@ class ReactionRoles(commands.Cog):
                                             convertor=commands.converter.RoleConverter().convert)
         
         return await ctx.prompt(prompt_role)
-    
-    @commands.Cog.listener()
-    async def on_ready(self):
-        # this function is run when the bot is started.
-        # we recreate the view as we did in the /post command
-        guild = self.bot.get_guild(cfg.guild_id)
-        rero_mappings = guild_service.all_rero_mappings()
-        for _, mapping in rero_mappings.items():
-            view = ui.View(timeout=None)
-            for emoji, role in mapping.items():
-                role = guild.get_role(role)
-                view.add_item(ReactionRoleButton(role, emoji))
-            
-            # for role in guild.roles[:25]:
-            # view.add_item(ReactionRoleButton(role))
-            self.bot.add_view(view)
 
-        # add the view to the bot so it will watch for reactions
-        # self.bot.add_view(view)
-        
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Move reactions from one message to another", permissions=slash_perms.admin_and_up())
+    async def movereactions(self, ctx: BlooContext, before: Option(str, description="ID of the old message"), after: Option(str, description="ID of the new message")):
+        """Move reactions from one message to another.
+
+        Example use
+        -----------
+        !movereactions <before message ID> <after message ID>
+
+        Parameters
+        ----------
+        before : int
+            "ID of before messsage"
+        after : int
+            "ID of after message"
+        """
+
+        before, after = int(before), int(after)
+
+        if before == after:
+            raise commands.BadArgument("I can't move to the same message.")
+
+        channel = ctx.guild.get_channel(guild_service.get_guild().channel_reaction_roles)
+
+        if channel is None:
+            return
+
+        rero_mapping = guild_service.get_rero_mapping(str(before))
+        if rero_mapping is None:
+            raise commands.BadArgument(f"Message with ID {before} had no reactions set in database.")
+
+        try:
+            after_message = await channel.fetch_message(after)
+        except Exception:
+            raise commands.BadArgument(f"Message with ID {after} not found.")
+
+        try:
+            before_message = await channel.fetch_message(before)
+        except Exception:
+            raise commands.BadArgument(f"Message with ID {before} not found.")
+
+        rero_mapping = {after: rero_mapping}
+
+        guild_service.add_rero_mapping(rero_mapping)
+        guild_service.delete_rero_mapping(before)
+
+        await before_message.edit(view=None)
+
+        resulting_reactions_list = "Done! We added the following emotes:\n"
+        view = ui.View(timeout=None)
+        async with ctx.channel.typing():
+            for r in rero_mapping[after]:
+                resulting_reactions_list += f"Reaction {r} will give role <@&{rero_mapping[after][r]}>\n"
+                view.add_item(ReactionRoleButton(ctx.guild.get_role(rero_mapping[after][r]), r))
+            await after_message.edit(view=view)
+
+        await ctx.send_success(title="Reaction roles moved!", description=resulting_reactions_list)
+
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Repost all buttons", permissions=slash_perms.admin_and_up())
+    async def repostreactions(self, ctx: BlooContext):
+        """Repost all reactions to messages with reaction roles (admin only)
+        """
+
+        channel = ctx.guild.get_channel(guild_service.get_guild().channel_reaction_roles)
+
+        if channel is None:
+            return
+
+        rero_mapping = guild_service.all_rero_mappings()
+        if rero_mapping is None or rero_mapping == {}:
+            raise commands.BadArgument("Nothing to do.")
+
+        async with ctx.channel.typing():
+            for m in rero_mapping:
+                try:
+                    message = await channel.fetch_message(int(m))
+                except Exception:
+                    continue
+                view = ui.View(timeout=None)
+                for r in rero_mapping[m]:
+                    role = ctx.guild.get_role(rero_mapping[m][r])
+                    view.add_item(ReactionRoleButton(role, r))
+                await message.edit(view=view)
+
+        await ctx.send_success("Done!")
+
+
+    @movereactions.error
     @newreaction.error
     @setreactions.error
     @postreact.error
+    @repostreactions.error
     async def info_error(self,  ctx: BlooContext, error):
         error = error.original
         if (isinstance(error, commands.MissingRequiredArgument)

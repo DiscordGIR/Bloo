@@ -5,7 +5,7 @@ from discord.embeds import Embed
 from discord.ext.commands import BadArgument
 from datetime import datetime, timedelta
 import pytimeparse
-
+import asyncio
 from utils.tasks import Tasks
 
 
@@ -23,6 +23,14 @@ class PromptData:
         return PromptData(self.value_name, self.description, self.convertor, self.title, self.reprompt)
 
 
+class PromptDataReaction:
+    def __init__(self, message, reactions, timeout=None, delete_after=False, raw_emoji=False):
+        self.message = message
+        self.reactions = reactions        
+        self.timeout = timeout
+        self.delete_after = delete_after
+        self.raw_emoji = raw_emoji
+
 class BlooContext(context.ApplicationContext):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -35,21 +43,21 @@ class BlooContext(context.ApplicationContext):
                 del kwargs["ephemeral"]
             if kwargs.get("delete_after") is not None:
                 del kwargs["delete_after"]
-            await self.edit(*args, **kwargs)
+            return await self.edit(*args, **kwargs)
         else:
-            await self.respond(*args, **kwargs)
+            return await self.respond(*args, **kwargs)
 
     async def send_success(self, description: str, title: str = ""):
         embed = Embed(title=title, description=description,  color=Color.dark_green())
-        await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=MISSING)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=MISSING)
     
     async def send_warning(self, description: str, title: str = ""):
         embed = Embed(title=title, description=description,  color=Color.orange())
-        await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=MISSING)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=MISSING)
     
     async def send_error(self, description):
         embed = Embed(title=":(\nYour command ran into a problem", description=description,  color=Color.red())
-        await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=MISSING)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=MISSING)
         
     async def prompt(self, info: PromptData):
         def wait_check(m):
@@ -102,4 +110,50 @@ class BlooContext(context.ApplicationContext):
                     
         return ret
     
- 
+    async def prompt_reaction(self, info: PromptDataReaction):
+        for reaction in info.reactions:
+            await info.message.add_reaction(reaction)
+            
+        def wait_check(reaction, user):
+            print("TRIGGGER")
+            res = (user.id != self.bot.user.id
+                and reaction.message.id == info.message.id)
+            
+            print(info.reactions)
+            if info.reactions:
+                res = res and str(reaction.emoji) in info.reactions
+            
+            return res
+            
+        if info.timeout is None:
+            while True:
+                try:
+                    reaction, reactor = await self.bot.wait_for('reaction_add', timeout=300.0, check=wait_check)
+                    if reaction is not None:
+                        return str(reaction.emoji), reactor    
+                except asyncio.TimeoutError:
+                    if self.bot.report.pending_tasks.get(info.message.id) == "TERMINATE":
+                        return "TERMINATE", None
+        else:
+            try:
+                print("here")
+                reaction, reactor = await self.bot.wait_for('reaction_add', timeout=info.timeout, check=wait_check)
+            except asyncio.TimeoutError:
+                try:
+                    if info.delete_after:
+                        await info.message.delete()
+                    else:
+                        await info.message.clear_reactions()
+                    return None, None
+                except Exception:
+                    pass
+            else:
+                if info.delete_after:
+                    await info.message.delete()
+                else:
+                    await info.message.clear_reactions()
+                
+                if not info.raw_emoji:
+                    return str(reaction.emoji), reactor    
+                else:
+                    return reaction, reactor    

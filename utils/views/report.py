@@ -20,19 +20,19 @@ class ReportActions(ui.View):
              return False
          return True
 
-    @ui.button(emoji="✅", style=ButtonStyle.primary)
+    @ui.button(emoji="✅", label="Dismiss", style=ButtonStyle.primary)
     async def dismiss(self, button: ui.Button, interaction: Interaction):
         if not self.check(interaction):
             return
         await self.ctx.message.delete()
         
-    @ui.button(emoji="🆔", style=ButtonStyle.primary)
+    @ui.button(emoji="🆔", label="Post ID", style=ButtonStyle.primary)
     async def id(self, button: ui.Button, interaction: Interaction):
         if not self.check(interaction):
             return
         await self.ctx.channel.send(self.author.id)
 
-    @ui.button(emoji="🧹", style=ButtonStyle.primary)
+    @ui.button(emoji="🧹", label="Clean up", style=ButtonStyle.primary)
     async def purge(self, button: ui.Button, interaction: Interaction):
         if not self.check(interaction):
             return

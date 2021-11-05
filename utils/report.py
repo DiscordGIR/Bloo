@@ -1,20 +1,22 @@
 import discord
-from discord.utils import format_dt
 from data.model.filterword import FilterWord
 from data.services import user_service
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
+from discord.utils import format_dt
+
 from utils.context import BlooContext
 from utils.views.report import ReportActions
+
 
 async def report(bot: discord.Client, message: discord.Message, word: FilterWord, invite=None):
     db_guild = guild_service.get_guild()
     channel = message.guild.get_channel(db_guild.channel_reports)
-    
+
     ping_string = prepare_ping_string(db_guild, message)
     embed = prepare_embed(message, word.word)
     view = ReportActions(message.author)
-    
+
     if invite:
         report_msg = await channel.send(f"{ping_string}\nMessage contained invite: {invite}", embed=embed, view=view)
     else:
@@ -23,8 +25,9 @@ async def report(bot: discord.Client, message: discord.Message, word: FilterWord
     ctx = await bot.get_context(report_msg)
     await view.start(ctx)
 
+
 def prepare_ping_string(db_guild, message):
-    ping_string = ""    
+    ping_string = ""
     role = message.guild.get_role(db_guild.role_moderator)
     for member in role.members:
         offline_ping = (user_service.get_user(member.id)).offline_report_ping
@@ -32,6 +35,7 @@ def prepare_ping_string(db_guild, message):
             ping_string += f"{member.mention} "
 
     return ping_string
+
 
 def prepare_embed(message: discord.Message, word: str = None, title="Word filter"):
     member = message.author
@@ -61,9 +65,11 @@ def prepare_embed(message: discord.Message, word: str = None, title="Word filter
     else:
         embed.add_field(name="Message", value=discord.utils.escape_markdown(
             message.content) + f"\n\n[Link to message]({message.jump_url})", inline=False)
-    embed.add_field(name="Join date", value=f"{joined} UTC", inline=True)
-    embed.add_field(name="Account creation date",
-                    value=f"{created} UTC", inline=True)
+    embed.add_field(
+        name="Join date", value=f"{format_dt(member.joined_at, style='F')} ({format_dt(member.joined_at, style='R')})", inline=True)
+    embed.add_field(name="Created",
+                    value=f"{format_dt(member.created_at, style='F')} ({format_dt(member.created_at, style='R')})", inline=True)
+
     embed.add_field(name="Warn points",
                     value=user_info.warn_points, inline=True)
 
@@ -85,6 +91,4 @@ def prepare_embed(message: discord.Message, word: str = None, title="Word filter
     else:
         embed.add_field(name=f"Recent cases",
                         value="This user has no cases.", inline=True)
-    embed.set_footer(text="React with ✅ to dismiss.")
     return embed
-

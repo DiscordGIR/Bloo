@@ -1,5 +1,6 @@
 import traceback
 from datetime import datetime, timedelta
+from discord.commands.errors import ApplicationCommandInvokeError
 from discord.embeds import Embed
 
 from discord.errors import NotFound

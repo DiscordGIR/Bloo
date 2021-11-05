@@ -11,7 +11,6 @@ class ErrorHandler(commands.Cog):
 
     async def on_command_error(self, ctx: BlooContext, error):
         """A global error handler cog."""
-        print("here")
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)
             or isinstance(error, commands.BadArgument)

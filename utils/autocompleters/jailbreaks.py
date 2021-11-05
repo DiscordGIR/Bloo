@@ -2,6 +2,7 @@ import json
 import re
 
 import aiohttp
+from discord.commands.context import AutocompleteContext
 from utils.async_cache import async_cacher
 
 
@@ -27,7 +28,7 @@ async def get_apps():
     return res_apps
 
 
-async def apps_autocomplete(_, value):
+async def apps_autocomplete(ctx: AutocompleteContext):
     apps = await get_apps()
     apps.sort()
-    return [app for app in apps if app.lower().startswith(value.lower())][:25]
+    return [app for app in apps if app.lower().startswith(ctx.value.lower())][:25]

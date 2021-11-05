@@ -37,17 +37,19 @@ class UserInfo(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @whisper()
-    @message_command(guild_ids=[cfg.guild_id], name="Userinfo")
     @slash_command(guild_ids=[cfg.guild_id], description="Get info of another user or yourself.")
     async def userinfo(self, ctx: BlooContext, user: Option(Member, description="User to get info of", required=False)) -> None:
-        if isinstance(user, Message):
-            user = user.author
         await self.handle_userinfo(ctx, user)
     
     @whisper()
     @user_command(guild_ids=[cfg.guild_id], name="Userinfo")
-    async def userinfo_ctx(self, ctx: BlooContext, user: Member) -> None:
+    async def userinfo_rc(self, ctx: BlooContext, user: Member) -> None:
         await self.handle_userinfo(ctx, user)
+    
+    @whisper()
+    @message_command(guild_ids=[cfg.guild_id], name="Userinfo")
+    async def userinfo_msg(self, ctx: BlooContext, message: Message) -> None:
+        await self.handle_userinfo(ctx, message.author)
 
     async def handle_userinfo(self, ctx: BlooContext, user: Union[User, Member]):
         is_mod = permissions.has(ctx.guild, ctx.author, 5)
@@ -173,7 +175,8 @@ class UserInfo(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     # @cases.error
-    @userinfo_ctx.error
+    @userinfo_rc.error
+    @userinfo_msg.error
     @userinfo.error
     @warnpoints.error
     @xp.error

@@ -15,10 +15,10 @@ class ReportActions(ui.View):
         self.ctx = ctx
         await self.wait()
         
-    async def check(self, interaction: Interaction):
-         if not permissions.has(self.author.guild, interaction.user, 5):
-             return False
-         return True
+    def check(self, interaction: Interaction):
+        if not permissions.has(self.author.guild, interaction.user, 5):
+            return False
+        return True
 
     @ui.button(emoji="✅", label="Dismiss", style=ButtonStyle.primary)
     async def dismiss(self, button: ui.Button, interaction: Interaction):

@@ -8,7 +8,7 @@ from discord.object import Object
 
 import humanize
 import pytimeparse
-from data.model import guild
+
 from data.model.case import Case
 
 from data.services.guild_service import guild_service

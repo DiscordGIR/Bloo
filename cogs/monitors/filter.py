@@ -1,17 +1,19 @@
 
 from datetime import timezone
-import discord
-from discord.ext import commands
+
 from data.services.guild_service import guild_service
+from discord.ext import commands
 from utils.config import cfg
 from utils.mod.filter import find_triggered_filters
+from utils.mod.global_modactions import mute
 from utils.mod.report import report
+
 
 class Xp(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.spam_cooldown = commands.CooldownMapping.from_cooldown(2, 10.0, commands.BucketType.user)
-    
+        self.spam_cooldown = commands.CooldownMapping.from_cooldown(
+            2, 10.0, commands.BucketType.member)
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -22,7 +24,8 @@ class Xp(commands.Cog):
         if message.author.bot:
             return
 
-        triggered_words = find_triggered_filters(message.content, message.author)
+        triggered_words = find_triggered_filters(
+            message.content, message.author)
         if not triggered_words:
             return
 
@@ -51,11 +54,15 @@ class Xp(commands.Cog):
 
     async def ratelimit(self, message):
         current = message.created_at.replace(tzinfo=timezone.utc).timestamp()
-        print("trigger")
         bucket = self.spam_cooldown.get_bucket(message)
         if bucket.update_rate_limit(current):
-            ctx = await self.bot.get_context(message)
-            # await self.mute(ctx, message.author)
+            try:
+                ctx = await self.bot.get_context(message)
+                ctx.author = ctx.guild.me
+                await mute(ctx, message.author, dur_seconds=15*60, reason="Filter spam")
+            except Exception:
+                return
+
 
 def setup(bot):
     bot.add_cog(Xp(bot))

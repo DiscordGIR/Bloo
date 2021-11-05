@@ -1,6 +1,7 @@
 from discord.commands.commands import Option, slash_command
 from discord.ext import commands
 from utils.context import BlooContext
+from utils.menu import Menu
 from utils.permissions.permissions import permissions
 from utils.database import Guild
 from utils.context import BlooContext
@@ -14,37 +15,35 @@ import urllib
 import json
 import aiohttp
 
-async def aiter(packages):
-    for package in packages:
-        yield package
-
-class TweakMenu():
-    def __init__(self, response, length):
-        #super().__init__(response, per_page=1)
-        self.page_length = length
-        
-    async def format_page(self, entry):
-        embed = discord.Embed(title=entry.get('name'), color=discord.Color.blue())
-        embed.description = discord.utils.escape_markdown(entry.get('description')) or "No description"
-        embed.add_field(name="Author", value= discord.utils.escape_markdown(entry.get('author').split("<")[0] or "No Author"), inline=True)
-        embed.add_field(name="Version", value= discord.utils.escape_markdown(entry.get('latestVersion') or "No Version"), inline=True)
-        embed.add_field(name="Price", value=entry.get("price") or "Free")
-        embed.add_field(name="Repo", value=f"[{entry.get('repository').get('name')}]({entry.get('repository').get('uri')})" or "No Repo", inline=True)
-        embed.add_field(name="Add Repo", value=f"[Click Here](https://sharerepo.stkc.win/?repo={entry.get('repository').get('uri')})" or "No Repo", inline=True)
-        pattern = re.compile(r"((http|https)\:\/\/)[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*")
-        if entry.get('tintColor') is None:
-            if (pattern.match(entry.get('packageIcon'))):
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(entry.get('packageIcon')) as icon:
-                        color = ColorThief(io.BytesIO(await icon.read())).get_color(quality=1)
-                        embed.color = discord.Color.from_rgb(color[0], color[1], color[2])
-        else:
-            embed.color = int(entry.get('tintColor').replace('#', '0x'), 0)
-        if (pattern.match(entry.get('packageIcon'))):
-            embed.set_thumbnail(url=entry.get('packageIcon'))
-        embed.set_footer(icon_url=f"{entry.get('repository').get('uri')}CydiaIcon.png", text=discord.utils.escape_markdown(entry.get('name'))+f" • Page 1/{self.page_length}" or "No Package")
-        embed.timestamp = datetime.now()
-        return embed
+async def format_page(entry, all_pages, current_page):
+    titleKey = entry.get('name')
+    if entry.get('name') is None:
+        titleKey = entry.get('identifier')
+    embed = discord.Embed(title=titleKey, color=discord.Color.blue())
+    embed.description = discord.utils.escape_markdown(entry.get('description')) or "No description"
+    if entry.get('author') is not None:
+        embed.add_field(name="Author", value= discord.utils.escape_markdown(entry.get('author').split("<")[0]), inline=True)
+    else:
+        embed.add_field(name="Author", value= discord.utils.escape_markdown("No Author"), inline=True)
+    embed.add_field(name="Version", value= discord.utils.escape_markdown(entry.get('latestVersion') or "No Version"), inline=True)
+    embed.add_field(name="Price", value=entry.get("price") or "Free", inline=True)
+    embed.add_field(name="Repo", value=f"[{entry.get('repository').get('name')}]({entry.get('repository').get('uri')})" or "No Repo", inline=True)
+    embed.add_field(name="Add Repo", value=f"[Click Here](https://sharerepo.stkc.win/?repo={entry.get('repository').get('uri')})" or "No Repo", inline=True)
+    pattern = re.compile(r"((http|https)\:\/\/)[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*")
+    if entry.get('tintColor') is None and entry.get('packageIcon') is not None and pattern.match(entry.get('packageIcon')):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(entry.get('packageIcon')) as icon:
+                color = ColorThief(io.BytesIO(await icon.read())).get_color(quality=1)
+                embed.color = discord.Color.from_rgb(color[0], color[1], color[2])
+    elif entry.get('tintColor') is not None:
+        embed.color = int(entry.get('tintColor').replace('#', '0x'), 0)
+    if entry.get('packageIcon') is not None and pattern.match(entry.get('packageIcon')):
+        embed.set_thumbnail(url=entry.get('packageIcon'))
+    if entry.get('header') is not None:
+        embed.set_image(url=entry.get('header'))
+    embed.set_footer(icon_url=f"{entry.get('repository').get('uri')}CydiaIcon.png", text=discord.utils.escape_markdown(f"{entry.get('repository').get('name')} • Page {current_page}/{len(all_pages)}" or "No Package"))
+    embed.timestamp = datetime.now()
+    return embed
 
 async def search(query):
     async with aiohttp.ClientSession() as client:
@@ -61,9 +60,13 @@ async def search(query):
 async def canister(bot, ctx: BlooContext, interaction: bool, whisper: bool, query: str):
     result = await search(query)
     if not interaction:
-        await bot.get_channel(ctx.channel.id).send(embed=(await TweakMenu(aiter(result), len(result)).format_page(result[0])))
+        menu = Menu(result, bot, ctx.channel, format_page, False, ctx, False)
+        await menu.init_menu()
+        #await bot.get_channel(ctx.channel.id).send(embed=(await TweakMenu(aiter(result), len(result)).format_page(result[0])))
     else:
-        await ctx.respond(embed=(await TweakMenu(aiter(result), len(result)).format_page(result[0])), ephemeral=whisper)
+        menu = Menu(result, bot, ctx.channel, format_page, True, ctx, whisper)
+        await menu.init_menu()
+        #await ctx.respond(embed=(await TweakMenu(aiter(result), len(result)).format_page(result[0])), ephemeral=whisper)
 
 class Canister(commands.Cog):
     def __init__(self, bot):
@@ -93,7 +96,7 @@ class Canister(commands.Cog):
         search_term = matches[0][0].replace('[[', '').replace(']]','')
         if not search_term:
             return
-
+        
         ctx = await self.bot.get_context(message)
         async with ctx.typing():
             await canister(self.bot, ctx, False, False, search_term)

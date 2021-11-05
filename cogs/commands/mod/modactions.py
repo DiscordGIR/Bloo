@@ -23,9 +23,9 @@ from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.converters  import (mods_and_above_external_resolver,
                               mods_and_above_member_resolver, user_resolver)
-from utils.mod_logs import prepare_editreason_log, prepare_liftwarn_log, prepare_mute_log, prepare_removepoints_log, prepare_unban_log, prepare_unmute_log, prepare_warn_log
+from utils.mod.mod_logs import prepare_editreason_log, prepare_liftwarn_log, prepare_mute_log, prepare_removepoints_log, prepare_unban_log, prepare_unmute_log, prepare_warn_log
 from utils.permissions.slash_perms  import slash_perms
-from utils.modactions_helpers import add_ban_case, add_kick_case, notify_user, notify_user_warn, submit_public_log
+from utils.mod.modactions_helpers import add_ban_case, add_kick_case, notify_user, notify_user_warn, submit_public_log
 
 """
 Make sure to add the cog to the initial_extensions list

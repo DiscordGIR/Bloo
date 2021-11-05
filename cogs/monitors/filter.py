@@ -1,14 +1,17 @@
 
+from datetime import timezone
 import discord
 from discord.ext import commands
 from data.services.guild_service import guild_service
 from utils.config import cfg
-from utils.filter import find_triggered_filters
-from utils.report import report
+from utils.mod.filter import find_triggered_filters
+from utils.mod.report import report
 
 class Xp(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.spam_cooldown = commands.CooldownMapping.from_cooldown(2, 10.0, commands.BucketType.user)
+    
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -36,6 +39,7 @@ class Xp(commands.Cog):
 
             if word.notify:
                 await message.delete()
+                await self.ratelimit(message)
                 await report(self.bot, message, word)
                 return
 
@@ -43,7 +47,15 @@ class Xp(commands.Cog):
 
         if should_delete:
             await message.delete()
+            await self.ratelimit(message)
 
+    async def ratelimit(self, message):
+        current = message.created_at.replace(tzinfo=timezone.utc).timestamp()
+        print("trigger")
+        bucket = self.spam_cooldown.get_bucket(message)
+        if bucket.update_rate_limit(current):
+            ctx = await self.bot.get_context(message)
+            # await self.mute(ctx, message.author)
 
 def setup(bot):
     bot.add_cog(Xp(bot))

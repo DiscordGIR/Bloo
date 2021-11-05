@@ -13,7 +13,8 @@ async def report(bot: discord.Client, message: discord.Message, word: FilterWord
     db_guild = guild_service.get_guild()
     channel = message.guild.get_channel(db_guild.channel_reports)
 
-    ping_string = prepare_ping_string(db_guild, message)
+    # ping_string = prepare_ping_string(db_guild, message)
+    ping_string = ""
     embed = prepare_embed(message, word.word)
     view = ReportActions(message.author)
 

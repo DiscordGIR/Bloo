@@ -12,7 +12,7 @@ from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 
 from utils.config import cfg
-from utils.mod_logs import prepare_unmute_log
+from utils.mod.mod_logs import prepare_unmute_log
 
 executors = {
     'default': ThreadPoolExecutor(20)

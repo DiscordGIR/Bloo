@@ -11,7 +11,7 @@ from discord.interactions import Interaction
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import db
-from utils.modactions_helpers import BanCache
+from utils.mod.modactions_helpers import BanCache
 from utils.permissions.permissions import permissions
 from utils.logger import logger
 from utils.tasks import Tasks

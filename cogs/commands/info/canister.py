@@ -62,11 +62,9 @@ async def canister(bot, ctx: BlooContext, interaction: bool, whisper: bool, quer
     if not interaction:
         menu = Menu(result, bot, ctx.channel, format_page, False, ctx, False)
         await menu.init_menu()
-        #await bot.get_channel(ctx.channel.id).send(embed=(await TweakMenu(aiter(result), len(result)).format_page(result[0])))
     else:
         menu = Menu(result, bot, ctx.channel, format_page, True, ctx, whisper)
         await menu.init_menu()
-        #await ctx.respond(embed=(await TweakMenu(aiter(result), len(result)).format_page(result[0])), ephemeral=whisper)
 
 class Canister(commands.Cog):
     def __init__(self, bot):

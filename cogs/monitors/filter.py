@@ -1,6 +1,7 @@
 
 import discord
 from discord.ext import commands
+from data.services.guild_service import guild_service
 from utils.config import cfg
 from utils.filter import find_triggered_filters
 from utils.report import report
@@ -17,16 +18,31 @@ class Xp(commands.Cog):
             return
         if message.author.bot:
             return
-        # guild_service.get_guild().channel_botspam:
+
         triggered_words = find_triggered_filters(message.content, message.author)
         if not triggered_words:
             return
 
-        await message.delete()
+        db_guild = guild_service.get_guild()
+        dev_role = message.guild.get_role(db_guild.role_dev)
+
+        # TODO: test this thoroughly
+        should_delete = False
         for word in triggered_words:
+            if word.piracy:
+                # ignore if it's a dev saying piracy in #development
+                if message.channel.id == db_guild.channel_development and dev_role in message.author.roles:
+                    continue
+
             if word.notify:
+                await message.delete()
                 await report(self.bot, message, word)
                 return
+
+            should_delete = True
+
+        if should_delete:
+            await message.delete()
 
 
 def setup(bot):

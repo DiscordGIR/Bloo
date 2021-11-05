@@ -24,6 +24,7 @@ initial_extensions = [
         "cogs.commands.info.jailbreaks",
         "cogs.commands.info.canister",
         "cogs.commands.mod.modactions",
+        "cogs.monitors.filter",
         "cogs.monitors.logging",
         "cogs.monitors.role_assignment_buttons",
     ]

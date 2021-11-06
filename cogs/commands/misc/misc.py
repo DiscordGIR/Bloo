@@ -21,6 +21,7 @@ from utils.context import BlooContext
 from utils.permissions.checks import PermissionsFailure, whisper
 from utils.permissions.permissions import permissions
 
+
 class PFPView(discord.ui.View):
     def __init__(self, ctx: BlooContext):
         super().__init__(timeout=30)
@@ -168,6 +169,7 @@ class Misc(commands.Cog):
 
         view.message = await ctx.respond(embed=embed, ephemeral=ctx.whisper, view=view)
 
+    
 
     @remindme.error
     @jumbo.error

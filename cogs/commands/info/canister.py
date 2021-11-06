@@ -14,7 +14,6 @@ from discord.ext import commands
 from utils import BlooContext, Guild, cfg
 from utils.views import MenuButtons
 from utils.permissions import permissions
-from utils.permissions.permissions import permissions
 
 
 async def format_page(entry, all_pages, current_page):

@@ -13,10 +13,9 @@ from discord.ext import commands
 from discord.member import Member
 from utils.permissions.permissions import permissions
 from utils.permissions.checks import PermissionsFailure, whisper
-from utils.config import cfg
-from utils.context import BlooContext
+from utils import cfg, BlooContext, async_cacher
 from utils.autocompleters.jailbreaks import apps_autocomplete
-from utils.async_cache import async_cacher
+
 
 @async_cacher()
 async def get_apps():

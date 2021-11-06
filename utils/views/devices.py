@@ -1,5 +1,5 @@
 from discord import ButtonStyle, Interaction, SelectOption, ui
-from utils.context import BlooContext
+from utils import BlooContext
 
 
 class Select(ui.Select):

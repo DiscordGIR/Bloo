@@ -6,7 +6,7 @@ import discord
 from data.services import guild_service
 from discord.errors import NotFound
 from discord.ext import commands
-from utils.config import cfg
+from utils import cfg
 from utils.mod.filter import find_triggered_filters
 from utils.mod.global_modactions import mute
 from utils.mod.report import report

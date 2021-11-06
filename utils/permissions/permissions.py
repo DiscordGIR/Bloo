@@ -4,7 +4,7 @@ from data.model import Guild
 from data.services import guild_service
 from discord.commands.permissions import Permission
 
-from utils.config import cfg
+from utils import cfg
 
 
 class Permissions:

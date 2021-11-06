@@ -8,8 +8,7 @@ from discord.commands import Option, slash_command
 from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
 from utils.autocompleters.tags import tags_autocomplete
-from utils.config import cfg
-from utils.context import BlooContext, PromptData
+from utils import BlooContext, PromptData, cfg
 from utils.permissions.checks import (PermissionsFailure,
                                       genius_or_submod_and_up)
 from utils.permissions.slash_perms import slash_perms

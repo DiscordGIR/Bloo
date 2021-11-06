@@ -1,10 +1,8 @@
 from discord.commands.commands import Option, slash_command
 from discord.ext import commands
-from utils.context import BlooContext
+from utils import BlooContext, cfg
 from utils.permissions.permissions import permissions
-from utils.database import Guild
-from utils.context import BlooContext
-from utils.config import cfg
+from data.model import Guild
 from datetime import datetime
 from colorthief import ColorThief
 import io

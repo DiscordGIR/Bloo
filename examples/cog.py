@@ -3,8 +3,7 @@ import traceback
 from discord.commands import Option, slash_command
 from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
-from utils.config import cfg
-from utils.context import BlooContext
+from utils import cfg, BlooContext
 from utils.permissions.checks import PermissionsFailure, mod_and_up, whisper
 from utils.permissions.slash_perms import slash_perms
 

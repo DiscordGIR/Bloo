@@ -6,8 +6,7 @@ from data.services import guild_service, user_service
 from discord.member import Member
 from discord.user import User
 
-from utils.config import cfg
-from utils.context import BlooContext
+from utils import cfg, BlooContext
 from utils.mod.mod_logs import prepare_ban_log, prepare_kick_log
 
 

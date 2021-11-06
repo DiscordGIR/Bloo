@@ -3,7 +3,7 @@ import re
 
 import aiohttp
 from discord.commands.context import AutocompleteContext
-from utils.async_cache import async_cacher
+from utils import async_cacher
 
 
 @async_cacher()

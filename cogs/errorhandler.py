@@ -1,6 +1,6 @@
 from discord.ext import commands
 import traceback
-from utils.context import BlooContext
+from utils import BlooContext
 from utils.permissions.checks import PermissionsFailure
 
 class ErrorHandler(commands.Cog):

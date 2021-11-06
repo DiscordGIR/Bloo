@@ -1,6 +1,6 @@
 from discord.ext import commands
 from data.services import guild_service
-from utils.context import BlooContext
+from utils import BlooContext
 
 from utils.permissions.permissions import permissions
 

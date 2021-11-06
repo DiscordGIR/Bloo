@@ -9,8 +9,7 @@ from data.services import user_service
 from discord.commands import errors, slash_command, Option, message_command, user_command
 from discord.ext import commands
 from utils.permissions.checks import PermissionsFailure, whisper
-from utils.config import cfg
-from utils.context import BlooContext
+from utils import cfg, BlooContext
 from utils.permissions.converters  import user_resolver
 from utils.permissions.permissions import permissions
 

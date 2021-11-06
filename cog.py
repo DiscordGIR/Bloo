@@ -4,7 +4,7 @@ from discord.commands import context, slash_command
 from discord.ext.commands import Cog
 from discord.commands import context, slash_command
 
-from utils.config import cfg
+from utils import cfg
 
 
 class Example(Cog):

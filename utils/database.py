@@ -3,8 +3,7 @@ import os
 import mongoengine
 from data.model.guild import Guild
 
-from utils.config import cfg
-from utils.logger import logger
+from utils import cfg, logger
 
 
 class Database:

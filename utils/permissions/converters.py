@@ -3,7 +3,7 @@ from discord.ext import commands
 from discord.ext.commands.errors import BadArgument
 from discord.member import Member
 from utils.permissions.checks import PermissionsFailure
-from utils.context import BlooContext
+from utils import BlooContext
 
 
 async def mods_and_above_member_resolver(ctx: BlooContext, argument):

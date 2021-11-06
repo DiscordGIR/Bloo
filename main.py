@@ -27,7 +27,8 @@ initial_extensions = [
         "cogs.monitors.role_assignment_buttons",
         "cogs.commands.misc.genius",
         "cogs.commands.misc.misc",
-        "cogs.commands.misc.subnews"
+        "cogs.commands.misc.subnews",
+        "cogs.commands.misc.giveaway"
     ]
 intents = discord.Intents.default()
 intents.members = True

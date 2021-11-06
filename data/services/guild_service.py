@@ -1,7 +1,7 @@
 from data.model.guild import Guild
 from data.model.tag import Tag
 from utils.config import cfg
-
+from data.model.giveaway import Giveaway
 
 class GuildService:
     def get_guild(self) -> Guild:
@@ -71,5 +71,47 @@ class GuildService:
         if str(id) in g.reaction_role_mapping.keys():
             g.reaction_role_mapping.pop(str(id))
             g.save()
+    
+    def get_giveaway(self, _id: int) -> Giveaway:
+        """
+        Return the Document representing a giveaway, whose ID (message ID) is given by `id`
+        If the giveaway doesn't exist in the database, then None is returned.
+        Parameters
+        ----------
+        id : int
+            The ID (message ID) of the giveaway
+        
+        Returns
+        -------
+        Giveaway
+        """
+        giveaway = Giveaway.objects(_id=_id).first()
+        return giveaway
+    
+    def add_giveaway(self, id: int, channel: int, name: str, entries: list, winners: int, ended: bool = False, prev_winners=[]) -> None:
+        """
+        Add a giveaway to the database.
+        Parameters
+        ----------
+        id : int
+            The message ID of the giveaway
+        channel : int
+            The channel ID that the giveaway is in
+        name : str
+            The name of the giveaway.
+        entries : list
+            A list of user IDs who have entered (reacted to) the giveaway.
+        winners : int
+            The amount of winners that will be selected at the end of the giveaway.
+        """
+        giveaway = Giveaway()
+        giveaway._id = id
+        giveaway.channel = channel
+        giveaway.name = name
+        giveaway.entries = entries
+        giveaway.winners = winners
+        giveaway.is_ended = ended
+        giveaway.previous_winners = prev_winners
+        giveaway.save()
 
 guild_service = GuildService()

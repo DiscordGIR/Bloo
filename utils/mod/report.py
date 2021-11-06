@@ -3,7 +3,7 @@ from data.services import user_service
 from data.services import guild_service, user_service
 from discord.utils import format_dt
 
-from utils.views.report import ReportActions
+from utils.views import ReportActions
 
 
 async def report(bot: discord.Client, message: discord.Message, word: str, invite=None):

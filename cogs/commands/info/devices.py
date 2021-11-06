@@ -12,7 +12,7 @@ from utils import cfg, BlooContext
 from utils.permissions.checks import (PermissionsFailure, always_whisper,
                                       ensure_invokee_role_lower_than_bot,
                                       whisper)
-from utils.views.devices import Confirm, FirmwareDropdown
+from utils.views import Confirm, FirmwareDropdown
 
 
 class Devices(commands.Cog):

@@ -4,14 +4,11 @@ import traceback
 from datetime import datetime
 from math import floor
 
+import discord
 import psutil
-from discord.colour import Color
-from discord.commands import slash_command
-from discord.commands.commands import Option
+from discord.commands import Option, slash_command
 from discord.commands.errors import ApplicationCommandInvokeError
-from discord.embeds import Embed
 from discord.ext import commands
-from discord.role import Role
 from discord.utils import format_dt
 from utils.config import cfg
 from utils.context import BlooContext
@@ -26,8 +23,8 @@ class Stats(commands.Cog):
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Pong!")
     async def ping(self, ctx: BlooContext) -> None:
-        embed = Embed(
-            title="Pong!", color=Color.blurple())
+        embed = discord.Embed(
+            title="Pong!", color=discord.Color.blurple())
         embed.set_thumbnail(url=self.bot.user.display_avatar)
         embed.description = "Latency: testing..."
 
@@ -43,8 +40,8 @@ class Stats(commands.Cog):
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get number of users of a role")
-    async def roleinfo(self, ctx: BlooContext, role: Option(Role, description="Role to view info of")) -> None:
-        embed = Embed(title="Role Statistics")
+    async def roleinfo(self, ctx: BlooContext, role: Option(discord.Role, description="Role to view info of")) -> None:
+        embed = discord.Embed(title="Role Statistics")
         embed.description = f"{len(role.members)} members have role {role.mention}"
         embed.color = role.color
         embed.set_footer(text=f"Requested by {ctx.author}")
@@ -56,8 +53,8 @@ class Stats(commands.Cog):
     async def stats(self, ctx: BlooContext) -> None:
         process = psutil.Process(os.getpid())
 
-        embed = Embed(
-            title=f"{self.bot.user.name} Statistics", color=Color.blurple())
+        embed = discord.Embed(
+            title=f"{self.bot.user.name} Statistics", color=discord.Color.blurple())
         embed.set_thumbnail(url=self.bot.user.display_avatar)
         embed.add_field(name="Bot started", value=format_dt(self.start_time, style='R'))
         embed.add_field(name="CPU Usage", value=f"{psutil.cpu_percent()}%")
@@ -71,8 +68,8 @@ class Stats(commands.Cog):
     @slash_command(guild_ids=[cfg.guild_id], description="Displays info about the server")
     async def serverinfo(self, ctx: BlooContext):
         guild = ctx.guild
-        embed = Embed(title="Server Information")
-        embed.color = Color.blurple()
+        embed = discord.Embed(title="Server Information")
+        embed.color = discord.Color.blurple()
         embed.set_thumbnail(url=guild.icon)
         embed.add_field(name="Region", value=guild.region, inline=True)
         embed.add_field(name="Boost Tier",

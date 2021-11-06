@@ -1,10 +1,7 @@
 from itertools import takewhile
 import discord
-from discord.colour import Color
-from discord.embeds import Embed
 from data.services.guild_service import guild_service
 from discord.commands import Option, slash_command
-from discord.enums import ButtonStyle
 from discord.ext import commands
 from discord.interactions import Interaction
 from utils.permissions.checks import PermissionsFailure, admin_and_up
@@ -31,7 +28,7 @@ def derive_label(string):
 
 class ReactionRoleButton(ui.Button):
     def __init__(self, role: discord.Role, emoji: discord.Emoji):
-        super().__init__(label=derive_label(role.name), style=ButtonStyle.primary, emoji=emoji, custom_id=str(role.id))
+        super().__init__(label=derive_label(role.name), style=discord.ButtonStyle.primary, emoji=emoji, custom_id=str(role.id))
     
     async def callback(self, interaction: Interaction):
         user = interaction.user
@@ -72,7 +69,7 @@ class RoleAssignButtons(commands.Cog):
         if channel is None:
             raise commands.BadArgument("Role assignment channel not found!")
 
-        embed = Embed(description="Click the buttons to opt-in to notifications of your choice. ", color=Color.blurple())
+        embed = discord.Embed(description="Click the buttons to opt-in to notifications of your choice. ", color=discord.Color.blurple())
         await channel.send(embed=embed)
         await ctx.send_success(f"Posted in {channel.mention}!")
 

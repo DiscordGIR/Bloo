@@ -2,7 +2,6 @@ import math
 from random import randint
 
 import discord
-from discord import guild
 from discord.ext import commands
 from utils.config import cfg
 from data.services.user_service import user_service

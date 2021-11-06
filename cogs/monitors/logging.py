@@ -1,6 +1,5 @@
 from datetime import datetime
 from io import BytesIO
-# from fold_to_ascii import fold
 from typing import List
 
 import discord

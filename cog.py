@@ -1,13 +1,10 @@
-from discord.commands.commands import Option
-
-from discord.commands import context, slash_command
-from discord.ext.commands import Cog
-from discord.commands import context, slash_command
+from discord.commands import Option, context, slash_command
+from discord.ext import commands
 
 from utils import cfg
 
 
-class Example(Cog):
+class Example(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 

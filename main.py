@@ -1,12 +1,8 @@
 import os
-import signal
-import sys
 
-signal.signal(signal.SIGINT, lambda x, y: sys.exit(0))
 
 import discord
 from discord.ext import commands
-from discord.interactions import Interaction
 
 from utils import BlooContext, Tasks, cfg, logger
 from utils.database import db
@@ -42,7 +38,7 @@ class Bot(commands.Bot):
         if cfg and db and permissions:
             logger.info("Presetup phase completed! Connecting to Discord...")
 
-    async def get_application_context(self, interaction: Interaction, *, cls=BlooContext) -> BlooContext:
+    async def get_application_context(self, interaction: discord.Interaction, *, cls=BlooContext) -> BlooContext:
         return await super().get_application_context(interaction, cls=cls)
 
 bot = Bot(intents=intents, allowed_mentions=mentions)

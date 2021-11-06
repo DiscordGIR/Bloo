@@ -2,9 +2,8 @@ from utils.context import BlooContext
 from utils.views.menu import MenuButtons
 
 class Menu():
-    def __init__(self, pages, bot, channel, format_page, interaction: bool, ctx: BlooContext, whisper: bool):
+    def __init__(self, pages: list, channel, format_page, interaction: bool, ctx: BlooContext, whisper: bool):
         self.pages = pages
-        self.bot = bot
         self.channel = channel
         self.page_formatter = format_page
         self.is_interaction = interaction

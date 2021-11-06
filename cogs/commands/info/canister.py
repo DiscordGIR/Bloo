@@ -58,13 +58,9 @@ async def search(query):
                 return None
 
 async def canister(bot, ctx: BlooContext, interaction: bool, whisper: bool, query: str):
-    result = await search(query)
-    if not interaction:
-        menu = Menu(result, bot, ctx.channel, format_page, False, ctx, False)
-        await menu.init_menu()
-    else:
-        menu = Menu(result, bot, ctx.channel, format_page, True, ctx, whisper)
-        await menu.init_menu()
+    result = list(await search(query))
+    menu = Menu(result, ctx.channel, format_page, interaction, ctx, whisper)
+    await menu.init_menu()
 
 class Canister(commands.Cog):
     def __init__(self, bot):

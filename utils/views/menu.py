@@ -1,8 +1,9 @@
-from discord import ButtonStyle, Interaction, SelectOption, ui
+from discord import ButtonStyle, Interaction, ui
 from utils.context import BlooContext
+from discord.channel import TextChannel
 
 class MenuButtons(ui.View):
-    def __init__(self, ctx, pages, page_formatter, channel, interaction: bool, whisper: bool):
+    def __init__(self, ctx: BlooContext, pages: list, page_formatter, channel: TextChannel, interaction: bool, whisper: bool):
         super().__init__()
         self.channel = channel
         self.is_interaction = interaction
@@ -38,9 +39,15 @@ class MenuButtons(ui.View):
                     await self.msg.edit(embed=embed)
         else:
             if componentEnabled is True:
-                await self.ctx.respond_or_edit(embed=embed, view=self, ephemeral=self.should_whisper)
+                if self.should_whisper is True:
+                    await self.ctx.respond_or_edit(embed=embed, view=self, ephemeral=True)
+                else:
+                    await self.ctx.respond_or_edit(embed=embed, view=self)
             else:
-                await self.ctx.respond_or_edit(embed=embed, ephemeral=self.should_whisper)
+                if self.should_whisper is True:
+                    await self.ctx.respond_or_edit(embed=embed, ephemeral=True)
+                else:
+                    await self.ctx.respond_or_edit(embed=embed)
     
     @ui.button(emoji='⬅️', style=ButtonStyle.blurple, row=1, disabled=True)
     async def previous(self, button: ui.Button, interaction: Interaction):

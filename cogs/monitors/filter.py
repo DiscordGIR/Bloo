@@ -16,10 +16,11 @@ import re
 from utils.permissions.permissions import permissions
 
 
-class Xp(commands.Cog):
+class Filter(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.invite_filter = r'(?:https?://)?discord(?:(?:app)?\.com/invite|\.gg)\/{1,}[a-zA-Z0-9]+/?'
+        self.spoiler_filter = r'\|\|(.*?)\|\|'
         self.spam_cooldown = commands.CooldownMapping.from_cooldown(
             2, 10.0, commands.BucketType.member)
 
@@ -33,11 +34,14 @@ class Xp(commands.Cog):
             return
         if not message.content:
             return
+        if permissions.has(message.guild, message.author, 5):
+            return
 
         # run through filters
         db_guild = guild_service.get_guild()
         if await self.bad_word_filter(message, db_guild): return
         if await self.do_invite_filter(message, db_guild): return
+        if await self.do_spoiler_newline_filter(message, db_guild): return
 
     async def bad_word_filter(self, message, db_guild) -> bool:
         triggered_words = find_triggered_filters(
@@ -57,6 +61,7 @@ class Xp(commands.Cog):
 
             if word.notify:
                 await self.delete(message)
+                await self.do_filter_notify(message.author, message.channel, word.word)
                 await self.ratelimit(message)
                 await report(self.bot, message, word.word)
                 return
@@ -67,15 +72,10 @@ class Xp(commands.Cog):
             await self.delete(message)
             await self.ratelimit(message)
         
+        await self.do_filter_notify(message.author, message.channel, word.word)
         return should_delete
     
     async def do_invite_filter(self, message, db_guild):
-        """
-        INVITE FILTER
-        """
-        if permissions.has(message.guild, message.author, 5):
-            return False
-        
         invites = re.findall(self.invite_filter, message.content, flags=re.S)
         if not invites: return
 
@@ -102,7 +102,32 @@ class Xp(commands.Cog):
             except NotFound:
                 await self.delete(message)
                 await self.ratelimit(message)
-                await self.report.report(message, message.author, invite, invite=invite)
+                await report(self.bot, message, invite, invite=invite)
+                return True
+
+        return False
+    
+    async def do_spoiler_newline_filter(self, message, db_guild):
+        """
+        SPOILER FILTER
+        """
+        if re.search(self.spoiler_filter, message.content, flags=re.S):
+            await self.delete(message)
+            return True
+
+        for a in message.attachments:
+            if a.is_spoiler():
+                await self.delete(message)
+                return True
+
+        """
+        NEWLINE FILTER
+        """
+        if len(message.content.splitlines()) > 100:
+            dev_role = message.guild.get_role(db_guild.role_dev)
+            if not dev_role or dev_role not in message.author.roles:
+                await self.delete(message)
+                await self.ratelimit(message)
                 return True
 
         return False
@@ -117,6 +142,19 @@ class Xp(commands.Cog):
                 await mute(ctx, message.author, dur_seconds=15*60, reason="Filter spam")
             except Exception:
                 return
+            
+    
+    async def do_filter_notify(self, member, channel, word):
+        message = f"Your message contained a word you aren't allowed to say in {member.guild.name}. This could be either hate speech or the name of a piracy tool/source. Please refrain from saying it!"
+        footer = "Repeatedly triggering the filter will automatically result in a mute."
+        try:
+            embed = discord.Embed(description=f"{message}\n\nFiltered word found: **{word}**", color=discord.Color.orange())
+            embed.set_footer(text=footer)
+            await member.send(embed=embed)
+        except Exception:
+            embed = discord.Embed(description=message, color=discord.Color.orange())
+            embed.set_footer(text=footer)
+            await channel.send(member.mention, embed=embed, delete_after=10)
 
     async def delete(self, message):
         try:
@@ -126,4 +164,4 @@ class Xp(commands.Cog):
 
 
 def setup(bot):
-    bot.add_cog(Xp(bot))
+    bot.add_cog(Filter(bot))

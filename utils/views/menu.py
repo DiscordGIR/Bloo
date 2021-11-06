@@ -39,33 +39,21 @@ class MenuButtons(ui.View):
             self.next.disabled = False
             componentEnabled = True
         
-        # If we aren't in an interaction,
-        if self.is_interaction is False:
-            if self.msg is None:
-                # This is so we don't have buttons needlessly enabled for tweaks with only 1 page
-                if componentEnabled is True:
-                    self.msg = await self.channel.send(embed=embed, view=self)
-                else:
-                    self.msg = await self.channel.send(embed=embed)
+        msg_send_method = self.channel.send
+        if self.is_interaction:
+            msg_send_method = self.ctx.respond_or_edit
+        elif self.msg is not None:
+            msg_send_method = self.msg.edit
+        
+        if componentEnabled:
+            if self.is_interaction:
+                await msg_send_method(embed=embed, view=self, ephemeral=self.should_whisper)
             else:
-                if componentEnabled is True:
-                    await self.msg.edit(embed=embed, view=self)
-                else:
-                    await self.msg.edit(embed=embed)
-        # Otherwise,
+                self.msg = await msg_send_method(embed=embed, view=self)
+        elif self.is_interaction:
+            await msg_send_method(embed=embed, ephemeral=self.should_whisper)
         else:
-            # Handle for an interaction.
-            # This is so we don't have buttons needlessly enabled for tweaks with only 1 page
-            if componentEnabled is True:
-                if self.should_whisper is True:
-                    await self.ctx.respond_or_edit(embed=embed, view=self, ephemeral=True)
-                else:
-                    await self.ctx.respond_or_edit(embed=embed, view=self)
-            else:
-                if self.should_whisper is True:
-                    await self.ctx.respond_or_edit(embed=embed, ephemeral=True)
-                else:
-                    await self.ctx.respond_or_edit(embed=embed)
+            self.msg = await msg_send_method(embed=embed)
     
     # Declare first button
     @ui.button(emoji='⏮️', style=ButtonStyle.blurple, row=1, disabled=True)

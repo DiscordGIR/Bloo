@@ -1,10 +1,8 @@
 import asyncio
 from typing import Union
 
-from data.model.case import Case
-from data.model.guild import Guild
-from data.services.guild_service import guild_service
-from data.services.user_service import user_service
+from data.model import Case, Guild
+from data.services import guild_service, user_service
 from discord.member import Member
 from discord.user import User
 

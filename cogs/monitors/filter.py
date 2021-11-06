@@ -3,7 +3,7 @@ import re
 from datetime import timezone
 
 import discord
-from data.services.guild_service import guild_service
+from data.services import guild_service
 from discord.errors import NotFound
 from discord.ext import commands
 from utils.config import cfg

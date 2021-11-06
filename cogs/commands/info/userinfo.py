@@ -5,7 +5,7 @@ from typing import Union
 
 import discord
 from discord.utils import format_dt
-from data.services.user_service import user_service
+from data.services import user_service
 from discord.commands import errors, slash_command, Option, message_command, user_command
 from discord.ext import commands
 from utils.permissions.checks import PermissionsFailure, whisper

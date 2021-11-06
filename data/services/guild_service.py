@@ -1,5 +1,4 @@
-from data.model.guild import Guild
-from data.model.tag import Tag
+from data.model import Guild, Tag
 from utils.config import cfg
 
 

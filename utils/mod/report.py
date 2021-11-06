@@ -1,8 +1,6 @@
 import discord
-from data.model.filterword import FilterWord
 from data.services import user_service
-from data.services.guild_service import guild_service
-from data.services.user_service import user_service
+from data.services import guild_service, user_service
 from discord.utils import format_dt
 
 from utils.views.report import ReportActions

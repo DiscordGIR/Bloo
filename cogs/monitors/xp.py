@@ -4,8 +4,7 @@ from random import randint
 import discord
 from discord.ext import commands
 from utils.config import cfg
-from data.services.user_service import user_service
-from data.services.guild_service import guild_service
+from data.services import user_service, guild_service
 
 
 class Xp(commands.Cog):

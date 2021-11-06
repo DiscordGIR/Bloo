@@ -2,8 +2,8 @@ import string
 from typing import List
 
 import discord
-from data.model.filterword import FilterWord
-from data.services.guild_service import guild_service
+from data.model import FilterWord
+from data.services import guild_service
 from fold_to_ascii import fold
 
 from utils.permissions.permissions import permissions

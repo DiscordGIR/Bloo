@@ -1,7 +1,5 @@
-from discord.errors import NotFound
 from discord.ext import commands
-from discord.member import Member
-from data.services.guild_service import guild_service
+from data.services import guild_service
 from utils.context import BlooContext
 
 from utils.permissions.permissions import permissions

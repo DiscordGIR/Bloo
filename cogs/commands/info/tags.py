@@ -1,8 +1,8 @@
 import traceback
 from io import BytesIO
 
-from data.model.tag import Tag
-from data.services.guild_service import guild_service
+from data.model import Tag
+from data.services import guild_service
 import discord
 from discord.commands import Option, slash_command
 from discord.commands.errors import ApplicationCommandInvokeError

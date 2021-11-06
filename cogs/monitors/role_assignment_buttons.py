@@ -1,6 +1,6 @@
 from itertools import takewhile
 import discord
-from data.services.guild_service import guild_service
+from data.services import guild_service
 from discord.commands import Option, slash_command
 from discord.ext import commands
 from discord.interactions import Interaction

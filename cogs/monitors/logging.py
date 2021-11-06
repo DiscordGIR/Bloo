@@ -3,12 +3,10 @@ from io import BytesIO
 from typing import List
 
 import discord
-from data.services.guild_service import guild_service
-from data.services.user_service import user_service
+from data.services import guild_service, user_service
 from discord.ext import commands
 from discord.utils import format_dt
 from utils.config import cfg
-from utils.context import BlooContext
 
 
 class Logging(commands.Cog):

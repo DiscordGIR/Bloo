@@ -10,7 +10,7 @@ from discord.user import User
 
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.mod_logs import prepare_ban_log, prepare_kick_log
+from utils.mod.mod_logs import prepare_ban_log, prepare_kick_log
 
 
 class BanCache:

@@ -11,7 +11,7 @@ from discord.interactions import Interaction
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import db
-from utils.modactions_helpers import BanCache
+from utils.mod.modactions_helpers import BanCache
 from utils.permissions.permissions import permissions
 from utils.logger import logger
 from utils.tasks import Tasks
@@ -24,6 +24,7 @@ initial_extensions = [
         "cogs.commands.info.jailbreaks",
         "cogs.commands.info.canister",
         "cogs.commands.mod.modactions",
+        "cogs.monitors.filter",
         "cogs.monitors.logging",
         "cogs.monitors.role_assignment_buttons",
     ]

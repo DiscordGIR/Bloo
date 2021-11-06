@@ -9,7 +9,7 @@ from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
 from utils.autocompleters.devices import device_autocomplete
 from utils import cfg, BlooContext
-from utils.permissions.checks import (PermissionsFailure, always_whisper,
+from utils.permissions import (PermissionsFailure, always_whisper,
                                       ensure_invokee_role_lower_than_bot,
                                       whisper)
 from utils.views import Confirm, FirmwareDropdown

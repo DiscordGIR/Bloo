@@ -11,7 +11,7 @@ from discord.interactions import Interaction
 from utils import cfg, BlooContext, logger, Tasks
 from utils.database import db
 from utils.mod.modactions_helpers import BanCache
-from utils.permissions.permissions import permissions
+from utils.permissions import permissions
 
 
 initial_extensions = [

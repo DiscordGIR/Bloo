@@ -8,10 +8,8 @@ from discord.utils import format_dt
 from data.services import user_service
 from discord.commands import errors, slash_command, Option, message_command, user_command
 from discord.ext import commands
-from utils.permissions.checks import PermissionsFailure, whisper
+from utils.permissions import PermissionsFailure, whisper,  user_resolver, permissions
 from utils import cfg, BlooContext
-from utils.permissions.converters  import user_resolver
-from utils.permissions.permissions import permissions
 
 
 class UserInfo(commands.Cog):

@@ -4,10 +4,9 @@ from data.services import guild_service
 from discord.commands import Option, slash_command
 from discord.ext import commands
 from discord.interactions import Interaction
-from utils.permissions.checks import PermissionsFailure, admin_and_up
+from utils.permissions import PermissionsFailure, admin_and_up, slash_perms
 from utils import cfg
 from utils import BlooContext, PromptData, PromptDataReaction
-from utils.permissions.slash_perms  import slash_perms
 from discord import ui
 import traceback
 import re

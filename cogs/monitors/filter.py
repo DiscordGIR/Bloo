@@ -10,7 +10,7 @@ from utils import cfg
 from utils.mod.filter import find_triggered_filters
 from utils.mod.global_modactions import mute
 from utils.mod.report import report
-from utils.permissions.permissions import permissions
+from utils.permissions import permissions
 
 
 class Filter(commands.Cog):

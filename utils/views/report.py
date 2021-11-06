@@ -3,7 +3,7 @@ from discord.enums import ButtonStyle
 from discord.interactions import Interaction
 from discord.ext.commands import Context
 from discord.member import Member
-from utils.permissions.permissions import permissions
+from utils.permissions import permissions
 
 
 class ReportActions(ui.View):

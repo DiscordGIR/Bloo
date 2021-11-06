@@ -10,12 +10,13 @@ from discord.commands import Option, slash_command
 from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
 from discord.utils import escape_markdown, escape_mentions
-from utils import cfg, BlooContext
+from utils import BlooContext, cfg
 from utils.mod.mod_logs import *
 from utils.mod.modactions_helpers import *
-from utils.permissions.checks import PermissionsFailure, mod_and_up
-from utils.permissions.converters import *
-from utils.permissions.slash_perms import slash_perms
+from utils.permissions import (PermissionsFailure, mod_and_up,
+                               mods_and_above_external_resolver,
+                               mods_and_above_member_resolver, slash_perms,
+                               user_resolver)
 
 
 class ModActions(commands.Cog):

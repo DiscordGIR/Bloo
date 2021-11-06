@@ -5,22 +5,22 @@ from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 from discord.utils import format_dt
 
-from utils.context import BlooContext
 from utils.views.report import ReportActions
 
 
-async def report(bot: discord.Client, message: discord.Message, word: FilterWord, invite=None):
+async def report(bot: discord.Client, message: discord.Message, word: str, invite=None):
     db_guild = guild_service.get_guild()
     channel = message.guild.get_channel(db_guild.channel_reports)
 
     # ping_string = prepare_ping_string(db_guild, message)
     ping_string = ""
-    embed = prepare_embed(message, word.word)
     view = ReportActions(message.author)
 
     if invite:
+        embed = prepare_embed(message, word, title="Invite filter")
         report_msg = await channel.send(f"{ping_string}\nMessage contained invite: {invite}", embed=embed, view=view)
     else:
+        embed = prepare_embed(message, word)
         report_msg = await channel.send(ping_string, embed=embed, view=view)
 
     ctx = await bot.get_context(report_msg)

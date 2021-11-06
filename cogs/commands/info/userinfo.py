@@ -4,12 +4,14 @@ from math import floor
 from typing import Union
 
 import discord
-from discord.utils import format_dt
 from data.services import user_service
-from discord.commands import errors, slash_command, Option, message_command, user_command
+from discord.commands import (Option, errors, message_command, slash_command,
+                              user_command)
 from discord.ext import commands
-from utils.permissions import PermissionsFailure, whisper,  user_resolver, permissions
-from utils import cfg, BlooContext
+from discord.utils import format_dt
+from utils import BlooContext, cfg
+from utils.permissions import (PermissionsFailure, permissions, user_resolver,
+                               whisper)
 
 
 class UserInfo(commands.Cog):

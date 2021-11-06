@@ -1,5 +1,7 @@
-import mongoengine
 from datetime import datetime
+
+import mongoengine
+
 
 class Tag(mongoengine.EmbeddedDocument):
     name         = mongoengine.StringField(required=True)

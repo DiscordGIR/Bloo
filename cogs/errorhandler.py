@@ -1,7 +1,9 @@
-from discord.ext import commands
 import traceback
+
+from discord.ext import commands
 from utils import BlooContext
 from utils.permissions import PermissionsFailure
+
 
 class ErrorHandler(commands.Cog):
     """A cog for global error handling."""

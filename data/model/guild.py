@@ -2,6 +2,7 @@ import mongoengine
 from data.model.filterword import FilterWord
 from data.model.tag import Tag
 
+
 class Guild(mongoengine.Document):
     _id                       = mongoengine.IntField(required=True)
     case_id                   = mongoengine.IntField(min_value=1, required=True)

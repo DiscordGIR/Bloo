@@ -1,15 +1,16 @@
+import re
+import traceback
 from itertools import takewhile
+
 import discord
 from data.services import guild_service
+from discord import ui
 from discord.commands import Option, slash_command
 from discord.ext import commands
 from discord.interactions import Interaction
+from utils import BlooContext, PromptData, PromptDataReaction, cfg
 from utils.permissions import PermissionsFailure, admin_and_up, slash_perms
-from utils import cfg
-from utils import BlooContext, PromptData, PromptDataReaction
-from discord import ui
-import traceback
-import re
+
 
 def derive_label(string):
     enders = {

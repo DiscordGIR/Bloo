@@ -3,8 +3,9 @@ import traceback
 from discord.commands import Option, slash_command
 from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
-from utils import cfg, BlooContext
-from utils.permissions import PermissionsFailure, mod_and_up, whisper, slash_perms
+from utils import BlooContext, cfg
+from utils.permissions import (PermissionsFailure, mod_and_up, slash_perms,
+                               whisper)
 
 """
 Make sure to add the cog to the initial_extensions list

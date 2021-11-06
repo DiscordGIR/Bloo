@@ -8,11 +8,10 @@ import discord
 from discord.ext import commands
 from discord.interactions import Interaction
 
-from utils import cfg, BlooContext, logger, Tasks
+from utils import BlooContext, Tasks, cfg, logger
 from utils.database import db
 from utils.mod.modactions_helpers import BanCache
 from utils.permissions import permissions
-
 
 initial_extensions = [
         "cogs.commands.info.stats",

@@ -1,9 +1,9 @@
 from typing import List
+
 import discord
 from data.model import Guild
 from data.services import guild_service
 from discord.commands.permissions import Permission
-
 from utils import cfg
 
 

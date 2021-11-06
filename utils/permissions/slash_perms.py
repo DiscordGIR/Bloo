@@ -1,7 +1,8 @@
 from typing import List
-from utils.permissions import permissions
-from discord.commands.permissions import Permission
+
 from data.services import guild_service
+from discord.commands.permissions import Permission
+from utils.permissions import permissions
 
 
 class SlashPerms:

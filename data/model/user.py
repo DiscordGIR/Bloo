@@ -1,5 +1,6 @@
 import mongoengine
 
+
 class User(mongoengine.Document):
     _id                 = mongoengine.IntField(required=True)
     is_clem             = mongoengine.BooleanField(default=False, required=True)

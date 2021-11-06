@@ -1,16 +1,16 @@
 import traceback
 from io import BytesIO
 
+import discord
 from data.model import Tag
 from data.services import guild_service
-import discord
 from discord.commands import Option, slash_command
 from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
-from utils.autocompleters.tags import tags_autocomplete
 from utils import BlooContext, PromptData, cfg
-from utils.permissions import (PermissionsFailure,
-                                      genius_or_submod_and_up, slash_perms)
+from utils.autocompleters.tags import tags_autocomplete
+from utils.permissions import (PermissionsFailure, genius_or_submod_and_up,
+                               slash_perms)
 
 
 class Tags(commands.Cog):

@@ -6,6 +6,7 @@ from data.services import guild_service, user_service
 from utils.mod.mod_logs import prepare_mute_log
 from utils.mod.modactions_helpers import notify_user, submit_public_log
 
+
 async def mute(ctx, member, dur_seconds, reason):
     mute_role = guild_service.get_guild().role_mute
     mute_role = ctx.guild.get_role(mute_role)

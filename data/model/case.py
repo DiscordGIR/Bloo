@@ -1,5 +1,7 @@
-import mongoengine
 import datetime
+
+import mongoengine
+
 
 class Case(mongoengine.EmbeddedDocument):
     _id               = mongoengine.IntField(required=True)

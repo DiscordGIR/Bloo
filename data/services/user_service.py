@@ -2,6 +2,7 @@ from data.model.case import Case
 from data.model.cases import Cases
 from data.model.user import User
 
+
 class UserService:
     def get_user(self, id: int) -> User:
         """Look up the User document of a user, whose ID is given by `id`.

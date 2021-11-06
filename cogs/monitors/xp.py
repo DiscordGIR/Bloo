@@ -2,9 +2,9 @@ import math
 from random import randint
 
 import discord
+from data.services import guild_service, user_service
 from discord.ext import commands
 from utils import cfg
-from data.services import user_service, guild_service
 
 
 class Xp(commands.Cog):

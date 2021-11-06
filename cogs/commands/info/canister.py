@@ -1,16 +1,18 @@
+import io
+import json
+import re
+import urllib
+from datetime import datetime
+
+import aiohttp
+import discord
+from colorthief import ColorThief
+from data.model import Guild
 from discord.commands.commands import Option, slash_command
 from discord.ext import commands
 from utils import BlooContext, cfg
 from utils.permissions import permissions
-from data.model import Guild
-from datetime import datetime
-from colorthief import ColorThief
-import io
-import discord
-import re
-import urllib
-import json
-import aiohttp
+
 
 async def aiter(packages):
     for package in packages:

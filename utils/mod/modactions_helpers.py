@@ -5,8 +5,7 @@ from data.model import Case, Guild
 from data.services import guild_service, user_service
 from discord.member import Member
 from discord.user import User
-
-from utils import cfg, BlooContext
+from utils import BlooContext, cfg
 from utils.mod.mod_logs import prepare_ban_log, prepare_kick_log
 
 

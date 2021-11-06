@@ -1,5 +1,5 @@
-from discord.commands.context import AutocompleteContext
 from data.services import guild_service
+from discord.commands.context import AutocompleteContext
 
 
 async def tags_autocomplete(ctx: AutocompleteContext):

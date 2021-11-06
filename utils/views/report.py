@@ -1,7 +1,7 @@
 from discord import ui
 from discord.enums import ButtonStyle
-from discord.interactions import Interaction
 from discord.ext.commands import Context
+from discord.interactions import Interaction
 from discord.member import Member
 from utils.permissions import permissions
 

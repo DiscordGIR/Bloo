@@ -1,5 +1,6 @@
 import mongoengine
 
+
 class Giveaway(mongoengine.Document):
     _id              = mongoengine.IntField(required=True)
     is_ended         = mongoengine.BooleanField(default=False)

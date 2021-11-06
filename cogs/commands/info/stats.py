@@ -10,7 +10,7 @@ from discord.commands import Option, slash_command
 from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
 from discord.utils import format_dt
-from utils import cfg, BlooContext
+from utils import BlooContext, cfg
 from utils.permissions import PermissionsFailure, whisper
 
 

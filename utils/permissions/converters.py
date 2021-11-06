@@ -2,8 +2,8 @@ from discord.errors import NotFound
 from discord.ext import commands
 from discord.ext.commands.errors import BadArgument
 from discord.member import Member
-from utils.permissions import PermissionsFailure
 from utils import BlooContext
+from utils.permissions import PermissionsFailure
 
 
 async def mods_and_above_member_resolver(ctx: BlooContext, argument):

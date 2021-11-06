@@ -21,7 +21,7 @@ from utils.context import BlooContext
 from utils.permissions.converters  import user_resolver
 from utils.permissions.permissions import permissions
 
-async def format_page(entry, all_pages, current_page, ctx):
+async def format_xptop_page(entry, all_pages, current_page, ctx):
     embed = Embed(title=f'Leaderboard', color=Color.blurple())
     for i, user in entry:
         member = ctx.guild.get_member(user._id)
@@ -40,6 +40,53 @@ async def format_page(entry, all_pages, current_page, ctx):
             
     embed.set_footer(text=f"Page {current_page} of {len(all_pages)}")
     return embed
+
+async def format_cases_page(entry, all_pages, current_page, ctx):
+    pun_map = {
+        "KICK": "Kicked",
+        "BAN": "Banned",
+        "CLEM": "Clemmed",
+        "UNBAN": "Unbanned",
+        "MUTE": "Duration",
+        "REMOVEPOINTS": "Points removed"
+    }
+    
+    user = ctx.case_user
+    
+    u = user_service.get_user(user.id)
+    embed = Embed(title=f'Cases - {u.warn_points} warn points', color=Color.blurple())
+    embed.set_author(name=user, icon_url=user.avatar)
+    for case in entry:
+        timestamp = case.date.strftime("%B %d, %Y, %I:%M %p")
+        if case._type == "WARN" or case._type == "LIFTWARN":
+            if case.lifted:
+                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id} [LIFTED]', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Lifted by**: {case.lifted_by_tag}\n**Lift reason**: {case.lifted_reason}\n**Warned on**: {timestamp}', inline=True)
+            elif case._type == "LIFTWARN":
+                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id} [LIFTED (legacy)]', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {timestamp} UTC', inline=True)
+            else:
+                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {timestamp} UTC', inline=True)
+        elif case._type == "MUTE" or case._type == "REMOVEPOINTS":
+                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**{pun_map[case._type]}**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {timestamp} UTC', inline=True)
+        elif case._type in pun_map:
+            embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**{pun_map[case._type]} on**: {timestamp} UTC', inline=True)
+        else:
+            embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {timestamp} UTC', inline=True)
+    embed.set_footer(text=f"Page {current_page} of {len(all_pages)} - newest cases first")
+    return embed
+
+async def determine_emoji(type):
+    emoji_dict = {
+        "KICK": "👢",
+        "BAN": "❌",
+        "UNBAN": "✅",
+        "MUTE": "🔇",
+        "WARN": "⚠️",
+        "UNMUTE": "🔈",
+        "LIFTWARN": "⚠️",
+        "REMOVEPOINTS": "⬇️",
+        "CLEM": "👎"
+    }
+    return emoji_dict[type]
 
 
 class UserInfo(commands.Cog):
@@ -210,16 +257,68 @@ class UserInfo(commands.Cog):
                 yield lst[i:i + n]
         results = enumerate(user_service.leaderboard())
         results = [ (i, m) for (i, m) in results if ctx.guild.get_member(m._id) is not None][0:100]
-        menu = Menu(list(chunks(results, 10)), ctx.channel, format_page, True, ctx, True)
+        menu = Menu(list(chunks(results, 10)), ctx.channel, format_xptop_page, True, ctx, True)
+        await menu.init_menu()
+    
+    @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's cases")
+    async def cases(self, ctx: BlooContext, user: Option(Member, description="Member to show cases of", required=False)):
+        """Show list of cases of a user (mod only)
+        Example usage
+        --------------
+        !cases <@user/ID>
+        Parameters
+        ----------
+        user : typing.Union[discord.Member,int]
+            "User we want to get cases of, doesn't have to be in guild"
+        """
+        
+        # if an invokee is not provided in command, call command on the invoker
+        # (get invoker's cases)
+        user = user or ctx.author
+
+        # users can only invoke on themselves if they aren't mods
+        if not permissions.has(ctx.guild, ctx.author, 5) and user.id != ctx.author.id:
+            raise PermissionsFailure(
+                f"You don't have permissions to check others' warnpoints.")
+
+        # if user not in guild, fetch their profile from the Discord API
+        if isinstance(user, int):
+            try:
+                user_1 = await self.bot.fetch_user(user)
+            except Exception:
+                return await ctx.send_error(f"Couldn't find user with ID {user}")
+            user = user_1
+
+        # fetch user's cases from our database
+        results = user_service.get_cases(user.id)
+        if len(results.cases) == 0:
+            if isinstance(user, int):
+                return await ctx.send_error(f'User with ID {user.id} had no cases.')
+            else:
+                return await ctx.send_error(f'{user.mention} had no cases.')
+        
+        # filter out unmute cases because they are irrelevant
+        cases = [case for case in results.cases if case._type != "UNMUTE"]
+        # reverse so newest cases are first
+        cases.reverse()
+
+        def chunks(lst, n):
+            """Yield successive n-sized chunks from lst."""
+            for i in range(0, len(lst), n):
+                yield lst[i:i + n]
+
+        ctx.case_user = user
+
+        menu = Menu(list(chunks(cases, 10)), ctx.channel, format_cases_page, True, ctx, True)
         await menu.init_menu()
 
-    # @cases.error
+    @cases.error
     @userinfo_rc.error
     @userinfo_msg.error
     @userinfo.error
     @warnpoints.error
     @xp.error
-    # @xptop.error
+    @xptop.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, errors.ApplicationCommandInvokeError):
             error = error.original

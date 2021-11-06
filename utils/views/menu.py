@@ -21,6 +21,13 @@ class MenuButtons(ui.View):
     async def launch(self, embed):
         self.embed = embed
         # See which buttons we actually need enabled
+        self.first.disabled = True
+        self.last.disabled = True
+        if len(self.pages) > 1:
+            if self.current_page != len(self.pages):
+                self.last.disabled = False
+            if self.array_current_page != 0:
+                self.first.disabled = False
         self.previous.disabled = True
         self.next.disabled = True
         componentEnabled = False
@@ -59,6 +66,19 @@ class MenuButtons(ui.View):
                 else:
                     await self.ctx.respond_or_edit(embed=embed)
     
+    # Declare first button
+    @ui.button(emoji='⏮️', style=ButtonStyle.blurple, row=1, disabled=True)
+    async def first(self, button: ui.Button, interaction: Interaction):
+        if interaction.user == self.ctx.author:
+            # Set current array page
+            self.array_current_page = 0
+            # Pull down actual current page
+            self.current_page = 1
+            # Prepare our embed
+            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page)
+            # Launch!
+            await self.launch(embed)
+    
     # Declare previous button
     @ui.button(emoji='⬅️', style=ButtonStyle.blurple, row=1, disabled=True)
     async def previous(self, button: ui.Button, interaction: Interaction):
@@ -87,6 +107,19 @@ class MenuButtons(ui.View):
             self.array_current_page = (self.array_current_page + 1)
             # Bump up actual current page
             self.current_page = (self.current_page + 1)
+            # Prepare our embed
+            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page)
+            # Launch!
+            await self.launch(embed)
+            
+    # Declare last button
+    @ui.button(emoji='⏭️', style=ButtonStyle.blurple, row=1, disabled=True)
+    async def last(self, button: ui.Button, interaction: Interaction):
+        if interaction.user == self.ctx.author:
+            # Set current array page
+            self.array_current_page = (len(self.pages) - 1)
+            # Pull down actual current page
+            self.current_page = (self.array_current_page + 1)
             # Prepare our embed
             embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page)
             # Launch!

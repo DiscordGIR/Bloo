@@ -24,7 +24,7 @@ async def format_page(entry, all_pages, current_page):
     if entry.get('author') is not None:
         embed.add_field(name="Author", value= discord.utils.escape_markdown(entry.get('author').split("<")[0]), inline=True)
     else:
-        embed.add_field(name="Author", value= discord.utils.escape_markdown("No Author"), inline=True)
+        embed.add_field(name="Author", value= discord.utils.escape_markdown(entry.get('maintainer').split("<")[0]), inline=True)
     embed.add_field(name="Version", value= discord.utils.escape_markdown(entry.get('latestVersion') or "No Version"), inline=True)
     embed.add_field(name="Price", value=entry.get("price") or "Free", inline=True)
     embed.add_field(name="Repo", value=f"[{entry.get('repository').get('name')}]({entry.get('repository').get('uri')})" or "No Repo", inline=True)
@@ -39,15 +39,13 @@ async def format_page(entry, all_pages, current_page):
         embed.color = int(entry.get('tintColor').replace('#', '0x'), 0)
     if entry.get('packageIcon') is not None and pattern.match(entry.get('packageIcon')):
         embed.set_thumbnail(url=entry.get('packageIcon'))
-    if entry.get('header') is not None:
-        embed.set_image(url=entry.get('header'))
-    embed.set_footer(icon_url=f"{entry.get('repository').get('uri')}CydiaIcon.png", text=discord.utils.escape_markdown(f"{entry.get('repository').get('name')} • Page {current_page}/{len(all_pages)}" or "No Package"))
+    embed.set_footer(icon_url=f"{entry.get('repository').get('uri')}/CydiaIcon.png", text=discord.utils.escape_markdown(f"{entry.get('repository').get('name')} • Page {current_page}/{len(all_pages)}" or "No Package"))
     embed.timestamp = datetime.now()
     return embed
 
 async def search(query):
     async with aiohttp.ClientSession() as client:
-        async with client.get(f'https://api.canister.me/v1/community/packages/search?query={urllib.parse.quote(query)}&searchFields=identifier,name&responseFields=identifier,header,tintColor,name,price,description,packageIcon,repository.uri,repository.name,author,latestVersion,nativeDepiction,depiction') as resp:
+        async with client.get(f'https://api.canister.me/v1/community/packages/search?query={urllib.parse.quote(query)}&searchFields=identifier,name&responseFields=identifier,header,tintColor,name,price,description,packageIcon,repository.uri,repository.name,author,maintainer,latestVersion,nativeDepiction,depiction') as resp:
             if resp.status == 200:
                 response = json.loads(await resp.text())
                 if response.get('status') == "Successful":
@@ -59,6 +57,10 @@ async def search(query):
 
 async def canister(bot, ctx: BlooContext, interaction: bool, whisper: bool, query: str):
     result = list(await search(query))
+    if len(result) == 0:
+        if interaction is True:
+            await ctx.send_error("That package isn't registered with Canister's database.")
+        return
     menu = Menu(result, ctx.channel, format_page, interaction, ctx, whisper)
     await menu.init_menu()
 
@@ -92,8 +94,7 @@ class Canister(commands.Cog):
             return
         
         ctx = await self.bot.get_context(message)
-        async with ctx.typing():
-            await canister(self.bot, ctx, False, False, search_term)
+        await canister(self.bot, ctx, False, False, search_term)
             
     @slash_command(guild_ids=[cfg.guild_id], description="Add device to nickname")
     async def tweak(self, ctx: BlooContext, query: Option(str, description="Tweak to search for."), whisper: Option(bool, description="Whisper? (No by default)", required=False)) -> None:

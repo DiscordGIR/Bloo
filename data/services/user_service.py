@@ -50,6 +50,22 @@ class UserService:
         # first we ensure this user has a User document in the database before continuing
         self.get_user(_id)
         User.objects(_id=_id).update_one(inc__warn_points=points)
+        
+    def inc_xp(self, id, xp):
+        """Increments user xp.
+        """
+
+        self.get_user(id)
+        User.objects(_id=id).update_one(inc__xp=xp)
+        u = User.objects(_id=id).first()
+        return (u.xp, u.level)
+
+    def inc_level(self, id) -> None:
+        """Increments user level.
+        """
+
+        self.get_user(id)
+        User.objects(_id=id).update_one(inc__level=1)
     
     def get_cases(self, id: int) -> Cases:
         """Return the Document representing the cases of a user, whose ID is given by `id`

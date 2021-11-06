@@ -123,7 +123,7 @@ class UserInfo(commands.Cog):
 
         embed = Embed(title="Level Statistics")
         embed.color = user.top_role.color
-        embed.set_author(name=user, icon_url=user.avatar)
+        embed.set_author(name=user, icon_url=user.display_avatar)
         embed.add_field(
             name="Level", value=results.level if not results.is_clem else "0", inline=True)
         embed.add_field(

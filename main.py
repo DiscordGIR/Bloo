@@ -27,6 +27,7 @@ initial_extensions = [
         "cogs.monitors.filter",
         "cogs.monitors.logging",
         "cogs.monitors.role_assignment_buttons",
+        "cogs.monitors.xp",
     ]
 intents = discord.Intents.default()
 intents.members = True

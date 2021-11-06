@@ -4,7 +4,7 @@ from typing import Callable
 from discord.channel import TextChannel
 
 class Menu():
-    def __init__(self, pages: list, channel: TextChannel, format_page: Callable[[any, list, int], None], interaction: bool, ctx: BlooContext, whisper: bool):
+    def __init__(self, pages: list, channel: TextChannel, format_page: Callable[[any, list, int, BlooContext], None], interaction: bool, ctx: BlooContext, whisper: bool):
         # Declare variables that we need to use globally throughout the menu
         self.pages = pages
         self.channel = channel
@@ -15,6 +15,6 @@ class Menu():
 
     async def init_menu(self):
         # Prepare inital embed
-        embed = await self.page_formatter(entry=self.pages[0], all_pages=self.pages, current_page=1)
+        embed = await self.page_formatter(entry=self.pages[0], all_pages=self.pages, current_page=1, ctx=self.ctx)
         # Initialize our menu
         await MenuButtons(self.ctx, self.pages, self.page_formatter, self.channel, self.is_interaction, self.should_whisper).launch(embed)

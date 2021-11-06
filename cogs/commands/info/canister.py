@@ -15,7 +15,7 @@ import urllib
 import json
 import aiohttp
 
-async def format_page(entry, all_pages, current_page):
+async def format_page(entry, all_pages, current_page, ctx):
     titleKey = entry.get('name')
     if entry.get('name') is None:
         titleKey = entry.get('identifier')

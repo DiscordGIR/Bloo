@@ -14,11 +14,32 @@ from discord.ext import commands
 from discord.member import Member
 from discord.user import User
 from discord.utils import format_dt
+from utils.menu import Menu
 from utils.permissions.checks import PermissionsFailure, whisper
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.converters  import user_resolver
 from utils.permissions.permissions import permissions
+
+async def format_page(entry, all_pages, current_page, ctx):
+    embed = Embed(title=f'Leaderboard', color=Color.blurple())
+    for i, user in entry:
+        member = ctx.guild.get_member(user._id)
+        trophy = ''
+        if current_page == 0:
+            if i == entry[0][0]:
+                trophy = ':first_place:'
+                embed.set_thumbnail(url=member.avatar_url)
+            if i == entry[1][0]:
+                trophy = ':second_place:'
+            if i == entry[2][0]:
+                trophy = ':third_place:'
+            
+            
+        embed.add_field(name=f"#{i+1} - Level {user.level}", value=f"{trophy} {member.mention}", inline=False)
+            
+    embed.set_footer(text=f"Page {current_page} of {len(all_pages)}")
+    return embed
 
 
 class UserInfo(commands.Cog):
@@ -173,6 +194,24 @@ class UserInfo(commands.Cog):
         embed.set_footer(text=f"Requested by {ctx.author}")
 
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
+    
+    @whisper()
+    @slash_command(guild_ids=[cfg.guild_id], description="Show the XP leaderboard.")
+    async def xptop(self, ctx: BlooContext):
+        """Show XP leaderboard for top 100, ranked highest to lowest.
+        Example usage
+        --------------
+        !xptop
+        """
+
+        def chunks(lst, n):
+            """Yield successive n-sized chunks from lst."""
+            for i in range(0, len(lst), n):
+                yield lst[i:i + n]
+        results = enumerate(user_service.leaderboard())
+        results = [ (i, m) for (i, m) in results if ctx.guild.get_member(m._id) is not None][0:100]
+        menu = Menu(list(chunks(results, 10)), ctx.channel, format_page, True, ctx, True)
+        await menu.init_menu()
 
     # @cases.error
     @userinfo_rc.error

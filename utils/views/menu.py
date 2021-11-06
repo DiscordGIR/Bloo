@@ -4,7 +4,7 @@ from utils.context import BlooContext
 from discord.channel import TextChannel
 
 class MenuButtons(ui.View):
-    def __init__(self, ctx: BlooContext, pages: list, page_formatter: Callable[[any, list, int], None], channel: TextChannel, interaction: bool, whisper: bool):
+    def __init__(self, ctx: BlooContext, pages: list, page_formatter: Callable[[any, list, int, BlooContext], None], channel: TextChannel, interaction: bool, whisper: bool):
         # Tell buttons to disable after 60 seconds
         super().__init__(timeout=60)
         # Declare variables that we need to use globally throughout the menu
@@ -64,7 +64,7 @@ class MenuButtons(ui.View):
             # Pull down actual current page
             self.current_page = 1
             # Prepare our embed
-            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page)
+            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
             # Launch!
             await self.launch(embed)
     
@@ -77,7 +77,7 @@ class MenuButtons(ui.View):
             # Pull down actual current page
             self.current_page = (self.current_page - 1)
             # Prepare our embed
-            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page)
+            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
             # Launch!
             await self.launch(embed)
             
@@ -97,7 +97,7 @@ class MenuButtons(ui.View):
             # Bump up actual current page
             self.current_page = (self.current_page + 1)
             # Prepare our embed
-            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page)
+            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
             # Launch!
             await self.launch(embed)
             
@@ -110,7 +110,7 @@ class MenuButtons(ui.View):
             # Pull down actual current page
             self.current_page = (self.array_current_page + 1)
             # Prepare our embed
-            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page)
+            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
             # Launch!
             await self.launch(embed)
 

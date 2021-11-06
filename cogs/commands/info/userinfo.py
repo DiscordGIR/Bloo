@@ -27,16 +27,6 @@ class UserInfo(commands.Cog):
         self.start_time = datetime.now()
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Get avatar of another user or yourself.")
-    async def avatar(self, ctx: BlooContext, user: Option(Member, description="User to get avatar of", required=False)) -> None:
-        if not user:
-            user = ctx.user
-        embed = Embed(title=f"{user}'s Avatar", color=Color.random())
-        embed.set_image(url=user.avatar)
-        embed.set_footer(text=f"Requested by {ctx.author}")
-        await ctx.respond(embed=embed, ephemeral=ctx.whisper)
-
-    @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info of another user or yourself.")
     async def userinfo(self, ctx: BlooContext, user: Option(Member, description="User to get info of", required=False)) -> None:
         await self.handle_userinfo(ctx, user)

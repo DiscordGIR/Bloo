@@ -11,15 +11,61 @@ import humanize
 import pytimeparse
 from data.services.guild_service import guild_service
 from discord.commands import slash_command
-from discord.commands.errors import ApplicationCommandInvokeError
+from discord.commands.commands import Option
 from discord.ext import commands
+from discord.ext.commands.converter import PartialEmojiConverter
+from discord.ext.commands.errors import PartialEmojiConversionFailure
 from PIL import Image
 from utils.config import cfg
-from utils.context import BlooContext, PromptData
+from utils.context import BlooContext
 from utils.permissions.checks import PermissionsFailure, whisper
-from utils.permissions.slash_perms import slash_perms
+from utils.permissions.permissions import permissions
+
+class PFPView(discord.ui.View):
+    def __init__(self, ctx: BlooContext):
+        super().__init__(timeout=30)
+        self.ctx = ctx
+    
+    async def on_timeout(self):
+        for child in self.children:
+            child.disabled = True
+        await self.ctx.respond_or_edit(view=self)
+
+class PFPButton(discord.ui.Button):
+    def __init__(self, ctx: BlooContext, member: discord.Member):
+        super().__init__(label="Show other avatar", style=discord.ButtonStyle.primary)
+        self.ctx = ctx
+        self.member = member
+        self.other = False
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user != self.ctx.author:
+            return 
+        if not self.other:
+            avatar = self.member.guild_avatar
+            self.other = not self.other
+        else:
+            avatar = self.member.avatar
+            self.other = not self.other
+
+        embed = interaction.message.embeds[0]
+        embed.set_image(url=avatar.replace(size=4096))
+
+        animated = ["gif", "png", "jpeg", "webp"]
+        not_animated = ["png", "jpeg", "webp"]
+
+        def fmt(format_):
+            return f"[{format_}]({avatar.replace(format=format_, size=4096)})"
+
+        if avatar.is_animated():
+            embed.description = f"View As\n {'  '.join([fmt(format_) for format_ in animated])}"
+        else:
+            embed.description = f"View As\n {'  '.join([fmt(format_) for format_ in not_animated])}"
+
+        await interaction.response.edit_message(embed=embed)
 
 
+        
 class Misc(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -33,7 +79,7 @@ class Misc(commands.Cog):
             with open('emojis.json') as f:
                 self.emojis = json.loads(f.read())
         except:
-            raise Exception("Could not find emojis.json. Make sure to run grab_emojis.py")
+            raise Exception("Could not find emojis.json. Make sure to run scrape_emojis.py")
         
     
     @whisper()
@@ -67,38 +113,60 @@ class Misc(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Post large version of a given emoji")
-    async def jumbo(self, ctx: BlooContext, emoji):
-        # # non-mod users will be ratelimited
-        # bot_chan = guild_service.get_guild().channel_botspam
-        # if not self.bot.permissions.hasAtLeast(ctx.guild, ctx.author, 5) and ctx.channel.id != bot_chan:
-        #     if await self.ratelimit(ctx.message):
-        #         raise commands.BadArgument("This command is on cooldown.")
+    async def jumbo(self, ctx: BlooContext, emoji: str):
+        # non-mod users will be ratelimited
+        bot_chan = guild_service.get_guild().channel_botspam
+        if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id != bot_chan:
+            # TODO: add ratelimit
+            ...
             
         # is this a regular Unicode emoji?
-        print(emoji)
-        if self.emojis.get(emoji) is not None:
-            # yes, read the bytes from our json file and turn it into an image
+        try:
+            em = await PartialEmojiConverter().convert(ctx, emoji)
+        except PartialEmojiConversionFailure:
+            em = emoji
+        if isinstance(em, str):
             async with ctx.typing():
-                emoji_url_file = self.emojis.get(emoji)
+                emoji_url_file = self.emojis.get(em)
                 if emoji_url_file is None:
                     raise commands.BadArgument("Couldn't find a suitable emoji.")
 
             im = Image.open(BytesIO(base64.b64decode(emoji_url_file)))
-            image_container = BytesIO()
-            im.save(image_container, 'png')
-            image_container.seek(0)
-            _file = discord.File(image_container, filename="image.png")
+            image_conatiner = BytesIO()
+            im.save(image_conatiner, 'png')
+            image_conatiner.seek(0)
+            _file = discord.File(image_conatiner, filename='image.png')
             await ctx.respond(file=_file)
         else:
-            # no, this is a custom emoji. send its URL
-            em = self.bot.get_emoji(int(emoji.split(":",2)[2].replace(">", "")))
             await ctx.respond(em.url)
 
-    async def ratelimit(self, message):
-        bucket = self.spam_cooldown.get_bucket(message)
-        return bucket.update_rate_limit()
+    @whisper()
+    @slash_command(guild_ids=[cfg.guild_id], description="Get avatar of another user or yourself.")
+    async def avatar(self, ctx: BlooContext, member: Option(discord.Member, description="User to get avatar of", required=False)) -> None:
+        if member is None:
+            member = ctx.author
 
+        embed = discord.Embed(title=f"{member}'s avatar")
+        animated = ["gif", "png", "jpeg", "webp"]
+        not_animated = ["png", "jpeg", "webp"]
 
+        def fmt(format_):
+            return f"[{format_}]({member.avatar.replace(format=format_, size=4096)})"
+
+        if member.avatar.is_animated():
+            embed.description = f"View As\n {'  '.join([fmt(format_) for format_ in animated])}"
+        else:
+            embed.description = f"View As\n {'  '.join([fmt(format_) for format_ in not_animated])}"
+        
+        embed.set_image(url=member.avatar.replace(size=4096))
+        embed.color = discord.Color.random()
+        embed.set_footer(text=f"Requested by {ctx.author}")
+
+        view = PFPView(ctx)
+        if member.guild_avatar is not None:
+            view.add_item(PFPButton(ctx, member))
+
+        view.message = await ctx.respond(embed=embed, ephemeral=ctx.whisper, view=view)
 
 
     @remindme.error

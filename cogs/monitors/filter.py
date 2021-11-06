@@ -1,18 +1,15 @@
 
+import re
 from datetime import timezone
 
 import discord
-from discord.errors import NotFound
-
 from data.services.guild_service import guild_service
+from discord.errors import NotFound
 from discord.ext import commands
 from utils.config import cfg
 from utils.mod.filter import find_triggered_filters
 from utils.mod.global_modactions import mute
 from utils.mod.report import report
-
-import re
-
 from utils.permissions.permissions import permissions
 
 
@@ -34,14 +31,24 @@ class Filter(commands.Cog):
             return
         if not message.content:
             return
-        if permissions.has(message.guild, message.author, 5):
+        if permissions.has(message.guild, message.author, 6):
+            return
+
+        db_guild = guild_service.get_guild()
+        role_submod = message.guild.get_role(db_guild.role_sub_mod)
+        if role_submod is not None and role_submod in message.author.roles:
             return
 
         # run through filters
-        db_guild = guild_service.get_guild()
-        if await self.bad_word_filter(message, db_guild): return
-        if await self.do_invite_filter(message, db_guild): return
-        if await self.do_spoiler_newline_filter(message, db_guild): return
+        if await self.bad_word_filter(message, db_guild):
+            return
+
+        if permissions.has(message.guild, message.author, 5):
+            return
+        if await self.do_invite_filter(message, db_guild):
+            return
+        if await self.do_spoiler_newline_filter(message, db_guild):
+            return
 
     async def bad_word_filter(self, message, db_guild) -> bool:
         triggered_words = find_triggered_filters(
@@ -71,13 +78,14 @@ class Filter(commands.Cog):
         if should_delete:
             await self.delete(message)
             await self.ratelimit(message)
-        
+
         await self.do_filter_notify(message.author, message.channel, word.word)
         return should_delete
-    
+
     async def do_invite_filter(self, message, db_guild):
         invites = re.findall(self.invite_filter, message.content, flags=re.S)
-        if not invites: return
+        if not invites:
+            return
 
         whitelist = db_guild.filter_excluded_guilds
         for invite in invites:
@@ -106,7 +114,7 @@ class Filter(commands.Cog):
                 return True
 
         return False
-    
+
     async def do_spoiler_newline_filter(self, message, db_guild):
         """
         SPOILER FILTER
@@ -142,17 +150,18 @@ class Filter(commands.Cog):
                 await mute(ctx, message.author, dur_seconds=15*60, reason="Filter spam")
             except Exception:
                 return
-            
-    
+
     async def do_filter_notify(self, member, channel, word):
         message = f"Your message contained a word you aren't allowed to say in {member.guild.name}. This could be either hate speech or the name of a piracy tool/source. Please refrain from saying it!"
         footer = "Repeatedly triggering the filter will automatically result in a mute."
         try:
-            embed = discord.Embed(description=f"{message}\n\nFiltered word found: **{word}**", color=discord.Color.orange())
+            embed = discord.Embed(
+                description=f"{message}\n\nFiltered word found: **{word}**", color=discord.Color.orange())
             embed.set_footer(text=footer)
             await member.send(embed=embed)
         except Exception:
-            embed = discord.Embed(description=message, color=discord.Color.orange())
+            embed = discord.Embed(description=message,
+                                  color=discord.Color.orange())
             embed.set_footer(text=footer)
             await channel.send(member.mention, embed=embed, delete_after=10)
 

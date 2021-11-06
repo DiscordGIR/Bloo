@@ -4,7 +4,7 @@ from discord.commands import Option, slash_command
 from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
 from utils import BlooContext, cfg
-from utils.permissions import (PermissionsFailure, mod_and_up, slash_perms,
+from services import (PermissionsFailure, mod_and_up, slash_perms,
                                whisper)
 
 """

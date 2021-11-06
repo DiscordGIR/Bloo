@@ -3,14 +3,14 @@ import re
 from datetime import timezone
 
 import discord
-from data.services import guild_service
+from services import guild_service
 from discord.errors import NotFound
 from discord.ext import commands
-from utils import cfg
+from services import cfg
 from utils.mod.filter import find_triggered_filters
 from utils.mod.global_modactions import mute
 from utils.mod.report import report
-from utils.permissions import permissions
+from services import permissions
 
 
 class Filter(commands.Cog):

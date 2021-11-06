@@ -13,7 +13,6 @@ from utils.permissions import (PermissionsFailure, always_whisper,
                                ensure_invokee_role_lower_than_bot, whisper)
 from utils.views import Confirm, FirmwareDropdown
 
-
 class Devices(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

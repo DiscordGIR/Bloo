@@ -1,7 +1,7 @@
-from data.services import guild_service
+from services import guild_service
 from discord.ext import commands
 from utils import BlooContext
-from utils.permissions.permissions import permissions
+from services import permissions
 
 
 class PermissionsFailure(commands.BadArgument):

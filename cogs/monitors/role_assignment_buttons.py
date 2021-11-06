@@ -3,7 +3,7 @@ import traceback
 from itertools import takewhile
 
 import discord
-from data.services import guild_service
+from services import guild_service
 from discord import ui
 from discord.commands import Option, slash_command
 from discord.ext import commands

@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 
 import humanize
 from data.model import Case
-from data.services import guild_service, user_service
+from services import guild_service, user_service
 from utils.mod.mod_logs import prepare_mute_log
 from utils.mod.modactions_helpers import notify_user, submit_public_log
 

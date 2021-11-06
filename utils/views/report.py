@@ -1,6 +1,6 @@
 import discord
 from discord.ext import commands
-from utils.permissions import permissions
+from services import permissions
 
 
 class ReportActions(discord.ui.View):

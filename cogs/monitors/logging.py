@@ -3,10 +3,10 @@ from io import BytesIO
 from typing import List
 
 import discord
-from data.services import guild_service, user_service
+from services import guild_service, user_service
 from discord.ext import commands
 from discord.utils import format_dt
-from utils import cfg
+from services import cfg
 
 
 class Logging(commands.Cog):

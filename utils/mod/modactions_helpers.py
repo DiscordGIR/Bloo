@@ -2,7 +2,7 @@ import asyncio
 from typing import Union
 
 from data.model import Case, Guild
-from data.services import guild_service, user_service
+from services import guild_service, user_service
 from discord.member import Member
 from discord.user import User
 from utils import BlooContext, cfg

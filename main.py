@@ -5,9 +5,9 @@ import discord
 from discord.ext import commands
 
 from utils import BlooContext, Tasks, cfg, logger
-from utils.database import db
+from services import db
 from utils.mod.modactions_helpers import BanCache
-from utils.permissions import permissions
+from services import permissions
 
 initial_extensions = [
         "cogs.commands.info.stats",

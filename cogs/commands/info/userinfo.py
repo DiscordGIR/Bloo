@@ -4,7 +4,7 @@ from math import floor
 from typing import Union
 
 import discord
-from data.services import user_service
+from services import user_service
 from discord.commands import (Option, errors, message_command, slash_command,
                               user_command)
 from discord.ext import commands

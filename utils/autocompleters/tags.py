@@ -1,4 +1,4 @@
-from data.services import guild_service
+from services import guild_service
 from discord.commands.context import AutocompleteContext
 
 

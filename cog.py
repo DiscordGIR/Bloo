@@ -2,7 +2,7 @@ import discord
 from discord.commands import Option, context, slash_command
 from discord.ext import commands
 
-from utils import cfg
+from services import cfg
 
 
 class Example(commands.Cog):

@@ -13,7 +13,6 @@ from discord.utils import format_dt
 from utils import BlooContext, cfg
 from utils.permissions import PermissionsFailure, whisper
 
-
 class Stats(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

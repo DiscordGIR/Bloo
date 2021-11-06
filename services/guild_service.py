@@ -1,5 +1,5 @@
 from data.model import Guild, Tag
-from utils import cfg
+from services import cfg
 
 
 class GuildService:

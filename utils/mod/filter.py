@@ -3,9 +3,9 @@ from typing import List
 
 import discord
 from data.model import FilterWord
-from data.services import guild_service
+from services import guild_service
 from fold_to_ascii import fold
-from utils.permissions import permissions
+from services import permissions
 
 
 def find_triggered_filters(input, member: discord.Member) -> List[FilterWord]:

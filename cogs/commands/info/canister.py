@@ -11,9 +11,11 @@ from data.model import Guild
 from discord.commands import Option, slash_command
 from discord.commands.commands import Option, slash_command
 from discord.ext import commands
-from utils import BlooContext, Guild, cfg
+from utils import BlooContext
+from data.model import Guild
+from services import cfg
 from utils.views import MenuButtons
-from utils.permissions import permissions
+from services import permissions
 
 
 async def format_page(entry, all_pages, current_page):

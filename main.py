@@ -26,6 +26,7 @@ initial_extensions = [
         "cogs.monitors.xp",
         "cogs.commands.misc.genius"
         "cogs.commands.misc.giveaway"
+        "cogs.commands.misc.subnews"
     ]
 intents = discord.Intents.default()
 intents.members = True

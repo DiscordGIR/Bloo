@@ -24,6 +24,7 @@ initial_extensions = [
         "cogs.monitors.logging",
         "cogs.monitors.role_assignment_buttons",
         "cogs.monitors.xp",
+        "cogs.commands.misc.genius"
         "cogs.commands.misc.giveaway"
     ]
 intents = discord.Intents.default()

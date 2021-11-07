@@ -1,9 +1,6 @@
 import os
-
 from dotenv.main import load_dotenv
-
 from utils.logger import logger
-
 
 class Config:
     def __init__(self):

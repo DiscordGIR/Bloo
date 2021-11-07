@@ -1,19 +1,12 @@
+import discord
+from discord.commands import errors, slash_command, Option, message_command, user_command
+from discord.utils import format_dt
+from discord.ext import commands
 import traceback
 from datetime import datetime
 from math import floor
 from typing import Union
-
-from discord.message import Message
-
 from data.services.user_service import user_service
-from discord.colour import Color
-from discord.commands import errors, slash_command
-from discord.commands.commands import Option, message_command, user_command
-from discord.embeds import Embed
-from discord.ext import commands
-from discord.member import Member
-from discord.user import User
-from discord.utils import format_dt
 from utils.menu import Menu
 from utils.permissions.checks import PermissionsFailure, whisper
 from utils.config import cfg
@@ -22,14 +15,14 @@ from utils.permissions.converters  import user_resolver
 from utils.permissions.permissions import permissions
 
 async def format_xptop_page(entry, all_pages, current_page, ctx):
-    embed = Embed(title=f'Leaderboard', color=Color.blurple())
+    embed = discord.Embed(title=f'Leaderboard', color=discord.Color.blurple())
     for i, user in entry:
         member = ctx.guild.get_member(user._id)
         trophy = ''
-        if current_page == 0:
+        if current_page == 1:
             if i == entry[0][0]:
                 trophy = ':first_place:'
-                embed.set_thumbnail(url=member.avatar_url)
+                embed.set_thumbnail(url=member.avatar)
             if i == entry[1][0]:
                 trophy = ':second_place:'
             if i == entry[2][0]:
@@ -42,6 +35,7 @@ async def format_xptop_page(entry, all_pages, current_page, ctx):
     return embed
 
 async def format_cases_page(entry, all_pages, current_page, ctx):
+    page_count = 0
     pun_map = {
         "KICK": "Kicked",
         "BAN": "Banned",
@@ -50,28 +44,31 @@ async def format_cases_page(entry, all_pages, current_page, ctx):
         "MUTE": "Duration",
         "REMOVEPOINTS": "Points removed"
     }
-    
     user = ctx.case_user
-    
     u = user_service.get_user(user.id)
-    embed = Embed(title=f'Cases - {u.warn_points} warn points', color=Color.blurple())
+    
+    for page in all_pages:
+        for case in page:
+            page_count = page_count + 1
+    embed = discord.Embed(title=f'Cases - {u.warn_points} warn points', color=discord.Color.blurple())
     embed.set_author(name=user, icon_url=user.avatar)
     for case in entry:
-        timestamp = case.date.strftime("%B %d, %Y, %I:%M %p")
+        timestamp = case.date
+        formatted = f"{format_dt(timestamp, style='F')} ({format_dt(timestamp, style='R')})"
         if case._type == "WARN" or case._type == "LIFTWARN":
             if case.lifted:
-                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id} [LIFTED]', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Lifted by**: {case.lifted_by_tag}\n**Lift reason**: {case.lifted_reason}\n**Warned on**: {timestamp}', inline=True)
+                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id} [LIFTED]', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Lifted by**: {case.lifted_by_tag}\n**Lift reason**: {case.lifted_reason}\n**Warned on**: {formatted}', inline=True)
             elif case._type == "LIFTWARN":
-                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id} [LIFTED (legacy)]', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {timestamp} UTC', inline=True)
+                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id} [LIFTED (legacy)]', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {formatted}', inline=True)
             else:
-                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {timestamp} UTC', inline=True)
+                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {formatted}', inline=True)
         elif case._type == "MUTE" or case._type == "REMOVEPOINTS":
-                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**{pun_map[case._type]}**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {timestamp} UTC', inline=True)
+                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**{pun_map[case._type]}**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {formatted}', inline=True)
         elif case._type in pun_map:
-            embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**{pun_map[case._type]} on**: {timestamp} UTC', inline=True)
+            embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**{pun_map[case._type]} on**: {formatted}', inline=True)
         else:
-            embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {timestamp} UTC', inline=True)
-    embed.set_footer(text=f"Page {current_page} of {len(all_pages)} - newest cases first")
+            embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {formatted}', inline=True)
+    embed.set_footer(text=f"Page {current_page} of {len(all_pages)} - newest cases first ({page_count} total cases)")
     return embed
 
 async def determine_emoji(type):
@@ -95,31 +92,21 @@ class UserInfo(commands.Cog):
         self.start_time = datetime.now()
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Get avatar of another user or yourself.")
-    async def avatar(self, ctx: BlooContext, user: Option(Member, description="User to get avatar of", required=False)) -> None:
-        if not user:
-            user = ctx.user
-        embed = Embed(title=f"{user}'s Avatar", color=Color.random())
-        embed.set_image(url=user.avatar)
-        embed.set_footer(text=f"Requested by {ctx.author}")
-        await ctx.respond(embed=embed, ephemeral=ctx.whisper)
-
-    @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info of another user or yourself.")
-    async def userinfo(self, ctx: BlooContext, user: Option(Member, description="User to get info of", required=False)) -> None:
+    async def userinfo(self, ctx: BlooContext, user: Option(discord.Member, description="User to get info of", required=False)) -> None:
         await self.handle_userinfo(ctx, user)
     
     @whisper()
     @user_command(guild_ids=[cfg.guild_id], name="Userinfo")
-    async def userinfo_rc(self, ctx: BlooContext, user: Member) -> None:
+    async def userinfo_rc(self, ctx: BlooContext, user: discord.Member) -> None:
         await self.handle_userinfo(ctx, user)
     
     @whisper()
     @message_command(guild_ids=[cfg.guild_id], name="Userinfo")
-    async def userinfo_msg(self, ctx: BlooContext, message: Message) -> None:
+    async def userinfo_msg(self, ctx: BlooContext, message: discord.Message) -> None:
         await self.handle_userinfo(ctx, message.author)
 
-    async def handle_userinfo(self, ctx: BlooContext, user: Union[User, Member]):
+    async def handle_userinfo(self, ctx: BlooContext, user: Union[discord.User, discord.Member]):
         is_mod = permissions.has(ctx.guild, ctx.author, 5)
         if user is None:
             user = ctx.author
@@ -127,7 +114,7 @@ class UserInfo(commands.Cog):
             user = await user_resolver(ctx, user)
 
         # is the invokee in the guild?
-        if isinstance(user, User) and not is_mod:
+        if isinstance(user, discord.User) and not is_mod:
             raise commands.BadArgument("You do not have permission to use this command.")
 
         # non-mods are only allowed to request their own userinfo
@@ -137,7 +124,7 @@ class UserInfo(commands.Cog):
 
         # prepare list of roles and join date
         roles = ""
-        if isinstance(user, Member) and user.joined_at is not None:
+        if isinstance(user, discord.Member) and user.joined_at is not None:
             reversed_roles = user.roles
             reversed_roles.reverse()
 
@@ -150,7 +137,7 @@ class UserInfo(commands.Cog):
 
         results = user_service.get_user(user.id)
 
-        embed = Embed(title=f"User Information", color=user.color)
+        embed = discord.Embed(title=f"User Information", color=user.color)
         embed.set_author(name=user)
         embed.set_thumbnail(url=user.avatar)
         embed.add_field(name="Username",
@@ -170,7 +157,7 @@ class UserInfo(commands.Cog):
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's XP")
-    async def xp(self, ctx: BlooContext, user: Option(Member, description="Member to show xp of", required=False)):
+    async def xp(self, ctx: BlooContext, user: Option(discord.Member, description="Member to show xp of", required=False)):
         """Show your or another user's XP
 
         Example usage
@@ -189,7 +176,7 @@ class UserInfo(commands.Cog):
 
         results = user_service.get_user(user.id)
 
-        embed = Embed(title="Level Statistics")
+        embed = discord.Embed(title="Level Statistics")
         embed.color = user.top_role.color
         embed.set_author(name=user, icon_url=user.display_avatar)
         embed.add_field(
@@ -205,7 +192,7 @@ class UserInfo(commands.Cog):
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's warnpoints")
-    async def warnpoints(self, ctx: BlooContext, user: Option(Member, description="Member to show warnpoints of", required=False)):
+    async def warnpoints(self, ctx: BlooContext, user: Option(discord.Member, description="Member to show warnpoints of", required=False)):
         """Show a user's warnpoints (mod only)
 
         Example usage
@@ -231,8 +218,7 @@ class UserInfo(commands.Cog):
         # fetch user profile from database
         results = user_service.get_user(user.id)
 
-        embed = Embed(title="Warn Points")
-        embed.color = Color.orange()
+        embed = discord.Embed(title="Warn Points", color=discord.Color.orange())
         embed.set_thumbnail(url=user.avatar)
         embed.add_field(
             name="Member", value=f'{user.mention}\n{user}\n({user.id})', inline=True)
@@ -261,7 +247,7 @@ class UserInfo(commands.Cog):
         await menu.init_menu()
     
     @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's cases")
-    async def cases(self, ctx: BlooContext, user: Option(Member, description="Member to show cases of", required=False)):
+    async def cases(self, ctx: BlooContext, user: Option(discord.Member, description="Member to show cases of", required=False)):
         """Show list of cases of a user (mod only)
         Example usage
         --------------

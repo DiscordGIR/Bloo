@@ -1,10 +1,10 @@
+import discord
+from typing import Callable
 from utils.context import BlooContext
 from utils.views.menu import MenuButtons
-from typing import Callable
-from discord.channel import TextChannel
 
 class Menu():
-    def __init__(self, pages: list, channel: TextChannel, format_page: Callable[[any, list, int, BlooContext], None], interaction: bool, ctx: BlooContext, whisper: bool):
+    def __init__(self, pages: list, channel: discord.TextChannel, format_page: Callable[[any, list, int, BlooContext], None], interaction: bool, ctx: BlooContext, whisper: bool):
         # Declare variables that we need to use globally throughout the menu
         self.pages = pages
         self.channel = channel

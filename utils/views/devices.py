@@ -1,14 +1,14 @@
-from discord import ButtonStyle, Interaction, SelectOption, ui
+import discord
+from discord import ui
 from utils.context import BlooContext
-
 
 class Select(ui.Select):
     def __init__(self, versions):
         super().__init__(custom_id="Some identifier", placeholder="Select a version...", min_values=1, max_values=1,
-                         options=[SelectOption(label=version) for version in versions])
+                         options=[discord.SelectOption(label=version) for version in versions])
         self.value = None
 
-    async def callback(self, interaction: Interaction):
+    async def callback(self, interaction: discord.Interaction):
         self.value = interaction.data
         self.view.stop()
 
@@ -31,14 +31,14 @@ class FirmwareDropdown(ui.View):
 
         return self.current_dropdown.value.get('values')[0] if self.current_dropdown.value.get('values') else None
 
-    @ui.button(label='Older firmwares', style=ButtonStyle.secondary, row=1)
-    async def older(self, button: ui.Button, interaction: Interaction):
+    @ui.button(label='Older firmwares', style=discord.ButtonStyle.secondary, row=1)
+    async def older(self, button: ui.Button, interaction: discord.Interaction):
         if interaction.user == self.ctx.author and self.pagination_index + 1 <= self.max_index:
             self.pagination_index += 1
             await self.refresh_current_dropdown(interaction)
 
-    @ui.button(label='Newer firmwares', style=ButtonStyle.secondary, disabled=True, row=1)
-    async def newer(self, button: ui.Button, interaction: Interaction):
+    @ui.button(label='Newer firmwares', style=discord.ButtonStyle.secondary, disabled=True, row=1)
+    async def newer(self, button: ui.Button, interaction: discord.Interaction):
         if interaction.user == self.ctx.author and self.pagination_index > 0:
             self.pagination_index -= 1
             await self.refresh_current_dropdown(interaction)
@@ -69,15 +69,15 @@ class Confirm(ui.View):
     # When the confirm button is pressed, set the inner value to `True` and
     # stop the View from listening to more input.
     # We also send the user an ephemeral message that we're confirming their choice.
-    @ui.button(label='Yes', style=ButtonStyle.success)
-    async def confirm(self, button: ui.Button, interaction: Interaction):
+    @ui.button(label='Yes', style=discord.ButtonStyle.success)
+    async def confirm(self, button: ui.Button, interaction: discord.Interaction):
         if interaction.user == self.ctx.author:
             self.value = True
             self.stop()
 
     # This one is similar to the confirmation button except sets the inner value to `False`
-    @ui.button(label='No', style=ButtonStyle.grey)
-    async def cancel(self, button: ui.Button, interaction: Interaction):
+    @ui.button(label='No', style=discord.ButtonStyle.grey)
+    async def cancel(self, button: ui.Button, interaction: discord.Interaction):
         if interaction.user == self.ctx.author:
             await self.ctx.send_warning(description=self.false_response)
             self.value = False

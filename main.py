@@ -16,6 +16,7 @@ initial_extensions = [
         "cogs.commands.info.devices",
         "cogs.commands.info.userinfo",
         "cogs.commands.info.tags",
+        "cogs.commands.misc.admin",
         "cogs.commands.misc.genius",
         "cogs.commands.misc.giveaway",
         "cogs.commands.misc.canister",

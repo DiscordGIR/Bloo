@@ -1,13 +1,12 @@
 import discord
 from discord.ext.commands import BadArgument
-from discord.utils import MISSING
 import pytimeparse
 import asyncio
 from datetime import datetime, timedelta
 from utils.tasks import Tasks
 
 class PromptData:
-    def __init__(self, value_name, description, convertor, timeout=120, title="", reprompt=False, raw=False):
+    def __init__(self, value_name, description, convertor=None, timeout=120, title="", reprompt=False, raw=False):
         self.value_name = value_name
         self.description = description
         self.convertor = convertor
@@ -46,22 +45,22 @@ class BlooContext(discord.context.ApplicationContext):
 
     async def send_success(self, description: str, title: str = ""):
         embed = discord.Embed(title=title, description=description,  color=discord.Color.dark_green())
-        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=MISSING)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=discord.utils.MISSING)
     
     async def send_warning(self, description: str, title: str = ""):
         embed = discord.Embed(title=title, description=description,  color=discord.Color.orange())
-        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=MISSING)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=discord.utils.MISSING)
     
     async def send_error(self, description):
         embed = discord.Embed(title=":(\nYour command ran into a problem", description=description,  color=discord.Color.red())
-        return await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=MISSING)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=discord.utils.MISSING)
         
     async def prompt(self, info: PromptData):
         def wait_check(m):
             return m.author == self.author and m.channel == self.channel
     
         ret = None
-        embed = discord.Embed(title=info.title if not info.reprompt else f"That wasn't a valid {info.value_name}. {info.title if info.title is not None else ''}", description=info.description, color=Color.blurple() if not info.reprompt else discord.Color.orange())
+        embed = discord.Embed(title=info.title if not info.reprompt else f"That wasn't a valid {info.value_name}. {info.title if info.title is not None else ''}", description=info.description, color=discord.Color.blurple() if not info.reprompt else discord.Color.orange())
         embed.set_footer(text="Send 'cancel' to cancel.")
 
         await self.respond_or_edit(embed=embed, ephemeral=True)
@@ -73,7 +72,7 @@ class BlooContext(discord.context.ApplicationContext):
             await response.delete()
             if response.content.lower() == "cancel":
                 return
-            elif not response.content:
+            elif not response.content and info.convertor is not None:
                 info.reprompt = True
                 return await self.prompt(info)
             else:
@@ -97,10 +96,15 @@ class BlooContext(discord.context.ApplicationContext):
                             raise BadArgument("Time has to be in the future >:(")
 
                 else:
-                    if info.raw:
-                        ret = await info.convertor(self, response.content), response
+                    if info.convertor is not None:
+                        value = await info.convertor(self, response.content)
                     else:
-                        ret = await info.convertor(self, response.content)
+                        value = None
+
+                    if info.raw:
+                        ret = value, response
+                    else:
+                        ret = value
                     
         return ret
     

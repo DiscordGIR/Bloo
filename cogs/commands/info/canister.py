@@ -96,7 +96,7 @@ class Canister(commands.Cog):
         ctx = await self.bot.get_context(message)
         await canister(self.bot, ctx, False, False, search_term)
             
-    @slash_command(guild_ids=[cfg.guild_id], description="Add device to nickname")
+    @slash_command(guild_ids=[cfg.guild_id], description="Search for a tweak")
     async def tweak(self, ctx: BlooContext, query: Option(str, description="Tweak to search for."), whisper: Option(bool, description="Whisper? (No by default)", required=False)) -> None:
         should_whisper = False
         if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == Guild.channel_general:

@@ -1,10 +1,10 @@
+import discord
+from discord import ui
 from typing import Callable
-from discord import ButtonStyle, Interaction, ui
 from utils.context import BlooContext
-from discord.channel import TextChannel
 
 class MenuButtons(ui.View):
-    def __init__(self, ctx: BlooContext, pages: list, page_formatter: Callable[[any, list, int, BlooContext], None], channel: TextChannel, interaction: bool, whisper: bool):
+    def __init__(self, ctx: BlooContext, pages: list, page_formatter: Callable[[any, list, int, BlooContext], None], channel: discord.TextChannel, interaction: bool, whisper: bool):
         # Tell buttons to disable after 60 seconds
         super().__init__(timeout=60)
         # Declare variables that we need to use globally throughout the menu
@@ -56,8 +56,8 @@ class MenuButtons(ui.View):
             self.msg = await msg_send_method(embed=embed)
     
     # Declare first button
-    @ui.button(emoji='⏮️', style=ButtonStyle.blurple, row=1, disabled=True)
-    async def first(self, button: ui.Button, interaction: Interaction):
+    @ui.button(emoji='⏮️', style=discord.ButtonStyle.blurple, row=1, disabled=True)
+    async def first(self, button: ui.Button, interaction: discord.Interaction):
         if interaction.user == self.ctx.author:
             # Set current array page
             self.array_current_page = 0
@@ -69,8 +69,8 @@ class MenuButtons(ui.View):
             await self.launch(embed)
     
     # Declare previous button
-    @ui.button(emoji='⬅️', style=ButtonStyle.blurple, row=1, disabled=True)
-    async def previous(self, button: ui.Button, interaction: Interaction):
+    @ui.button(emoji='⬅️', style=discord.ButtonStyle.blurple, row=1, disabled=True)
+    async def previous(self, button: ui.Button, interaction: discord.Interaction):
         if interaction.user == self.ctx.author:
             # Pull down array current page
             self.array_current_page = (self.array_current_page - 1)
@@ -82,15 +82,15 @@ class MenuButtons(ui.View):
             await self.launch(embed)
             
     # Declare stop button
-    @ui.button(emoji='⏹️', style=ButtonStyle.blurple, row=1)
-    async def pause(self, button: ui.Button, interaction: Interaction):
+    @ui.button(emoji='⏹️', style=discord.ButtonStyle.blurple, row=1)
+    async def pause(self, button: ui.Button, interaction: discord.Interaction):
         if interaction.user == self.ctx.author:
             # Run our timeout function early
             await self.on_timeout()
             
     # Declare next button
-    @ui.button(emoji='➡️', style=ButtonStyle.blurple, row=1, disabled=True)
-    async def next(self, button: ui.Button, interaction: Interaction):
+    @ui.button(emoji='➡️', style=discord.ButtonStyle.blurple, row=1, disabled=True)
+    async def next(self, button: ui.Button, interaction: discord.Interaction):
         if interaction.user == self.ctx.author:
             # Bump up array current page
             self.array_current_page = (self.array_current_page + 1)
@@ -102,8 +102,8 @@ class MenuButtons(ui.View):
             await self.launch(embed)
             
     # Declare last button
-    @ui.button(emoji='⏭️', style=ButtonStyle.blurple, row=1, disabled=True)
-    async def last(self, button: ui.Button, interaction: Interaction):
+    @ui.button(emoji='⏭️', style=discord.ButtonStyle.blurple, row=1, disabled=True)
+    async def last(self, button: ui.Button, interaction: discord.Interaction):
         if interaction.user == self.ctx.author:
             # Set current array page
             self.array_current_page = (len(self.pages) - 1)

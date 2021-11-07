@@ -1,20 +1,15 @@
-
+import discord
+from discord.commands import Option, slash_command
+from discord.ext import commands
 import json
+import aiohttp
 import re
 import traceback
-
-import aiohttp
-import discord
-from discord.commands.commands import Option, slash_command
-from discord.ext import commands
 from utils.autocompleters.devices import device_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.permissions.checks import (PermissionsFailure, always_whisper,
-                                      ensure_invokee_role_lower_than_bot,
-                                      whisper)
+from utils.permissions.checks import (PermissionsFailure, always_whisper, ensure_invokee_role_lower_than_bot, whisper)
 from utils.views.devices import Confirm, FirmwareDropdown
-
 
 class Devices(commands.Cog):
     def __init__(self, bot):

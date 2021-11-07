@@ -1,7 +1,6 @@
 from collections import OrderedDict
 from functools import wraps
 
-
 def async_cacher(size=1024):
     cache = OrderedDict()
 

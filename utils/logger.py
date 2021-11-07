@@ -1,7 +1,5 @@
 import logging
-
 import coloredlogs
-
 
 class Logger:
     def __init__(self):

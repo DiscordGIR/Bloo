@@ -23,7 +23,7 @@ async def mods_and_above_external_resolver(ctx: BlooContext, argument):
         except NotFound:
             raise PermissionsFailure(
                 f"Couldn't find user with ID {argument}")
-        
+            
     await check_invokee(ctx, user)
     return user 
 
@@ -44,12 +44,10 @@ async def user_resolver(ctx: BlooContext, argument):
 async def check_invokee(ctx, user):
     if isinstance(user, discord.Member):
         if user.id == ctx.author.id:
-            await ctx.message.add_reaction("🤔")
-            raise PermissionsFailure("You can't call that on yourself.")
+            await ctx.send_error("You can't call that on yourself.")
         
         if user.id == ctx.bot.user.id:
-            await ctx.message.add_reaction("🤔")
-            raise PermissionsFailure("You can't call that on me :(")
+            await ctx.send_error("You can't call that on yourself.")
         
         if user:
                 if isinstance(user, discord.Member):

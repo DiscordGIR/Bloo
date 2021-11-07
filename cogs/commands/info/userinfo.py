@@ -19,10 +19,10 @@ async def format_xptop_page(entry, all_pages, current_page, ctx):
     for i, user in entry:
         member = ctx.guild.get_member(user._id)
         trophy = ''
-        if current_page == 0:
+        if current_page == 1:
             if i == entry[0][0]:
                 trophy = ':first_place:'
-                embed.set_thumbnail(url=member.avatar_url)
+                embed.set_thumbnail(url=member.avatar)
             if i == entry[1][0]:
                 trophy = ':second_place:'
             if i == entry[2][0]:
@@ -35,6 +35,7 @@ async def format_xptop_page(entry, all_pages, current_page, ctx):
     return embed
 
 async def format_cases_page(entry, all_pages, current_page, ctx):
+    page_count = 0
     pun_map = {
         "KICK": "Kicked",
         "BAN": "Banned",
@@ -43,28 +44,31 @@ async def format_cases_page(entry, all_pages, current_page, ctx):
         "MUTE": "Duration",
         "REMOVEPOINTS": "Points removed"
     }
-    
     user = ctx.case_user
-    
     u = user_service.get_user(user.id)
+    
+    for page in all_pages:
+        for case in page:
+            page_count = page_count + 1
     embed = discord.Embed(title=f'Cases - {u.warn_points} warn points', color=discord.Color.blurple())
     embed.set_author(name=user, icon_url=user.avatar)
     for case in entry:
-        timestamp = case.date.strftime("%B %d, %Y, %I:%M %p")
+        timestamp = case.date
+        formatted = f"{format_dt(timestamp, style='F')} ({format_dt(timestamp, style='R')})"
         if case._type == "WARN" or case._type == "LIFTWARN":
             if case.lifted:
-                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id} [LIFTED]', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Lifted by**: {case.lifted_by_tag}\n**Lift reason**: {case.lifted_reason}\n**Warned on**: {timestamp}', inline=True)
+                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id} [LIFTED]', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Lifted by**: {case.lifted_by_tag}\n**Lift reason**: {case.lifted_reason}\n**Warned on**: {formatted}', inline=True)
             elif case._type == "LIFTWARN":
-                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id} [LIFTED (legacy)]', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {timestamp} UTC', inline=True)
+                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id} [LIFTED (legacy)]', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {formatted}', inline=True)
             else:
-                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {timestamp} UTC', inline=True)
+                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {formatted}', inline=True)
         elif case._type == "MUTE" or case._type == "REMOVEPOINTS":
-                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**{pun_map[case._type]}**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {timestamp} UTC', inline=True)
+                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**{pun_map[case._type]}**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {formatted}', inline=True)
         elif case._type in pun_map:
-            embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**{pun_map[case._type]} on**: {timestamp} UTC', inline=True)
+            embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**{pun_map[case._type]} on**: {formatted}', inline=True)
         else:
-            embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {timestamp} UTC', inline=True)
-    embed.set_footer(text=f"Page {current_page} of {len(all_pages)} - newest cases first")
+            embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {formatted}', inline=True)
+    embed.set_footer(text=f"Page {current_page} of {len(all_pages)} - newest cases first ({page_count} total cases)")
     return embed
 
 async def determine_emoji(type):
@@ -86,16 +90,6 @@ class UserInfo(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.start_time = datetime.now()
-
-    @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Get avatar of another user or yourself.")
-    async def avatar(self, ctx: BlooContext, user: Option(discord.Member, description="User to get avatar of", required=False)) -> None:
-        if not user:
-            user = ctx.user
-        embed = discord.Embed(title=f"{user}'s Avatar", color=discord.Color.random())
-        embed.set_image(url=user.avatar)
-        embed.set_footer(text=f"Requested by {ctx.author}")
-        await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info of another user or yourself.")

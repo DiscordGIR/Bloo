@@ -12,7 +12,7 @@ from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 
 from utils.config import cfg
-from utils.mod.mod_logs import prepare_unmute_log
+from utils.mod_logs import prepare_unmute_log
 
 executors = {
     'default': ThreadPoolExecutor(20)
@@ -354,7 +354,7 @@ async def end_giveaway(channel_id: int, message_id: int, winners: int) -> None:
             mentions.append(member.mention)
             winner_ids.append(member.id)
 
-    g = await BOT_GLOBAL.settings.get_giveaway(_id=message.id)
+    g = guild_service.get_giveaway(_id=message.id)
     g.entries = reacted_ids
     g.is_ended = True
     g.previous_winners = winner_ids

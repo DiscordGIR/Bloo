@@ -4,15 +4,10 @@ import aiohttp
 import io
 from colorthief import ColorThief
 
-from discord.utils import format_dt
-from discord.colour import Color
-from discord.commands import slash_command
-from discord.commands.commands import Option
-from discord.embeds import Embed
+import discord
+from discord.commands import slash_command, Option
 from discord.ext import commands
-from discord.member import Member
-from utils.permissions.permissions import permissions
-from utils.permissions.checks import PermissionsFailure, whisper
+from utils.permissions.checks import whisper
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.autocompleters.jailbreaks import apps_autocomplete
@@ -54,7 +49,7 @@ class JailbreaksApp(commands.Cog):
         async with aiohttp.ClientSession() as session:
             async with session.get(f"https://jailbreaks.app/{app['icon']}") as icon:
                 color = ColorThief(io.BytesIO(await icon.read())).get_color(quality=1)
-        embed = Embed(title=app['name'], color=Color.from_rgb(color[0], color[1], color[2]), url=mainDLLink, description=app['short-description'])
+        embed = discord.Embed(title=app['name'], color=discord.Color.from_rgb(color[0], color[1], color[2]), url=mainDLLink, description=app['short-description'])
         embed.set_thumbnail(url=f"https://jailbreaks.app/{app['icon']}")
         embed.add_field(name=f"Download{'' if len(app['other_versions']) == 0 else 's'}", value=allVersions, inline=True)
         embed.add_field(name="Developer", value=f"{('[' + app['dev'] + '](https://twitter.com/' + app['dev'] + ')') if app['dev'].startswith('@') else possibleApp['dev']}")

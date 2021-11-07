@@ -1,19 +1,20 @@
-from discord.commands.commands import Option, slash_command
-from discord.ext import commands
-from utils.context import BlooContext
-from utils.menu import Menu
-from utils.permissions.permissions import permissions
-from utils.database import Guild
-from utils.context import BlooContext
-from utils.config import cfg
-from datetime import datetime
-from colorthief import ColorThief
 import io
-import discord
+import json
 import re
 import urllib
-import json
+from datetime import datetime
+
 import aiohttp
+import discord
+from colorthief import ColorThief
+from discord.commands.commands import Option, slash_command
+from discord.ext import commands
+from utils.config import cfg
+from utils.context import BlooContext
+from utils.database import Guild
+from utils.menu import Menu
+from utils.permissions.permissions import permissions
+
 
 async def format_page(entry, all_pages, current_page, ctx):
     titleKey = entry.get('name')

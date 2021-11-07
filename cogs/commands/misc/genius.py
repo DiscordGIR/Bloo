@@ -19,7 +19,6 @@ class Genius(commands.Cog):
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Submit a new common issue", permissions=slash_perms.genius_or_submod_and_up())
-    # figure out how to do max concurrency
     async def commonissue(self, ctx: BlooContext, *, title: str):
         """Submit a new common issue (Geniuses only)
         Example usage
@@ -31,16 +30,12 @@ class Genius(commands.Cog):
             "Title for the issue"
         """
 
-        #this should only work in rjb
-        if not ctx.guild.id == cfg.guild_id:
-            return
-        
         # get #common-issues channel
-        
-        channel = ctx.guild.get_channel(guild_service.get_guild().channel_common_issues)
+        channel = ctx.guild.get_channel(
+            guild_service.get_guild().channel_common_issues)
         if not channel:
             raise commands.BadArgument("common issues channel not found")
-        
+
         # prompt the user for common issue body
         await ctx.defer(ephemeral=True)
         prompt = PromptData(
@@ -53,7 +48,7 @@ class Genius(commands.Cog):
         if description is None:
             await ctx.send_warning("Cancelled new common issue.")
             return
-        
+
         embed, f = await self.prepare_issues_embed(title, description, response)
         await channel.send(embed=embed, file=f)
         await ctx.send_success("Common issue posted!")
@@ -71,20 +66,19 @@ class Genius(commands.Cog):
             _type = image.content_type
             if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
                 raise commands.BadArgument("Attached file was not an image.")
-            
+
             f = await image.to_file()
             embed.set_image(url=f"attachment://{f.filename}")
-        
+
         embed.set_footer(text=f"Submitted by {message.author}")
         embed.timestamp = datetime.datetime.now()
         return embed, f
 
-   
     @commonissue.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, ApplicationCommandInvokeError):
             error = error.original
-        
+
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)
             or isinstance(error, commands.BadArgument)
@@ -97,6 +91,7 @@ class Genius(commands.Cog):
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
             traceback.print_exc()
+
 
 def setup(bot):
     bot.add_cog(Genius(bot))

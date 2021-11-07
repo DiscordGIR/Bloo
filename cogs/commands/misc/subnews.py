@@ -17,23 +17,20 @@ class SubNews(commands.Cog):
     @submod_or_admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Post a new subreddit news post", permissions=slash_perms.submod_or_admin_and_up())
     async def subnews(self, ctx: BlooContext):
-        if not ctx.guild.id == cfg.guild_id:
-            return
-
-        db = guild_service.get_guild()
+        db_guild = guild_service.get_guild()
         
-        channel = ctx.guild.get_channel(db.channel_subnews)
+        channel = ctx.guild.get_channel(db_guild.channel_subnews)
         if not channel:
             raise commands.BadArgument("A subreddit news channel was not found. Contact Slim.")
 
-        subnews = ctx.guild.get_role(db.role_sub_news)
+        subnews = ctx.guild.get_role(db_guild.role_sub_news)
         if not subnews:
             raise commands.BadArgument("A subbredit news role was not found. Conact Slim")
         
         await ctx.defer(ephemeral=True)
         prompt = PromptData(
             value_name="description",
-            description="Please enter a description of this common issue.",
+            description="Please enter a description of this common issue (and attach an image if you want).",
             convertor=str,
             raw=True)
         description, response = await ctx.prompt(prompt)

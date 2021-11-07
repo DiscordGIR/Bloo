@@ -1,24 +1,15 @@
-
-import functools
+import discord
+from discord.commands import Option, slash_command
+from discord.ext import commands
 import json
+import aiohttp
 import re
 import traceback
-from collections import OrderedDict
-
-import aiohttp
-from discord.colour import Color
-from discord.commands.commands import Option, slash_command
-from discord.commands.errors import ApplicationCommandInvokeError
-from discord.embeds import Embed
-from discord.ext import commands
 from utils.autocompleters.devices import device_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.permissions.checks import (PermissionsFailure, always_whisper,
-                                      ensure_invokee_role_lower_than_bot,
-                                      whisper)
+from utils.permissions.checks import (PermissionsFailure, always_whisper, ensure_invokee_role_lower_than_bot, whisper)
 from utils.views.devices import Confirm, FirmwareDropdown
-
 
 class Devices(commands.Cog):
     def __init__(self, bot):
@@ -232,8 +223,8 @@ class Devices(commands.Cog):
         # stupid ipsw.me api doesn't have these devices
         devices_dict["iPhone"].add("iPhone SE 2")
 
-        embed = Embed(title="Devices list")
-        embed.color = Color.blurple()
+        embed = discord.Embed(title="Devices list")
+        embed.color = discord.Color.blurple()
         for key in devices_dict.keys():
             temp = list(devices_dict[key])
             temp.sort()
@@ -248,7 +239,7 @@ class Devices(commands.Cog):
     @adddevice.error
     @listdevices.error
     async def info_error(self,  ctx: BlooContext, error):
-        if isinstance(error, ApplicationCommandInvokeError):
+        if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original
         
         if (isinstance(error, commands.MissingRequiredArgument)

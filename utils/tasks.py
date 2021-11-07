@@ -1,16 +1,13 @@
-import logging
+import discord
 import os
 import random
 from datetime import datetime
-
-import discord
 from apscheduler.executors.pool import ThreadPoolExecutor
 from apscheduler.jobstores.mongodb import MongoDBJobStore
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from data.model.case import Case
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
-
 from utils.config import cfg
 from utils.mod.mod_logs import prepare_unmute_log
 
@@ -23,7 +20,6 @@ job_defaults = {
 }
 
 BOT_GLOBAL = None
-
 
 class Tasks():
     """Job scheduler for unmute, using APScheduler
@@ -98,7 +94,8 @@ class Tasks():
 
     def cancel_unbirthday(self, id: int) -> None:
         """When we manually unset the birthday of a user given by ID `id`, stop the task to remove the role.
-         Parameters
+        
+        Parameters
         ----------
         id : int
             User whose task we want to cancel
@@ -323,8 +320,7 @@ async def end_giveaway(channel_id: int, message_id: int, winners: int) -> None:
 
     embed = message.embeds[0]
     embed.set_footer(text="Ended")
-    embed.set_field_at(0, name="Time remaining",
-                       value="This giveaway has ended.")
+    embed.set_field_at(0, name="Time remaining", value="This giveaway has ended.")
     embed.timestamp = datetime.now()
     embed.color = discord.Color.default()
 
@@ -354,7 +350,7 @@ async def end_giveaway(channel_id: int, message_id: int, winners: int) -> None:
             mentions.append(member.mention)
             winner_ids.append(member.id)
 
-    g = await BOT_GLOBAL.settings.get_giveaway(_id=message.id)
+    g = guild_service.get_giveaway(_id=message.id)
     g.entries = reacted_ids
     g.is_ended = True
     g.previous_winners = winner_ids

@@ -25,3 +25,4 @@ colorthief==0.2.1
 tzdata==2021.5
 tzlocal==4.1
 watchdog==2.1.6
+bs4==0.0.1

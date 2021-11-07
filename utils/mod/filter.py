@@ -1,13 +1,10 @@
+import discord
 import string
 from typing import List
-
-import discord
+from fold_to_ascii import fold
 from data.model.filterword import FilterWord
 from data.services.guild_service import guild_service
-from fold_to_ascii import fold
-
 from utils.permissions.permissions import permissions
-
 
 def find_triggered_filters(input, member: discord.Member) -> List[FilterWord]:
     """

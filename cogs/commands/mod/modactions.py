@@ -1,28 +1,19 @@
-import traceback
-from datetime import datetime, timedelta
+import discord
 from discord.commands.errors import ApplicationCommandInvokeError
-from discord.embeds import Embed
-
-from discord.errors import NotFound
-from discord.object import Object
-
-import humanize
-import pytimeparse
-
-from data.model.case import Case
-
-from data.services.guild_service import guild_service
-from data.services.user_service import user_service
 from discord.commands import Option, slash_command
 from discord.ext import commands
-from discord.member import Member
-from discord.user import User
 from discord.utils import escape_markdown, escape_mentions
+import humanize
+import pytimeparse
+import traceback
+from datetime import datetime, timedelta
+from data.model.case import Case
+from data.services.guild_service import guild_service
+from data.services.user_service import user_service
 from utils.permissions.checks import PermissionsFailure, mod_and_up, whisper
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.permissions.converters  import (mods_and_above_external_resolver,
-                              mods_and_above_member_resolver, user_resolver)
+from utils.permissions.converters  import (mods_and_above_external_resolver, mods_and_above_member_resolver, user_resolver)
 from utils.mod.mod_logs import prepare_editreason_log, prepare_liftwarn_log, prepare_mute_log, prepare_removepoints_log, prepare_unban_log, prepare_unmute_log, prepare_warn_log
 from utils.permissions.slash_perms  import slash_perms
 from utils.mod.modactions_helpers import add_ban_case, add_kick_case, notify_user, notify_user_warn, submit_public_log
@@ -38,7 +29,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Warn a user", permissions=slash_perms.mod_and_up())
-    async def warn(self, ctx: BlooContext, user: Option(Member, description="User to warn"), points:Option(int, description="Amount of points to warn for", min_value=1, max_value=600), reason: Option(str, description="Reason for warn", required=False) = "No reason."):
+    async def warn(self, ctx: BlooContext, user: Option(discord.Member, description="User to warn"), points:Option(int, description="Amount of points to warn for", min_value=1, max_value=600), reason: Option(str, description="Reason for warn", required=False) = "No reason."):
         """Warn a user (mod only)
 
         Example usage
@@ -96,7 +87,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Kick a user", permissions=slash_perms.mod_and_up())
-    async def kick(self, ctx: BlooContext, member: Option(Member, description="User to kick"), *, reason: Option(str, description="Reason for kick", required=False) = "No reason.") -> None:
+    async def kick(self, ctx: BlooContext, member: Option(discord.Member, description="User to kick"), *, reason: Option(str, description="Reason for kick", required=False) = "No reason.") -> None:
         """Kick a user (mod only)
 
         Example usage
@@ -129,7 +120,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Kick a user", permissions=slash_perms.mod_and_up())
-    async def roblox(self, ctx: BlooContext, member: Option(Member, description="User to kick")) -> None:
+    async def roblox(self, ctx: BlooContext, member: Option(discord.Member, description="User to kick")) -> None:
         """Kick a user (mod only)
 
         Example usage
@@ -160,7 +151,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Mute a user", permissions=slash_perms.mod_and_up())
-    async def mute(self, ctx: BlooContext, member: Option(Member, description="User to mute"), dur: Option(str, description="Duration for mute", required=False) = "", reason: Option(str, description="Reason for mute", required=False) = "No reason.") -> None:
+    async def mute(self, ctx: BlooContext, member: Option(discord.Member, description="User to mute"), dur: Option(str, description="Duration for mute", required=False) = "", reason: Option(str, description="Reason for mute", required=False) = "No reason.") -> None:
         """Mute a user (mod only)
 
         Example usage
@@ -242,7 +233,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Unmute a user", permissions=slash_perms.mod_and_up())
-    async def unmute(self, ctx: BlooContext, member: Option(Member, description="User to mute"), reason: Option(str, description="Reason for mute", required=False) = "No reason.") -> None:
+    async def unmute(self, ctx: BlooContext, member: Option(discord.Member, description="User to mute"), reason: Option(str, description="Reason for mute", required=False) = "No reason.") -> None:
         """Unmute a user (mod only)
 
         Example usage
@@ -292,7 +283,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Ban a user", permissions=slash_perms.mod_and_up())
-    async def ban(self, ctx: BlooContext, user: Option(Member, description="User to ban"), reason: Option(str, description="Reason for ban", required=False) = "No reason."):
+    async def ban(self, ctx: BlooContext, user: Option(discord.Member, description="User to ban"), reason: Option(str, description="Reason for ban", required=False) = "No reason."):
         """Ban a user (mod only)
 
         Example usage
@@ -313,7 +304,7 @@ class ModActions(commands.Cog):
         reason = escape_mentions(reason)
         db_guild = guild_service.get_guild()
 
-        member_is_external = isinstance(user, User)
+        member_is_external = isinstance(user, discord.User)
 
         # if the ID given is of a user who isn't in the guild, try to fetch the profile
         if member_is_external:
@@ -329,14 +320,14 @@ class ModActions(commands.Cog):
             await user.ban(reason=reason)
         else:
             # hackban for user not currently in guild
-            await ctx.guild.ban(Object(id=user.id))
+            await ctx.guild.ban(discord.Object(id=user.id))
 
         await ctx.respond(embed=log, delete_after=10)
         await submit_public_log(ctx, db_guild, user, log)
         
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Unban a user", permissions=slash_perms.mod_and_up())
-    async def unban(self, ctx: BlooContext, user: Option(Member, description="User to unban"), reason: Option(str, description="Reason for unban", required=False) = "No reason.") -> None:
+    async def unban(self, ctx: BlooContext, user: Option(discord.Member, description="User to unban"), reason: Option(str, description="Reason for unban", required=False) = "No reason.") -> None:
         """Unban a user (must use ID) (mod only)
 
         Example usage
@@ -363,8 +354,8 @@ class ModActions(commands.Cog):
             raise commands.BadArgument("That user isn't banned!")
 
         try:
-            await ctx.guild.unban(Object(id=user.id), reason=reason)
-        except NotFound:
+            await ctx.guild.unban(discord.Object(id=user.id), reason=reason)
+        except discord.NotFound:
             raise commands.BadArgument(f"{user} is not banned.")
 
         self.bot.ban_cache.unban(user.id)
@@ -413,7 +404,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Lift a warn", permissions=slash_perms.mod_and_up())
-    async def liftwarn(self, ctx: BlooContext, user: Option(Member, description="User to lift warn of"), case_id: Option(int), reason: Option(str, required=False) = "No reason.") -> None:
+    async def liftwarn(self, ctx: BlooContext, user: Option(discord.Member, description="User to lift warn of"), case_id: Option(int), reason: Option(str, required=False) = "No reason.") -> None:
         """Mark a warn as lifted and remove points. (mod only)
 
         Example usage
@@ -476,7 +467,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Edit case reason", permissions=slash_perms.mod_and_up())
-    async def editreason(self, ctx: BlooContext, user: Option(Member), case_id: Option(int), new_reason: Option(str)) -> None:
+    async def editreason(self, ctx: BlooContext, user: Option(discord.Member), case_id: Option(int), new_reason: Option(str)) -> None:
         """Edit case reason and the embed in #public-mod-logs. (mod only)
 
         Example usage
@@ -530,7 +521,7 @@ class ModActions(commands.Cog):
                     continue
                 embed = message.embeds[0]
 
-                if embed.footer.text == Embed.Empty:
+                if embed.footer.text == discord.Embed.Empty:
                     continue
                 if len(embed.footer.text.split(" ")) < 2:
                     continue
@@ -551,7 +542,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Edit case reason", permissions=slash_perms.mod_and_up())
-    async def removepoints(self, ctx: BlooContext, user: Option(Member), points: Option(int), reason: Option(str, required=False) = "No reason.") -> None:
+    async def removepoints(self, ctx: BlooContext, user: Option(discord.Member), points: Option(int), reason: Option(str, required=False) = "No reason.") -> None:
         """Remove warnpoints from a user. (mod only)
 
         Example usage

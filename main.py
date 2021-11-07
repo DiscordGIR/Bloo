@@ -18,13 +18,12 @@ initial_extensions = [
     "cogs.commands.info.devices",
     "cogs.commands.info.userinfo",
     "cogs.commands.info.tags",
-    "cogs.commands.info.jailbreaks",
-    "cogs.commands.info.canister",
+    "cogs.commands.misc.canister",
     "cogs.commands.mod.modactions",
+    "cogs.commands.misc.misc",
     "cogs.monitors.filter",
     "cogs.monitors.logging",
     "cogs.monitors.role_assignment_buttons",
-    "cogs.commands.misc.misc"
     "cogs.monitors.xp",
 ]
 intents = discord.Intents.default()

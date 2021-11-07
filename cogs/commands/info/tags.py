@@ -1,14 +1,11 @@
 import traceback
 from io import BytesIO
 
+import discord
 from data.model.tag import Tag
 from data.services.guild_service import guild_service
-from discord import Color, Embed
 from discord.commands import Option, slash_command
-from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
-from discord.file import File
-from discord.utils import MISSING
 from utils.autocompleters.tags import tags_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
@@ -39,7 +36,7 @@ class Tags(commands.Cog):
         # if the Tag has an image, add it to the embed
         file = tag.image.read()
         if file is not None:
-            file = File(BytesIO(
+            file = discord.File(BytesIO(
                 file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
 
         await ctx.respond(embed=await self.prepare_tag_embed(tag), file=file)
@@ -65,7 +62,8 @@ class Tags(commands.Cog):
             raise commands.BadArgument("Tag name must be alphanumeric.")
 
         if len(name.split()) > 1:
-            raise commands.BadArgument("Tag names can't be longer than 1 word.")
+            raise commands.BadArgument(
+                "Tag names can't be longer than 1 word.")
 
         if (guild_service.get_tag(name.lower())) is not None:
             raise commands.BadArgument("Tag with that name already exists.")
@@ -84,7 +82,7 @@ class Tags(commands.Cog):
         tag.content = description
         tag.added_by_id = ctx.author.id
         tag.added_by_tag = str(ctx.author)
-        
+
         # did the user want to attach an image to this tag?
         if len(response.attachments) > 0:
             # ensure the attached file is an image
@@ -99,12 +97,13 @@ class Tags(commands.Cog):
 
         # store tag in database
         guild_service.add_tag(tag)
-        
+
         _file = tag.image.read()
         if _file is not None:
-            _file = File(BytesIO(_file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
+            _file = discord.File(BytesIO(
+                _file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
 
-        await ctx.respond(f"Added new tag!", file=_file or MISSING, embed=await self.prepare_tag_embed(tag))
+        await ctx.respond(f"Added new tag!", file=_file or discord.utils.MISSING, embed=await self.prepare_tag_embed(tag))
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Delete a tag", permissions=slash_perms.genius_or_submod_and_up())
@@ -144,10 +143,10 @@ class Tags(commands.Cog):
         discord.Embed
             The embed we want to send
         """
-        embed = Embed(title=tag.name)
+        embed = discord.Embed(title=tag.name)
         embed.description = tag.content
         embed.timestamp = tag.added_date
-        embed.color = Color.blue()
+        embed.color = discord.Color.blue()
 
         if tag.image.read() is not None:
             embed.set_image(url="attachment://image.gif" if tag.image.content_type ==
@@ -162,9 +161,9 @@ class Tags(commands.Cog):
     @deltag.error
     @addtag.error
     async def info_error(self,  ctx: BlooContext, error):
-        if isinstance(error, ApplicationCommandInvokeError):
+        if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original
-        
+
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)
             or isinstance(error, commands.BadArgument)
@@ -177,6 +176,7 @@ class Tags(commands.Cog):
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
             traceback.print_exc()
+
 
 def setup(bot):
     bot.add_cog(Tags(bot))

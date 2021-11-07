@@ -1,9 +1,8 @@
+from discord.commands.context import AutocompleteContext
 import json
 import re
-
 import aiohttp
 from utils.async_cache import async_cacher
-
 
 @async_cacher()
 async def get_devices():
@@ -30,7 +29,7 @@ async def get_devices():
     return res_devices
 
 
-async def device_autocomplete(_, value):
+async def device_autocomplete(ctx: AutocompleteContext):
     devices = await get_devices()
     devices.sort()
-    return [device for device in devices if device.lower().startswith(value.lower())][:25]
+    return [device for device in devices if device.lower().startswith(ctx.value.lower())][:25]

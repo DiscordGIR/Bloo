@@ -1,17 +1,13 @@
+import discord
 import asyncio
 from typing import Union
-
 from data.model.case import Case
 from data.model.guild import Guild
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
-from discord.member import Member
-from discord.user import User
-
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.mod_logs import prepare_ban_log, prepare_kick_log
-
+from utils.mod.mod_logs import prepare_ban_log, prepare_kick_log
 
 class BanCache:
     def __init__(self, bot):
@@ -64,7 +60,7 @@ async def notify_user(user, text, log):
     return True
 
 
-async def notify_user_warn(ctx: BlooContext, user: User, db_user, db_guild, cur_points: int, log):
+async def notify_user_warn(ctx: BlooContext, user: discord.User, db_user, db_guild, cur_points: int, log):
     log_kickban = None
     dmed = True
 
@@ -74,7 +70,7 @@ async def notify_user_warn(ctx: BlooContext, user: User, db_user, db_guild, cur_
         log_kickban = await add_ban_case(ctx, user, "600 or more warn points reached.")
         await user.ban(reason="600 or more warn points reached.")
 
-    elif cur_points >= 400 and not db_user.was_warn_kicked and isinstance(user, Member):
+    elif cur_points >= 400 and not db_user.was_warn_kicked and isinstance(user, discord.Member):
         # kick user if >= 400 points and wasn't previously kicked
         user_service.set_warn_kicked(user.id)
 
@@ -83,7 +79,7 @@ async def notify_user_warn(ctx: BlooContext, user: User, db_user, db_guild, cur_
         await user.kick(reason="400 or more warn points reached.")
 
     else:
-        if isinstance(user, Member):
+        if isinstance(user, discord.Member):
             dmed = await notify_user(user, f"You were warned in {ctx.guild.name}. Please note that you will be kicked at 400 points and banned at 600 points.", log)
 
     if log_kickban:
@@ -92,7 +88,7 @@ async def notify_user_warn(ctx: BlooContext, user: User, db_user, db_guild, cur_
     return dmed
 
 
-async def submit_public_log(ctx: BlooContext, db_guild: Guild, user: Union[Member, User], log, dmed: bool = None):
+async def submit_public_log(ctx: BlooContext, db_guild: Guild, user: Union[discord.Member, discord.User], log, dmed: bool = None):
     public_chan = ctx.guild.get_channel(
         db_guild.channel_public)
     if public_chan:
@@ -104,7 +100,7 @@ async def submit_public_log(ctx: BlooContext, db_guild: Guild, user: Union[Membe
             await public_chan.send(embed=log)
 
 
-async def add_ban_case(ctx: BlooContext, user: User, reason, db_guild: Guild = None):
+async def add_ban_case(ctx: BlooContext, user: discord.User, reason, db_guild: Guild = None):
     # prepare the case to store in DB
     case = Case(
         _id=db_guild.case_id,

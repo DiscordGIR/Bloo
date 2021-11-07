@@ -1,6 +1,5 @@
 import discord
 
-
 def prepare_warn_log(author, user, case):
     embed = discord.Embed(title="Member Warned")
     embed.set_author(name=user, icon_url=user.display_avatar)

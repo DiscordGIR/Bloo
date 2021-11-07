@@ -1,13 +1,10 @@
+import discord
+from discord.ext import commands
 import math
 from random import randint
-
-import discord
-from discord import guild
-from discord.ext import commands
 from utils.config import cfg
 from data.services.user_service import user_service
 from data.services.guild_service import guild_service
-
 
 class Xp(commands.Cog):
     def __init__(self, bot):

@@ -1,13 +1,8 @@
+import discord
+from discord.ext import commands
 import os
 import signal
 import sys
-
-signal.signal(signal.SIGINT, lambda x, y: sys.exit(0))
-
-import discord
-from discord.ext import commands
-from discord.interactions import Interaction
-
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import db
@@ -15,6 +10,8 @@ from utils.mod.modactions_helpers import BanCache
 from utils.permissions.permissions import permissions
 from utils.logger import logger
 from utils.tasks import Tasks
+
+signal.signal(signal.SIGINT, lambda x, y: sys.exit(0))
 
 initial_extensions = [
         "cogs.commands.info.stats",
@@ -36,7 +33,6 @@ intents.messages = True
 intents.presences = True
 mentions = discord.AllowedMentions(everyone=False, users=True, roles=False)
 
-
 class Bot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -46,7 +42,7 @@ class Bot(commands.Bot):
         if cfg and db and permissions:
             logger.info("Presetup phase completed! Connecting to Discord...")
 
-    async def get_application_context(self, interaction: Interaction, *, cls=BlooContext) -> BlooContext:
+    async def get_application_context(self, interaction: discord.Interaction, *, cls=BlooContext) -> BlooContext:
         return await super().get_application_context(interaction, cls=cls)
 
 bot = Bot(intents=intents, allowed_mentions=mentions)

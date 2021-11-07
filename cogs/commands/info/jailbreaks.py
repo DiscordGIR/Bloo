@@ -1,12 +1,11 @@
+import discord
+from discord.commands import slash_command, Option
+from discord.ext import commands
 import time
 import json
 import aiohttp
 import io
 from colorthief import ColorThief
-
-import discord
-from discord.commands import slash_command, Option
-from discord.ext import commands
 from utils.permissions.checks import whisper
 from utils.config import cfg
 from utils.context import BlooContext

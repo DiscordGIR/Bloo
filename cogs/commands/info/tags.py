@@ -1,21 +1,16 @@
-import traceback
-from io import BytesIO
-
-from data.model.tag import Tag
-from data.services.guild_service import guild_service
-from discord import Color, Embed
+import discord
 from discord.commands import Option, slash_command
 from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
-from discord.file import File
-from discord.utils import MISSING
+import traceback
+from io import BytesIO
+from data.model.tag import Tag
+from data.services.guild_service import guild_service
 from utils.autocompleters.tags import tags_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
-from utils.permissions.checks import (PermissionsFailure,
-                                      genius_or_submod_and_up)
+from utils.permissions.checks import (PermissionsFailure, genius_or_submod_and_up)
 from utils.permissions.slash_perms import slash_perms
-
 
 class Tags(commands.Cog):
     def __init__(self, bot):
@@ -39,7 +34,7 @@ class Tags(commands.Cog):
         # if the Tag has an image, add it to the embed
         file = tag.image.read()
         if file is not None:
-            file = File(BytesIO(
+            file = discord.File(BytesIO(
                 file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
 
         await ctx.respond(embed=await self.prepare_tag_embed(tag), file=file)
@@ -102,9 +97,9 @@ class Tags(commands.Cog):
         
         _file = tag.image.read()
         if _file is not None:
-            _file = File(BytesIO(_file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
+            _file = discord.File(BytesIO(_file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
 
-        await ctx.respond(f"Added new tag!", file=_file or MISSING, embed=await self.prepare_tag_embed(tag))
+        await ctx.respond(f"Added new tag!", file=_file or discord.MISSING, embed=await self.prepare_tag_embed(tag))
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Delete a tag", permissions=slash_perms.genius_or_submod_and_up())
@@ -144,10 +139,10 @@ class Tags(commands.Cog):
         discord.Embed
             The embed we want to send
         """
-        embed = Embed(title=tag.name)
+        embed = discord.Embed(title=tag.name)
         embed.description = tag.content
         embed.timestamp = tag.added_date
-        embed.color = Color.blue()
+        embed.color = discord.Color.blue()
 
         if tag.image.read() is not None:
             embed.set_image(url="attachment://image.gif" if tag.image.content_type ==

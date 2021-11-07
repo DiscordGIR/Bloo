@@ -1,18 +1,21 @@
-import discord
-from discord.commands import errors, slash_command, Option, message_command, user_command
-from discord.utils import format_dt
-from discord.ext import commands
 import traceback
 from datetime import datetime
 from math import floor
 from typing import Union
+
+import discord
 from data.services.user_service import user_service
-from utils.menu import Menu
-from utils.permissions.checks import PermissionsFailure, whisper
+from discord.commands import (Option, message_command, slash_command,
+                              user_command)
+from discord.ext import commands
+from discord.utils import format_dt
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.permissions.converters  import user_resolver
+from utils.menu import Menu
+from utils.permissions.checks import PermissionsFailure, whisper
+from utils.permissions.converters import user_resolver
 from utils.permissions.permissions import permissions
+
 
 async def format_xptop_page(entry, all_pages, current_page, ctx):
     embed = discord.Embed(title=f'Leaderboard', color=discord.Color.blurple())
@@ -27,12 +30,13 @@ async def format_xptop_page(entry, all_pages, current_page, ctx):
                 trophy = ':second_place:'
             if i == entry[2][0]:
                 trophy = ':third_place:'
-            
-            
-        embed.add_field(name=f"#{i+1} - Level {user.level}", value=f"{trophy} {member.mention}", inline=False)
-            
+
+        embed.add_field(name=f"#{i+1} - Level {user.level}",
+                        value=f"{trophy} {member.mention}", inline=False)
+
     embed.set_footer(text=f"Page {current_page} of {len(all_pages)}")
     return embed
+
 
 async def format_cases_page(entry, all_pages, current_page, ctx):
     page_count = 0
@@ -46,11 +50,12 @@ async def format_cases_page(entry, all_pages, current_page, ctx):
     }
     user = ctx.case_user
     u = user_service.get_user(user.id)
-    
+
     for page in all_pages:
         for case in page:
             page_count = page_count + 1
-    embed = discord.Embed(title=f'Cases - {u.warn_points} warn points', color=discord.Color.blurple())
+    embed = discord.Embed(
+        title=f'Cases - {u.warn_points} warn points', color=discord.Color.blurple())
     embed.set_author(name=user, icon_url=user.avatar)
     for case in entry:
         timestamp = case.date
@@ -63,13 +68,15 @@ async def format_cases_page(entry, all_pages, current_page, ctx):
             else:
                 embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {formatted}', inline=True)
         elif case._type == "MUTE" or case._type == "REMOVEPOINTS":
-                embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**{pun_map[case._type]}**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {formatted}', inline=True)
+            embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**{pun_map[case._type]}**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {formatted}', inline=True)
         elif case._type in pun_map:
             embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**{pun_map[case._type]} on**: {formatted}', inline=True)
         else:
             embed.add_field(name=f'{await determine_emoji(case._type)} Case #{case._id}', value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {formatted}', inline=True)
-    embed.set_footer(text=f"Page {current_page} of {len(all_pages)} - newest cases first ({page_count} total cases)")
+    embed.set_footer(
+        text=f"Page {current_page} of {len(all_pages)} - newest cases first ({page_count} total cases)")
     return embed
+
 
 async def determine_emoji(type):
     emoji_dict = {
@@ -95,12 +102,12 @@ class UserInfo(commands.Cog):
     @slash_command(guild_ids=[cfg.guild_id], description="Get info of another user or yourself.")
     async def userinfo(self, ctx: BlooContext, user: Option(discord.Member, description="User to get info of", required=False)) -> None:
         await self.handle_userinfo(ctx, user)
-    
+
     @whisper()
     @user_command(guild_ids=[cfg.guild_id], name="Userinfo")
     async def userinfo_rc(self, ctx: BlooContext, user: discord.Member) -> None:
         await self.handle_userinfo(ctx, user)
-    
+
     @whisper()
     @message_command(guild_ids=[cfg.guild_id], name="Userinfo")
     async def userinfo_msg(self, ctx: BlooContext, message: discord.Message) -> None:
@@ -115,7 +122,8 @@ class UserInfo(commands.Cog):
 
         # is the invokee in the guild?
         if isinstance(user, discord.User) and not is_mod:
-            raise commands.BadArgument("You do not have permission to use this command.")
+            raise commands.BadArgument(
+                "You do not have permission to use this command.")
 
         # non-mods are only allowed to request their own userinfo
         if not is_mod and user.id != ctx.author.id:
@@ -218,7 +226,8 @@ class UserInfo(commands.Cog):
         # fetch user profile from database
         results = user_service.get_user(user.id)
 
-        embed = discord.Embed(title="Warn Points", color=discord.Color.orange())
+        embed = discord.Embed(title="Warn Points",
+                              color=discord.Color.orange())
         embed.set_thumbnail(url=user.avatar)
         embed.add_field(
             name="Member", value=f'{user.mention}\n{user}\n({user.id})', inline=True)
@@ -227,7 +236,7 @@ class UserInfo(commands.Cog):
         embed.set_footer(text=f"Requested by {ctx.author}")
 
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
-    
+
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Show the XP leaderboard.")
     async def xptop(self, ctx: BlooContext):
@@ -242,10 +251,12 @@ class UserInfo(commands.Cog):
             for i in range(0, len(lst), n):
                 yield lst[i:i + n]
         results = enumerate(user_service.leaderboard())
-        results = [ (i, m) for (i, m) in results if ctx.guild.get_member(m._id) is not None][0:100]
-        menu = Menu(list(chunks(results, 10)), ctx.channel, format_xptop_page, True, ctx, True)
+        results = [(i, m) for (i, m) in results if ctx.guild.get_member(
+            m._id) is not None][0:100]
+        menu = Menu(list(chunks(results, 10)), ctx.channel,
+                    format_xptop_page, True, ctx, True)
         await menu.init_menu()
-    
+
     @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's cases")
     async def cases(self, ctx: BlooContext, user: Option(discord.Member, description="Member to show cases of", required=False)):
         """Show list of cases of a user (mod only)
@@ -257,7 +268,7 @@ class UserInfo(commands.Cog):
         user : typing.Union[discord.Member,int]
             "User we want to get cases of, doesn't have to be in guild"
         """
-        
+
         # if an invokee is not provided in command, call command on the invoker
         # (get invoker's cases)
         user = user or ctx.author
@@ -282,7 +293,7 @@ class UserInfo(commands.Cog):
                 return await ctx.send_error(f'User with ID {user.id} had no cases.')
             else:
                 return await ctx.send_error(f'{user.mention} had no cases.')
-        
+
         # filter out unmute cases because they are irrelevant
         cases = [case for case in results.cases if case._type != "UNMUTE"]
         # reverse so newest cases are first
@@ -295,7 +306,8 @@ class UserInfo(commands.Cog):
 
         ctx.case_user = user
 
-        menu = Menu(list(chunks(cases, 10)), ctx.channel, format_cases_page, True, ctx, True)
+        menu = Menu(list(chunks(cases, 10)), ctx.channel,
+                    format_cases_page, True, ctx, True)
         await menu.init_menu()
 
     @cases.error
@@ -306,9 +318,9 @@ class UserInfo(commands.Cog):
     @xp.error
     @xptop.error
     async def info_error(self,  ctx: BlooContext, error):
-        if isinstance(error, errors.ApplicationCommandInvokeError):
+        if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original
-        
+
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)
             or isinstance(error, commands.BadArgument)

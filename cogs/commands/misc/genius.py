@@ -4,7 +4,6 @@ import traceback
 import discord
 from data.services.guild_service import guild_service
 from discord.commands import slash_command
-from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
@@ -76,7 +75,7 @@ class Genius(commands.Cog):
 
     @commonissue.error
     async def info_error(self,  ctx: BlooContext, error):
-        if isinstance(error, ApplicationCommandInvokeError):
+        if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original
 
         if (isinstance(error, commands.MissingRequiredArgument)

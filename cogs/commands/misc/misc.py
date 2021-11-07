@@ -1,26 +1,26 @@
-from discord.commands import slash_command, Option
-from discord.ext import commands
-from discord.ext.commands import PartialEmojiConverter, PartialEmojiConversionFailure
-
 import base64
 import datetime
+import io
 import json
 import traceback
-import io
+
+import aiohttp
 import discord
 import humanize
 import pytimeparse
-import aiohttp
 from colorthief import ColorThief
-from PIL import Image
 from data.services.guild_service import guild_service
+from discord.commands import Option, slash_command
+from discord.ext import commands
+from PIL import Image
 from utils.async_cache import async_cacher
 from utils.autocompleters.jailbreaks import jb_autocomplete
-from utils.database import Guild
 from utils.config import cfg
 from utils.context import BlooContext
+from utils.database import Guild
 from utils.permissions.checks import PermissionsFailure, whisper
 from utils.permissions.permissions import permissions
+
 
 @async_cacher()
 async def get_jailbreaks_jba():
@@ -32,6 +32,7 @@ async def get_jailbreaks_jba():
                 res_apps = json.loads(data)
     return res_apps
 
+
 @async_cacher()
 async def get_jailbreaks():
     response = {}
@@ -42,21 +43,24 @@ async def get_jailbreaks():
                 response = json.loads(data)
     return response
 
+
 async def iterate_apps(query) -> dict:
     apps = await get_jailbreaks_jba()
     for possibleApp in apps:
         if possibleApp.get('name').lower() == query.lower().replace("œ", "oe"):
             return possibleApp
 
+
 class PFPView(discord.ui.View):
     def __init__(self, ctx: BlooContext):
         super().__init__(timeout=30)
         self.ctx = ctx
-    
+
     async def on_timeout(self):
         for child in self.children:
             child.disabled = True
         await self.ctx.respond_or_edit(view=self)
+
 
 class PFPButton(discord.ui.Button):
     def __init__(self, ctx: BlooContext, member: discord.Member):
@@ -67,7 +71,7 @@ class PFPButton(discord.ui.Button):
 
     async def callback(self, interaction: discord.Interaction):
         if interaction.user != self.ctx.author:
-            return 
+            return
         if not self.other:
             avatar = self.member.guild_avatar
             self.other = not self.other
@@ -92,11 +96,11 @@ class PFPButton(discord.ui.Button):
         await interaction.response.edit_message(embed=embed)
 
 
-        
 class Misc(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.spam_cooldown = commands.CooldownMapping.from_cooldown(3, 15.0, commands.BucketType.channel)
+        self.spam_cooldown = commands.CooldownMapping.from_cooldown(
+            3, 15.0, commands.BucketType.channel)
 
         # self.CIJ_KEY = os.environ.get('CIJ_KEY')
         # self.cij_baseurl = "https://canijailbreak2.com/v1/pls"
@@ -106,9 +110,9 @@ class Misc(commands.Cog):
             with open('emojis.json') as f:
                 self.emojis = json.loads(f.read())
         except:
-            raise Exception("Could not find emojis.json. Make sure to run scrape_emojis.py")
-        
-    
+            raise Exception(
+                "Could not find emojis.json. Make sure to run scrape_emojis.py")
+
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Send yourself a reminder after a given time gap")
     async def remindme(self, ctx: BlooContext, dur: str, *, reminder: str):
@@ -126,8 +130,9 @@ class Misc(commands.Cog):
         now = datetime.datetime.now()
         delta = pytimeparse.parse(dur)
         if delta is None:
-            raise commands.BadArgument("Please give me a valid time to remind you! (i.e 1h, 30m)")
-        
+            raise commands.BadArgument(
+                "Please give me a valid time to remind you! (i.e 1h, 30m)")
+
         time = now + datetime.timedelta(seconds=delta)
         if time < now:
             raise commands.BadArgument("Time has to be in the future >:(")
@@ -136,7 +141,8 @@ class Misc(commands.Cog):
         ctx.tasks.schedule_reminder(ctx.author.id, reminder, time)
         natural_time = humanize.naturaldelta(
             delta, minimum_unit='seconds')
-        embed = discord.Embed(title="Reminder set", color = discord.Color.random(), description=f"We'll remind you in {natural_time}")
+        embed = discord.Embed(title="Reminder set", color=discord.Color.random(
+        ), description=f"We'll remind you in {natural_time}")
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Post large version of a given emoji")
@@ -146,17 +152,18 @@ class Misc(commands.Cog):
         if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id != bot_chan:
             # TODO: add ratelimit
             ...
-            
+
         # is this a regular Unicode emoji?
         try:
-            em = await PartialEmojiConverter().convert(ctx, emoji)
-        except PartialEmojiConversionFailure:
+            em = await commands.PartialEmojiConverter().convert(ctx, emoji)
+        except commands.PartialEmojiConversionFailure:
             em = emoji
         if isinstance(em, str):
             async with ctx.typing():
                 emoji_url_file = self.emojis.get(em)
                 if emoji_url_file is None:
-                    raise commands.BadArgument("Couldn't find a suitable emoji.")
+                    raise commands.BadArgument(
+                        "Couldn't find a suitable emoji.")
 
             im = Image.open(io.BytesIO(base64.b64decode(emoji_url_file)))
             image_conatiner = io.BytesIO()
@@ -184,7 +191,7 @@ class Misc(commands.Cog):
             embed.description = f"View As\n {'  '.join([fmt(format_) for format_ in animated])}"
         else:
             embed.description = f"View As\n {'  '.join([fmt(format_) for format_ in not_animated])}"
-        
+
         embed.set_image(url=member.avatar.replace(size=4096))
         embed.color = discord.Color.random()
         embed.set_footer(text=f"Requested by {ctx.author}")
@@ -194,7 +201,7 @@ class Misc(commands.Cog):
             view.add_item(PFPButton(ctx, member))
 
         view.message = await ctx.respond(embed=embed, ephemeral=ctx.whisper, view=view)
-        
+
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info about a jailbreak.")
     async def jailbreak(self, ctx: BlooContext, name: Option(str, description="Name of the jailbreak", autocomplete=jb_autocomplete, required=True), whisper: Option(bool, description="Whisper? (No by default)", required=False)) -> None:
@@ -207,24 +214,33 @@ class Misc(commands.Cog):
         try:
             for object in response[f'{name.lower().replace("œ", "oe")}']:
                 view = None
-                embed = discord.Embed(title=object['Name'], color=discord.Color.random())
-                embed.add_field(name="Version", value=object['LatestVersion'], inline=True)
-                embed.add_field(name="Compatible with", value=object['Versions'], inline=True)
-                embed.add_field(name="Type", value=object['Type'], inline=False)
-                embed.add_field(name="Website", value=object['Website'], inline=False)
+                embed = discord.Embed(
+                    title=object['Name'], color=discord.Color.random())
+                embed.add_field(
+                    name="Version", value=object['LatestVersion'], inline=True)
+                embed.add_field(name="Compatible with",
+                                value=object['Versions'], inline=True)
+                embed.add_field(
+                    name="Type", value=object['Type'], inline=False)
+                embed.add_field(
+                    name="Website", value=object['Website'], inline=False)
                 if object.get('Guide') is not None:
-                    embed.add_field(name="Guide", value=object['Guide'], inline=False)
+                    embed.add_field(
+                        name="Guide", value=object['Guide'], inline=False)
                 if object.get('Notes') is not None:
-                    embed.add_field(name="Notes", value=object['Notes'], inline=False)
+                    embed.add_field(
+                        name="Notes", value=object['Notes'], inline=False)
                 jba = await iterate_apps(object.get('Name'))
                 if jba is not None:
                     view = discord.ui.View()
-                    view.add_item(discord.ui.Button(label='Install with Jailbreaks.app', url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
+                    view.add_item(discord.ui.Button(label='Install with Jailbreaks.app',
+                                  url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
                 if object.get('Icon') is not None:
                     async with aiohttp.ClientSession() as session:
                         async with session.get(object.get('Icon')) as icon:
                             color = ColorThief(io.BytesIO(await icon.read())).get_color(quality=1)
-                            embed.color = discord.Color.from_rgb(color[0], color[1], color[2])
+                            embed.color = discord.Color.from_rgb(
+                                color[0], color[1], color[2])
                     embed.set_thumbnail(url=object.get('Icon'))
                 if view is not None:
                     await ctx.respond_or_edit(embed=embed, ephemeral=should_whisper, view=view)
@@ -233,11 +249,13 @@ class Misc(commands.Cog):
         except:
             await ctx.send_error("Sorry, I couldn't find any jailbreaks with that name.")
 
-    
     @jailbreak.error
     @remindme.error
     @jumbo.error
     async def info_error(self, ctx: BlooContext, error):
+        if isinstance(error, discord.ApplicationCommandInvokeError):
+            error = error.original
+
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)
             or isinstance(error, commands.BadArgument)
@@ -250,6 +268,7 @@ class Misc(commands.Cog):
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
             traceback.print_exc()
+
 
 def setup(bot):
     bot.add_cog(Misc(bot))

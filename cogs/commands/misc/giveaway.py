@@ -3,16 +3,15 @@ import random
 import traceback
 
 import discord
-from discord.utils import format_dt
 import humanize
 import pytimeparse
 from data.model.giveaway import Giveaway as GiveawayDB
 from data.services.guild_service import guild_service
 from discord.commands import Option, slash_command
-from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
+from discord.utils import format_dt
 from utils.config import cfg
-from utils.context import BlooContext, PromptData
+from utils.context import BlooContext
 from utils.permissions.checks import PermissionsFailure, admin_and_up
 from utils.permissions.slash_perms import slash_perms
 from utils.tasks import end_giveaway
@@ -26,29 +25,6 @@ class Giveaway(commands.Cog):
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Start a giveaway.", permissions=slash_perms.admin_and_up())
     async def giveawaystart(self, ctx: BlooContext, name: Option(str, description="Name of the giveaway"), sponsor: Option(discord.Member, description="Who sponsored the giveaway"), time: Option(str, description="How long should the giveaway last?"), winners: Option(int, description="How many winners?"), channel: Option(discord.TextChannel, description="Where to post the giveaway")):
-
-        # store responses for prompts in one place
-        # responses = {
-        #     'name': None,
-        #     'sponsor': sponsor,
-        #     'time': pytimeparse.parse(time) if time is not None else None,
-        #     'winners': None if winners < 1 else winners,
-        #     'channel': channel
-        # }
-
-        # for response in responses:
-        #     if responses[response] is None:
-        #         res = await ctx.prompt(prompts[response])
-        #         if res is None:
-        #             await ctx.send("Giveaway cancelled.")
-        #             return
-
-        #         if response == 'winners' and res < 1:
-        #             await ctx.send_warning("Can't have less than 1 winner!")
-        #             return
-
-        #         responses[response] = res
-
         delta = pytimeparse.parse(time)
         if delta is None:
             raise commands.BadArgument("Invalid time passed in.")
@@ -170,7 +146,7 @@ class Giveaway(commands.Cog):
     @giveawayreroll.error
     @giveawayend.error
     async def info_error(self,  ctx: BlooContext, error):
-        if isinstance(error, ApplicationCommandInvokeError):
+        if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original
 
         if (isinstance(error, commands.MissingRequiredArgument)

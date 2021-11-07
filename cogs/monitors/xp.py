@@ -1,10 +1,12 @@
-import discord
-from discord.ext import commands
 import math
 from random import randint
-from utils.config import cfg
-from data.services.user_service import user_service
+
+import discord
 from data.services.guild_service import guild_service
+from data.services.user_service import user_service
+from discord.ext import commands
+from utils.config import cfg
+
 
 class Xp(commands.Cog):
     def __init__(self, bot):
@@ -36,7 +38,7 @@ class Xp(commands.Cog):
             return
         if message.author.bot:
             return
-        
+
         db_guild = guild_service.get_guild()
         if message.channel.id == db_guild.channel_botspam:
             return
@@ -46,7 +48,8 @@ class Xp(commands.Cog):
             return
 
         xp_to_add = randint(0, 11)
-        new_xp, level_before = user_service.inc_xp(message.author.id, xp_to_add)
+        new_xp, level_before = user_service.inc_xp(
+            message.author.id, xp_to_add)
         new_level = self.get_level(new_xp)
 
         if new_level > level_before:
@@ -71,11 +74,11 @@ class Xp(commands.Cog):
     async def add_new_roles(self, obj, roles_to_add):
         if roles_to_add is None:
             return
-        
+
         member = obj
         if isinstance(obj, discord.Message):
             member = obj.author
-        
+
         for role in roles_to_add:
             role = member.guild.get_role(role)
             if role not in member.roles:

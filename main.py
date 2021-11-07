@@ -16,10 +16,10 @@ initial_extensions = [
         "cogs.commands.info.devices",
         "cogs.commands.info.userinfo",
         "cogs.commands.info.tags",
-        "cogs.commands.misc.genius"
-        "cogs.commands.misc.giveaway"
+        "cogs.commands.misc.genius",
+        "cogs.commands.misc.giveaway",
         "cogs.commands.misc.canister",
-        "cogs.commands.misc.subnews"
+        "cogs.commands.misc.subnews",
         "cogs.commands.mod.modactions",
         "cogs.monitors.filter",
         "cogs.monitors.logging",

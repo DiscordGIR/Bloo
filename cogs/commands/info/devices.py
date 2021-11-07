@@ -1,15 +1,19 @@
+import json
+import re
+import traceback
+
+import aiohttp
 import discord
 from discord.commands import Option, slash_command
 from discord.ext import commands
-import json
-import aiohttp
-import re
-import traceback
 from utils.autocompleters.devices import device_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.permissions.checks import (PermissionsFailure, always_whisper, ensure_invokee_role_lower_than_bot, whisper)
+from utils.permissions.checks import (PermissionsFailure, always_whisper,
+                                      ensure_invokee_role_lower_than_bot,
+                                      whisper)
 from utils.views.devices import Confirm, FirmwareDropdown
+
 
 class Devices(commands.Cog):
     def __init__(self, bot):
@@ -180,7 +184,8 @@ class Devices(commands.Cog):
         if not re.match(self.devices_test, ctx.author.display_name):
             raise commands.BadArgument("You don't have a device nickname set!")
 
-        new_nick = re.sub(self.devices_remove_re, "", ctx.author.display_name).strip()
+        new_nick = re.sub(self.devices_remove_re, "",
+                          ctx.author.display_name).strip()
         if len(new_nick) > 32:
             raise commands.BadArgument("Nickname too long")
 
@@ -190,12 +195,12 @@ class Devices(commands.Cog):
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="List all devices you can set your nickname to")
     async def listdevices(self, ctx: BlooContext) -> None:
-    #     """List all possible devices you can set your nickname to.
+        #     """List all possible devices you can set your nickname to.
 
-    #     Example usage
-    #     -------------
-    #     !listdevices
-    #     """
+        #     Example usage
+        #     -------------
+        #     !listdevices
+        #     """
 
         devices_dict = {
             'iPhone': set(),
@@ -241,7 +246,7 @@ class Devices(commands.Cog):
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original
-        
+
         if (isinstance(error, commands.MissingRequiredArgument)
             or isinstance(error, PermissionsFailure)
             or isinstance(error, commands.BadArgument)

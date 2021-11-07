@@ -21,6 +21,7 @@ initial_extensions = [
         "cogs.commands.misc.giveaway",
         "cogs.commands.misc.canister",
         "cogs.commands.misc.subnews",
+        "cogs.commands.mod.antiraid",
         "cogs.commands.mod.modactions",
         "cogs.monitors.filter",
         "cogs.monitors.logging",

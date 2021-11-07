@@ -1,15 +1,11 @@
 
-import functools
 import json
 import re
 import traceback
-from collections import OrderedDict
 
 import aiohttp
-from discord.colour import Color
+import discord
 from discord.commands.commands import Option, slash_command
-from discord.commands.errors import ApplicationCommandInvokeError
-from discord.embeds import Embed
 from discord.ext import commands
 from utils.autocompleters.devices import device_autocomplete
 from utils.config import cfg
@@ -232,8 +228,8 @@ class Devices(commands.Cog):
         # stupid ipsw.me api doesn't have these devices
         devices_dict["iPhone"].add("iPhone SE 2")
 
-        embed = Embed(title="Devices list")
-        embed.color = Color.blurple()
+        embed = discord.Embed(title="Devices list")
+        embed.color = discord.Color.blurple()
         for key in devices_dict.keys():
             temp = list(devices_dict[key])
             temp.sort()
@@ -248,7 +244,7 @@ class Devices(commands.Cog):
     @adddevice.error
     @listdevices.error
     async def info_error(self,  ctx: BlooContext, error):
-        if isinstance(error, ApplicationCommandInvokeError):
+        if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original
         
         if (isinstance(error, commands.MissingRequiredArgument)

@@ -1,23 +1,22 @@
+from discord.commands.context import AutocompleteContext
 import json
 import re
-
 import aiohttp
-from discord.commands.context import AutocompleteContext
 from utils.async_cache import async_cacher
 
-
 @async_cacher()
-async def get_apps():
+async def get_jailbreaks():
     res_apps = []
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://jailbreaks.app/json/apps.json") as resp:
+        async with session.get("https://assets.stkc.win/jailbreaks.json") as resp:
             if resp.status == 200:
                 data = await resp.text()
-                apps = json.loads(data)
+                jailbreaks = json.loads(data)
 
                 # try to find an app with the name given in command
-                for d in apps:
-                    name = re.sub(r'\((.*?)\)', "", d["name"])
+                for d in jailbreaks:
+                    jb = jailbreaks[d][0]
+                    name = re.sub(r'\((.*?)\)', "", jb["Name"])
                     # get rid of '[ and ']'
                     name = name.replace('[', '')
                     name = name.replace(']', '')
@@ -28,7 +27,7 @@ async def get_apps():
     return res_apps
 
 
-async def apps_autocomplete(ctx: AutocompleteContext):
-    apps = await get_apps()
+async def jb_autocomplete(ctx: AutocompleteContext):
+    apps = await get_jailbreaks()
     apps.sort()
     return [app for app in apps if app.lower().startswith(ctx.value.lower())][:25]

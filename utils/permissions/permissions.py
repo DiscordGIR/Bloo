@@ -1,11 +1,9 @@
-from typing import List
 import discord
+from discord.commands.permissions import Permission
+from typing import List
 from data.model.guild import Guild
 from data.services.guild_service import guild_service
-from discord.commands.permissions import Permission
-
 from utils.config import cfg
-
 
 class Permissions:
     """A way of calculating a user's permissions.

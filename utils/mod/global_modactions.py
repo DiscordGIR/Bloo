@@ -1,6 +1,5 @@
-from datetime import datetime, timedelta
-
 import humanize
+from datetime import datetime, timedelta
 from data.model.case import Case
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service

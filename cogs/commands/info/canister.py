@@ -1,19 +1,18 @@
-from discord.commands.commands import Option, slash_command
-from discord.ext import commands
-from utils.context import BlooContext
-from utils.menu import Menu
-from utils.permissions.permissions import permissions
-from utils.database import Guild
-from utils.context import BlooContext
-from utils.config import cfg
-from datetime import datetime
-from colorthief import ColorThief
-import io
 import discord
+from discord.commands import Option, slash_command
+from discord.ext import commands
+import io
+import json
 import re
 import urllib
-import json
 import aiohttp
+from datetime import datetime
+from colorthief import ColorThief
+from utils.config import cfg
+from utils.context import BlooContext
+from utils.database import Guild
+from utils.menu import Menu
+from utils.permissions.permissions import permissions
 
 async def format_page(entry, all_pages, current_page, ctx):
     titleKey = entry.get('name')
@@ -96,7 +95,7 @@ class Canister(commands.Cog):
         ctx = await self.bot.get_context(message)
         await canister(self.bot, ctx, False, False, search_term)
             
-    @slash_command(guild_ids=[cfg.guild_id], description="Add device to nickname")
+    @slash_command(guild_ids=[cfg.guild_id], description="Search for a tweak")
     async def tweak(self, ctx: BlooContext, query: Option(str, description="Tweak to search for."), whisper: Option(bool, description="Whisper? (No by default)", required=False)) -> None:
         should_whisper = False
         if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == Guild.channel_general:

@@ -1,19 +1,15 @@
-from itertools import takewhile
 import discord
-from discord.colour import Color
-from discord.embeds import Embed
-from data.services.guild_service import guild_service
+from discord import ui
 from discord.commands import Option, slash_command
-from discord.enums import ButtonStyle
 from discord.ext import commands
-from discord.interactions import Interaction
+import traceback
+import re
+from itertools import takewhile
+from data.services.guild_service import guild_service
 from utils.permissions.checks import PermissionsFailure, admin_and_up
 from utils.config import cfg
 from utils.context import BlooContext, PromptData, PromptDataReaction
-from utils.permissions.slash_perms  import slash_perms
-from discord import ui
-import traceback
-import re
+from utils.permissions.slash_perms import slash_perms
 
 def derive_label(string):
     enders = {
@@ -31,9 +27,9 @@ def derive_label(string):
 
 class ReactionRoleButton(ui.Button):
     def __init__(self, role: discord.Role, emoji: discord.Emoji):
-        super().__init__(label=derive_label(role.name), style=ButtonStyle.primary, emoji=emoji, custom_id=str(role.id))
+        super().__init__(label=derive_label(role.name), style=discord.ButtonStyle.primary, emoji=emoji, custom_id=str(role.id))
     
-    async def callback(self, interaction: Interaction):
+    async def callback(self, interaction: discord.Interaction):
         user = interaction.user
         role = interaction.guild.get_role(int(self.custom_id))
         if role is None:
@@ -72,7 +68,7 @@ class RoleAssignButtons(commands.Cog):
         if channel is None:
             raise commands.BadArgument("Role assignment channel not found!")
 
-        embed = Embed(description="Click the buttons to opt-in to notifications of your choice. ", color=Color.blurple())
+        embed = discord.Embed(description="Click the buttons to opt-in to notifications of your choice. ", color=discord.Color.blurple())
         await channel.send(embed=embed)
         await ctx.send_success(f"Posted in {channel.mention}!")
 
@@ -233,9 +229,7 @@ class RoleAssignButtons(commands.Cog):
             for r in reactions:
                 text += f"\n{r} <@&{reactions[r]}>"
 
-        prompt_role = PromptData(value_name="role to give", 
-                                            description=text, 
-                                            convertor=commands.converter.RoleConverter().convert)
+        prompt_role = PromptData(value_name="role to give", description=text, convertor=commands.converter.RoleConverter().convert)
         
         return await ctx.prompt(prompt_role)
 

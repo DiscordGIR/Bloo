@@ -14,18 +14,19 @@ from utils.tasks import Tasks
 signal.signal(signal.SIGINT, lambda x, y: sys.exit(0))
 
 initial_extensions = [
-    "cogs.commands.info.stats",
-    "cogs.commands.info.devices",
-    "cogs.commands.info.userinfo",
-    "cogs.commands.info.tags",
-    "cogs.commands.misc.canister",
-    "cogs.commands.mod.modactions",
-    "cogs.commands.misc.misc",
-    "cogs.monitors.filter",
-    "cogs.monitors.logging",
-    "cogs.monitors.role_assignment_buttons",
-    "cogs.monitors.xp",
-]
+        "cogs.commands.info.stats",
+        "cogs.commands.info.devices",
+        "cogs.commands.info.userinfo",
+        "cogs.commands.info.tags",
+        "cogs.commands.info.jailbreaks",
+        "cogs.commands.info.canister",
+        "cogs.commands.mod.modactions",
+        "cogs.monitors.filter",
+        "cogs.monitors.logging",
+        "cogs.monitors.role_assignment_buttons",
+        "cogs.monitors.xp",
+        "cogs.commands.misc.giveaway"
+    ]
 intents = discord.Intents.default()
 intents.members = True
 intents.messages = True

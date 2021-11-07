@@ -1,33 +1,32 @@
+import os
+
 import discord
 from discord.ext import commands
-import os
-import signal
-import sys
+
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import db
+from utils.logger import logger
 from utils.mod.modactions_helpers import BanCache
 from utils.permissions.permissions import permissions
-from utils.logger import logger
 from utils.tasks import Tasks
-
-signal.signal(signal.SIGINT, lambda x, y: sys.exit(0))
 
 initial_extensions = [
         "cogs.commands.info.stats",
         "cogs.commands.info.devices",
         "cogs.commands.info.userinfo",
         "cogs.commands.info.tags",
-        "cogs.commands.info.canister",
+        "cogs.commands.misc.genius"
+        "cogs.commands.misc.giveaway"
+        "cogs.commands.misc.canister",
+        "cogs.commands.misc.subnews"
         "cogs.commands.mod.modactions",
         "cogs.monitors.filter",
         "cogs.monitors.logging",
         "cogs.monitors.role_assignment_buttons",
         "cogs.monitors.xp",
-        "cogs.commands.misc.genius"
-        "cogs.commands.misc.giveaway"
-        "cogs.commands.misc.subnews"
-    ]
+]
+
 intents = discord.Intents.default()
 intents.members = True
 intents.messages = True

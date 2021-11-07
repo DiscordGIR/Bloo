@@ -1,5 +1,6 @@
 import discord
 from discord.ext.commands import BadArgument
+from discord.utils import MISSING
 import pytimeparse
 import asyncio
 from datetime import datetime, timedelta
@@ -45,15 +46,15 @@ class BlooContext(discord.context.ApplicationContext):
 
     async def send_success(self, description: str, title: str = ""):
         embed = discord.Embed(title=title, description=description,  color=discord.Color.dark_green())
-        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=discord.MISSING)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=MISSING)
     
     async def send_warning(self, description: str, title: str = ""):
         embed = discord.Embed(title=title, description=description,  color=discord.Color.orange())
-        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=discord.MISSING)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=MISSING)
     
     async def send_error(self, description):
         embed = discord.Embed(title=":(\nYour command ran into a problem", description=description,  color=discord.Color.red())
-        return await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=discord.MISSING)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=MISSING)
         
     async def prompt(self, info: PromptData):
         def wait_check(m):

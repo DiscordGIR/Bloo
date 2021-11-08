@@ -128,5 +128,50 @@ class GuildService:
     def set_spam_mode(self, mode) -> None:
         Guild.objects(_id=cfg.guild_id).update_one(set__ban_today_spam_accounts=mode)
 
+    def add_filtered_word(self, fw: FilterWord) -> None:
+        existing = self.get_guild().filter_words.filter(word=fw.word)
+        if(len(existing) > 0):
+            return False
+
+        Guild.objects(_id=cfg.guild_id).update_one(push__filter_words=fw)
+        return True
+
+    def remove_filtered_word(self, word: str):
+        return Guild.objects(_id=cfg.guild_id).update_one(pull__filter_words__word=FilterWord(word=word).word)
+
+    def update_filtered_word(self, word: FilterWord):
+        return Guild.objects(_id=cfg.guild_id, filter_words__word=word.word).update_one(set__filter_words__S=word)
+
+    def add_whitelisted_guild(self, id: int):
+        g = Guild.objects(_id=cfg.guild_id)
+        g2 = g.first()
+        if id not in g2.filter_excluded_guilds:
+            g.update_one(push__filter_excluded_guilds=id)
+            return True
+        return False
+
+    def remove_whitelisted_guild(self, id: int):
+        g = Guild.objects(_id=cfg.guild_id)
+        g2 = g.first()
+        if id in g2.filter_excluded_guilds:
+            g.update_one(pull__filter_excluded_guilds=id)
+            return True
+        return False
+
+    def add_ignored_channel(self, id: int):
+        g = Guild.objects(_id=cfg.guild_id)
+        g2 = g.first()
+        if id not in g2.filter_excluded_channels:
+            g.update_one(push__filter_excluded_channels=id)
+            return True
+        return False
+
+    def remove_ignored_channel(self, id: int):
+        g = Guild.objects(_id=cfg.guild_id)
+        g2 = g.first()
+        if id in g2.filter_excluded_channels:
+            g.update_one(pull__filter_excluded_channels=id)
+            return True
+        return False
 
 guild_service = GuildService()

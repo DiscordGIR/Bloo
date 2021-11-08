@@ -1,0 +1,332 @@
+import traceback
+
+import discord
+from data.services.guild_service import guild_service
+from data.services.user_service import user_service
+from discord.commands import Option, slash_command
+from discord.ext import commands
+from utils.config import cfg
+from utils.context import BlooContext
+from utils.permissions.checks import (PermissionsFailure, admin_and_up,
+                                      mod_and_up)
+from data.model.filterword import FilterWord
+from utils.permissions.slash_perms import slash_perms
+from utils.permissions.permissions import permissions
+from utils.menu import Menu
+
+async def format_filter_page(entry, all_pages, current_page, ctx):
+    embed = discord.Embed(
+        title=f'Filtered words', color=discord.Color.blurple())
+    for word in entry:
+        notify_flag = ""
+        piracy_flag = ""
+        flags_check = ""
+        if word.notify is True:
+            notify_flag = "🔔"
+        if word.piracy:
+            piracy_flag = " 🏴‍☠️"
+        if word.notify is False and not word.piracy:
+            flags_check = "None"
+        embed.add_field(name=word.word, value=f"Bypassed by: {permissions.level_info(word.bypass)}\nFlags: {flags_check}{notify_flag}{piracy_flag}")
+    embed.set_footer(
+        text=f"Page {current_page} of {len(all_pages)}")
+    return embed
+
+
+class Filters(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Add a phrase to the raid filter.", permissions=slash_perms.mod_and_up())
+    async def offlineping(self, ctx: BlooContext, val: Option(bool, required=False) = None):
+        """Bot will ping for reports when offline (mod only)
+
+        Example usage
+        --------------
+        !offlineping <true/false>
+
+        Parameters
+        ----------
+        val : bool
+            "True or False, if you want pings or not"
+
+        """
+
+        cur = user_service.get_user(ctx.author.id)
+        
+        if val is None:
+            val = not cur.offline_report_ping 
+
+        cur.offline_report_ping = val
+        cur.save()
+
+        if val:
+            await ctx.send_success("You will now be pinged for reports when offline")
+        else:
+            await ctx.send_warning("You will no longer be pinged for reports when offline")
+
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Add a word to filter", permissions=slash_perms.admin_and_up())
+    async def filteradd(self, ctx: BlooContext, notify: Option(bool, description="Whether to generate a report or not when this word is filtered"), bypass: Option(int, description="Level that bypasses this filter"), *, phrase: str) -> None:
+        """Add a word to filter (admin only)
+
+        Example usage
+        -------------
+        !filter false 5 :kek:
+
+        Parameters
+        ----------
+        notify : bool
+            "Whether to generate a report or not when this word is filtered"
+        bypass : int
+            "Level that can bypass this word"
+        phrase : str
+            "Phrase to filter"
+        """
+
+        fw = FilterWord()
+        fw.bypass = bypass
+        fw.notify = notify
+        fw.word = phrase
+
+        if not guild_service.add_filtered_word(fw):
+            raise commands.BadArgument("That word is already filtered!")
+
+        phrase = discord.utils.escape_markdown(phrase)
+        phrase = discord.utils.escape_mentions(phrase)
+
+        await ctx.send_success(title="Added new word to filter!", description=f"This filter {'will' if notify else 'will not'} ping for reports, level {bypass} can bypass it, and the phrase is `{phrase}`")
+
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="List filtered words", permissions=slash_perms.mod_and_up())
+    async def filterlist(self, ctx: BlooContext):
+        """List filtered words (admin only)
+        """
+
+        filters = guild_service.get_guild().filter_words
+        if len(filters) == 0:
+            raise commands.BadArgument("The filterlist is currently empty. Please add a word using `!filter`.")
+        
+        filters = sorted(filters, key=lambda word: word.word.lower())
+
+        def chunks(lst, n):
+            """Yield successive n-sized chunks from lst."""
+            for i in range(0, len(lst), n):
+                yield lst[i:i + n]
+
+        menu = Menu(list(chunks(filters, 12)), ctx.channel,
+                    format_page=format_filter_page, interaction=True, ctx=ctx, whisper=False)
+
+        await menu.init_menu()
+
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Mark a word as piracy, will be ignored in #dev", permissions=slash_perms.mod_and_up())
+    async def piracy(self, ctx: BlooContext, *, word: str):
+        """Mark a word as piracy, will be ignored in #dev (admin only)
+
+        Example usage
+        --------------
+        !piracy xd xd xd
+
+        Parameters
+        ----------
+        word : str
+            "Word to mark as piracy"
+
+        """
+
+        word = word.lower()
+
+        words = guild_service.get_guild().filter_words
+        words = list(filter(lambda w: w.word.lower() == word.lower(), words))
+        
+        if len(words) > 0:
+            words[0].piracy = not words[0].piracy
+            guild_service.update_filtered_word(words[0])
+
+            await ctx.send_success("Marked as a piracy word!" if words[0].piracy else "Removed as a piracy word!")
+        else:
+            await ctx.send_warning("You must filter that word before it can be marked as piracy.")
+
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Remove word from filter", permissions=slash_perms.admin_and_up())
+    async def filterremove(self, ctx: BlooContext, *, word: str):
+        """Remove word from filter (admin only)
+
+        Example usage
+        --------------
+        !filterremove xd xd xd
+
+        Parameters
+        ----------
+        word : str
+            "Word to remove"
+
+        """
+
+        word = word.lower()
+
+        words = guild_service.get_guild().filter_words
+        words = list(filter(lambda w: w.word.lower() == word.lower(), words))
+        
+        if len(words) > 0:
+            guild_service.remove_filtered_word(words[0].word)
+            await ctx.send_success("Deleted!")
+        else:
+            await ctx.send_warning("That word is not filtered.")            
+
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Whitelist a guild from invite filter", permissions=slash_perms.admin_and_up())
+    async def whitelist(self, ctx: BlooContext, id: str):
+        """Whitelist a guild from invite filter (admin only)
+
+        Example usage
+        --------------
+        !whitelist 349243932447604736
+
+        Parameters
+        ----------
+        id : int
+            "ID of guild to whitelist"
+
+        """
+
+        try:
+            id = int(id)
+        except ValueError:
+            raise commands.BadArgument("Invalid ID!")
+
+        if guild_service.add_whitelisted_guild(id):
+            await ctx.send_success("Whitelisted.")
+        else:
+            await ctx.send_warning("That server is already whitelisted.")
+            
+
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Blacklist a guild from invite filter ", permissions=slash_perms.admin_and_up())
+    async def blacklist(self, ctx: BlooContext, id: str):
+        """Blacklist a guild from invite filter (admin only)
+
+        Example usage
+        --------------
+        !blacklist 349243932447604736
+
+        Parameters
+        ----------
+        id : int
+            "ID of guild to blacklist"
+
+        """
+
+        try:
+            id = int(id)
+        except ValueError:
+            raise commands.BadArgument("Invalid ID!")
+
+        if guild_service.remove_whitelisted_guild(id):
+            await ctx.send_success("Blacklisted.")
+        else:
+            await ctx.send_warning("That server is already blacklisted.")
+
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Ignore channel in filter", permissions=slash_perms.admin_and_up())
+    async def ignorechannel(self, ctx: BlooContext, channel: discord.TextChannel) -> None:
+        """Ignore channel in filter (admin only)
+
+        Example usage
+        -------------
+        !ignorechannel #xd
+
+        Parameters
+        ----------
+        channel : discord.Channel
+            "Channel to ignore"
+
+        """
+
+        if guild_service.add_ignored_channel(channel.id):
+            await ctx.send_success(f"The filter will no longer run in {channel.mention}.")
+        else:
+            await ctx.send_warning("That channel is already ignored.")
+
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Unignore channel in filter", permissions=slash_perms.admin_and_up())
+    async def unignorechannel(self, ctx: BlooContext, channel: discord.TextChannel) -> None:
+        """Unignore channel in filter (admin only)
+
+        Example usage
+        -------------
+        !unignorechannel #xd
+
+        Parameters
+        ----------
+        channel : discord.Channel
+            "Channel to unignore"
+        """
+
+        if guild_service.remove_ignored_channel(channel.id):
+            await ctx.send_success(f"Resumed filtering in {channel.mention}.")
+        else:
+            await ctx.send_warning("That channel is not already ignored.")
+
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Disabling enhanced filter checks on a word", permissions=slash_perms.admin_and_up())
+    async def falsepositive(self, ctx: BlooContext, *, word: str):
+        """Disabling enhanced filter checks on a word (admin only)
+
+        Example usage
+        --------------
+        !falsepositive xd
+
+        Parameters
+        ----------
+        word : str
+            "Word to mark as false positive"
+
+        """
+
+        word = word.lower()
+
+        words = guild_service.get_guild().filter_words
+        words = list(filter(lambda w: w.word.lower() == word.lower(), words))
+        
+        if len(words) > 0:
+            words[0].false_positive = not words[0].false_positive
+            if guild_service.update_filtered_word(words[0]):
+                await ctx.send_success("Marked as potential false positive, we won't perform the enhanced checks on it!" if words[0].false_positive else "Removed as potential false positive.")
+            else:
+                raise commands.BadArgument("Unexpected error occured trying to mark as false positive!")
+        else:
+            await ctx.send_warning("That word is not filtered.")  
+            
+    @falsepositive.error
+    @piracy.error
+    @whitelist.error
+    @blacklist.error
+    @filterremove.error
+    @filteradd.error
+    @filterlist.error
+    @offlineping.error
+    @ignorechannel.error
+    @unignorechannel.error
+    async def info_error(self,  ctx: BlooContext, error):
+        if isinstance(error, discord.ApplicationCommandInvokeError):
+            error = error.original
+        
+        if (isinstance(error, commands.MissingRequiredArgument)
+            or isinstance(error, PermissionsFailure)
+            or isinstance(error, commands.BadArgument)
+            or isinstance(error, commands.BadUnionArgument)
+            or isinstance(error, commands.MissingPermissions)
+            or isinstance(error, commands.BotMissingPermissions)
+            or isinstance(error, commands.MaxConcurrencyReached)
+                or isinstance(error, commands.NoPrivateMessage)):
+            await ctx.send_error(error)
+        else:
+            await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
+            traceback.print_exc()
+
+
+def setup(bot):
+    bot.add_cog(Filters(bot))

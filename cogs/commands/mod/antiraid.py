@@ -1,7 +1,6 @@
 import traceback
 
 import discord
-from discord import guild
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 from discord.commands import Option, slash_command

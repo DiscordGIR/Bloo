@@ -20,9 +20,9 @@ class Menu():
             for i in range(0, len(lst), n):
                 yield lst[i:i + n]
         
-        for key, value in self.kwargs.items():
-            if key == "per_page":
-                self.pages = list(chunks(self.pages, value))
+        if self.kwargs.get('per_page') is not None:
+            self.pages = list(chunks(self.pages, self.kwargs.get('per_page')))
+        
         # Prepare inital embed
         embed = await self.page_formatter(entry=self.pages[0], all_pages=self.pages, current_page=1, ctx=self.ctx)
         # Initialize our menu

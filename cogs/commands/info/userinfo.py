@@ -246,15 +246,10 @@ class UserInfo(commands.Cog):
         !xptop
         """
 
-        def chunks(lst, n):
-            """Yield successive n-sized chunks from lst."""
-            for i in range(0, len(lst), n):
-                yield lst[i:i + n]
         results = enumerate(user_service.leaderboard())
         results = [(i, m) for (i, m) in results if ctx.guild.get_member(
             m._id) is not None][0:100]
-        menu = Menu(list(chunks(results, 10)), ctx.channel,
-                    format_xptop_page, True, ctx, True)
+        menu = Menu(results, ctx.channel, format_xptop_page, True, ctx, True, per_page=10)
         await menu.init_menu()
 
     @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's cases")
@@ -290,24 +285,18 @@ class UserInfo(commands.Cog):
         results = user_service.get_cases(user.id)
         if len(results.cases) == 0:
             if isinstance(user, int):
-                return await ctx.send_error(f'User with ID {user.id} had no cases.')
+                return await ctx.send_error(f'User with ID {user.id} has no cases.')
             else:
-                return await ctx.send_error(f'{user.mention} had no cases.')
+                return await ctx.send_error(f'{user.mention} has no cases.')
 
         # filter out unmute cases because they are irrelevant
         cases = [case for case in results.cases if case._type != "UNMUTE"]
         # reverse so newest cases are first
         cases.reverse()
 
-        def chunks(lst, n):
-            """Yield successive n-sized chunks from lst."""
-            for i in range(0, len(lst), n):
-                yield lst[i:i + n]
-
         ctx.case_user = user
 
-        menu = Menu(list(chunks(cases, 10)), ctx.channel,
-                    format_cases_page, True, ctx, True)
+        menu = Menu(cases, ctx.channel, format_cases_page, True, ctx, True, per_page=10)
         await menu.init_menu()
 
     @cases.error

@@ -18,6 +18,7 @@ class MenuButtons(ui.View):
         self.ctx = ctx
         self.msg = None
         self.embed = None
+        self.sent = False
         
     async def launch(self, embed):
         self.embed = embed
@@ -47,11 +48,19 @@ class MenuButtons(ui.View):
         
         if componentEnabled:
             if self.is_interaction:
-                await msg_send_method(embed=embed, view=self, ephemeral=self.should_whisper)
+                if not self.sent:
+                    await msg_send_method(embed=embed, view=self, ephemeral=self.should_whisper)
+                else:
+                    await msg_send_method(embed=embed, view=self)
+                self.sent = True
             else:
                 self.msg = await msg_send_method(embed=embed, view=self)
         elif self.is_interaction:
-            await msg_send_method(embed=embed, ephemeral=self.should_whisper)
+            if not self.sent:
+                await msg_send_method(embed=embed, ephemeral=self.should_whisper)
+            else:
+                await msg_send_method(embed=embed)
+            self.sent = True
         else:
             self.msg = await msg_send_method(embed=embed)
     

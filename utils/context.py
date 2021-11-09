@@ -1,5 +1,6 @@
 import discord
 from discord.ext.commands import BadArgument
+
 import pytimeparse
 import asyncio
 from datetime import datetime, timedelta
@@ -34,6 +35,7 @@ class BlooContext(discord.context.ApplicationContext):
         self.tasks: Tasks = self.bot.tasks
 
     async def respond_or_edit(self, *args, **kwargs):
+        """Creates or edits an interaction response"""
         if self.interaction.response.is_done():
             if kwargs.get("ephemeral") is not None:
                 del kwargs["ephemeral"]
@@ -44,18 +46,56 @@ class BlooContext(discord.context.ApplicationContext):
             return await self.respond(*args, **kwargs)
 
     async def send_success(self, description: str, title: str = ""):
+        """Sends a success message
+        
+        Parameters
+        ----------
+        description : str
+            "Success message"
+        title : str
+            "Success message title"
+
+        """
         embed = discord.Embed(title=title, description=description,  color=discord.Color.dark_green())
         return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=discord.utils.MISSING)
     
     async def send_warning(self, description: str, title: str = ""):
+        """Sends a warning message
+        
+        Parameters
+        ----------
+        description : str
+            "Warning message"
+        title : str
+            "Warning message title"
+
+        """
         embed = discord.Embed(title=title, description=description,  color=discord.Color.orange())
         return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=discord.utils.MISSING)
     
     async def send_error(self, description):
+        """Sends an error message
+        
+        Parameters
+        ----------
+        description : str
+            "Error message"
+        title : str
+            "Error message title"
+
+        """
         embed = discord.Embed(title=":(\nYour command ran into a problem", description=description,  color=discord.Color.red())
         return await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=discord.utils.MISSING)
         
     async def prompt(self, info: PromptData):
+        """Prompts for a response
+        
+        Parameters
+        ----------
+        info : PromptData
+            "Prompt information"
+
+        """
         def wait_check(m):
             return m.author == self.author and m.channel == self.channel
     
@@ -109,6 +149,14 @@ class BlooContext(discord.context.ApplicationContext):
         return ret
     
     async def prompt_reaction(self, info: PromptDataReaction):
+        """Prompts for a reaction
+        
+        Parameters
+        ----------
+        info : PromptDataReaction
+            "Prompt data"
+            
+        """
         for reaction in info.reactions:
             await info.message.add_reaction(reaction)
             

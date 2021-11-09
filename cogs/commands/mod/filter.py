@@ -1,20 +1,36 @@
-import traceback
-
 import discord
-from data.services.guild_service import guild_service
-from data.services.user_service import user_service
 from discord.commands import Option, slash_command
 from discord.ext import commands
+
+import traceback
+from data.services.guild_service import guild_service
+from data.services.user_service import user_service
+from data.model.filterword import FilterWord
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.permissions.checks import (PermissionsFailure, admin_and_up,
-                                      mod_and_up)
-from data.model.filterword import FilterWord
+from utils.permissions.checks import (PermissionsFailure, admin_and_up, mod_and_up)
 from utils.permissions.slash_perms import slash_perms
 from utils.permissions.permissions import permissions
 from utils.menu import Menu
 
 async def format_filter_page(entry, all_pages, current_page, ctx):
+    """Formats the page for the filtered words embed
+    
+    Parameters
+    ----------
+    entry : dict
+        "The dictionary for the entry"
+    all_pages : list
+        "All entries that we will eventually iterate through"
+    current_page : number
+        "The number of the page that we are currently on"
+        
+    Returns
+    -------
+    discord.Embed
+        "The embed that we will send"
+        
+    """
     embed = discord.Embed(
         title=f'Filtered words', color=discord.Color.blurple())
     for word in entry:
@@ -40,11 +56,11 @@ class Filters(commands.Cog):
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Add a phrase to the raid filter.", permissions=slash_perms.mod_and_up())
     async def offlineping(self, ctx: BlooContext, val: Option(bool, required=False) = None):
-        """Bot will ping for reports when offline (mod only)
+        """Toggles bot pinging for reports when offline
 
         Example usage
         --------------
-        !offlineping <true/false>
+        /offlineping val:<value>
 
         Parameters
         ----------
@@ -69,11 +85,11 @@ class Filters(commands.Cog):
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Add a word to filter", permissions=slash_perms.admin_and_up())
     async def filteradd(self, ctx: BlooContext, notify: Option(bool, description="Whether to generate a report or not when this word is filtered"), bypass: Option(int, description="Level that bypasses this filter"), *, phrase: str) -> None:
-        """Add a word to filter (admin only)
+        """Adds a word to filter (admin only)
 
         Example usage
         -------------
-        !filter false 5 :kek:
+        /filter notify:<shouldnotify> bypass:<bypasslevel> <phrase>
 
         Parameters
         ----------
@@ -83,6 +99,7 @@ class Filters(commands.Cog):
             "Level that can bypass this word"
         phrase : str
             "Phrase to filter"
+            
         """
 
         fw = FilterWord()
@@ -101,7 +118,12 @@ class Filters(commands.Cog):
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="List filtered words", permissions=slash_perms.mod_and_up())
     async def filterlist(self, ctx: BlooContext):
-        """List filtered words (admin only)
+        """Lists filtered words (admin only)
+        
+        Example usage
+        -------------
+        /filterlist
+        
         """
 
         filters = guild_service.get_guild().filter_words
@@ -123,11 +145,11 @@ class Filters(commands.Cog):
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Mark a word as piracy, will be ignored in #dev", permissions=slash_perms.mod_and_up())
     async def piracy(self, ctx: BlooContext, *, word: str):
-        """Mark a word as piracy, will be ignored in #dev (admin only)
+        """Marks a word as piracy, will be ignored in #dev (admin only)
 
         Example usage
         --------------
-        !piracy xd xd xd
+        /piracy <word>
 
         Parameters
         ----------
@@ -152,11 +174,11 @@ class Filters(commands.Cog):
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Remove word from filter", permissions=slash_perms.admin_and_up())
     async def filterremove(self, ctx: BlooContext, *, word: str):
-        """Remove word from filter (admin only)
+        """Removes a word from filter (admin only)
 
         Example usage
         --------------
-        !filterremove xd xd xd
+        /filterremove <word>
 
         Parameters
         ----------
@@ -179,11 +201,11 @@ class Filters(commands.Cog):
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Whitelist a guild from invite filter", permissions=slash_perms.admin_and_up())
     async def whitelist(self, ctx: BlooContext, id: str):
-        """Whitelist a guild from invite filter (admin only)
+        """Whitelists a guild from invite filter (admin only)
 
         Example usage
         --------------
-        !whitelist 349243932447604736
+        /whitelist <guildid>
 
         Parameters
         ----------
@@ -206,11 +228,11 @@ class Filters(commands.Cog):
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Blacklist a guild from invite filter ", permissions=slash_perms.admin_and_up())
     async def blacklist(self, ctx: BlooContext, id: str):
-        """Blacklist a guild from invite filter (admin only)
+        """Blacklists a guild from invite filter (admin only)
 
         Example usage
         --------------
-        !blacklist 349243932447604736
+        /blacklist <guildid>
 
         Parameters
         ----------
@@ -232,11 +254,11 @@ class Filters(commands.Cog):
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Ignore channel in filter", permissions=slash_perms.admin_and_up())
     async def ignorechannel(self, ctx: BlooContext, channel: discord.TextChannel) -> None:
-        """Ignore channel in filter (admin only)
+        """Ignores channel in filter (admin only)
 
         Example usage
         -------------
-        !ignorechannel #xd
+        /ignorechannel <channel>
 
         Parameters
         ----------
@@ -253,16 +275,17 @@ class Filters(commands.Cog):
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Unignore channel in filter", permissions=slash_perms.admin_and_up())
     async def unignorechannel(self, ctx: BlooContext, channel: discord.TextChannel) -> None:
-        """Unignore channel in filter (admin only)
+        """Unignores channel in filter (admin only)
 
         Example usage
         -------------
-        !unignorechannel #xd
+        /unignorechannel <channel>
 
         Parameters
         ----------
         channel : discord.Channel
             "Channel to unignore"
+            
         """
 
         if guild_service.remove_ignored_channel(channel.id):
@@ -277,7 +300,7 @@ class Filters(commands.Cog):
 
         Example usage
         --------------
-        !falsepositive xd
+        /falsepositive <word>
 
         Parameters
         ----------

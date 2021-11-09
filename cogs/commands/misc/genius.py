@@ -1,16 +1,14 @@
-import datetime
-import traceback
-
 import discord
-from data.services.guild_service import guild_service
 from discord.commands import slash_command
 from discord.ext import commands
+
+import datetime
+import traceback
+from data.services.guild_service import guild_service
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
-from utils.permissions.checks import (PermissionsFailure,
-                                      genius_or_submod_and_up)
+from utils.permissions.checks import (PermissionsFailure, genius_or_submod_and_up)
 from utils.permissions.slash_perms import slash_perms
-
 
 class Genius(commands.Cog):
     def __init__(self, bot):
@@ -20,13 +18,16 @@ class Genius(commands.Cog):
     @slash_command(guild_ids=[cfg.guild_id], description="Submit a new common issue", permissions=slash_perms.genius_or_submod_and_up())
     async def commonissue(self, ctx: BlooContext, *, title: str):
         """Submit a new common issue (Geniuses only)
+        
         Example usage
         ------------
         /commonissue This is a title (you will be prompted for a description)
+        
         Parameters
         ----------
         title : str
             "Title for the issue"
+            
         """
 
         # get #common-issues channel

@@ -21,5 +21,4 @@ class Config:
     def setup_error(self, k: str):
         raise Exception(f".env file is not correctly set up! Missing key {k}")
 
-
 cfg = Config()

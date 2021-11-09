@@ -1,14 +1,13 @@
+import discord
+from discord.ext import commands
+from discord.utils import format_dt
+
 from datetime import datetime
 from io import BytesIO
 from typing import List
-
-import discord
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
-from discord.ext import commands
-from discord.utils import format_dt
 from utils.config import cfg
-
 
 class Logging(commands.Cog):
     def __init__(self, bot):

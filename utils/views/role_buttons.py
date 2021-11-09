@@ -1,8 +1,7 @@
-import re
-from itertools import takewhile
-
 import discord
 
+import re
+from itertools import takewhile
 
 def derive_label(string):
     enders = {
@@ -21,8 +20,7 @@ def derive_label(string):
 
 class ReactionRoleButton(discord.ui.Button):
     def __init__(self, role: discord.Role, emoji: discord.Emoji):
-        super().__init__(label=derive_label(role.name),
-                         style=discord.ButtonStyle.primary, emoji=emoji, custom_id=str(role.id))
+        super().__init__(label=derive_label(role.name), style=discord.ButtonStyle.primary, emoji=emoji, custom_id=str(role.id))
 
     async def callback(self, interaction: discord.Interaction):
         user = interaction.user

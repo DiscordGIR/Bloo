@@ -1,10 +1,10 @@
-import traceback
-
 import discord
-from data.services.guild_service import guild_service
-from data.services.user_service import user_service
 from discord.commands import Option, slash_command
 from discord.ext import commands
+
+import traceback
+from data.services.guild_service import guild_service
+from data.services.user_service import user_service
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.checks import PermissionsFailure, admin_and_up, mod_and_up
@@ -18,16 +18,17 @@ class AntiRaid(commands.Cog):
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Add a phrase to the raid filter.", permissions=slash_perms.mod_and_up())
     async def raid(self, ctx: BlooContext, phrase: Option(str, description="Phrase to add")) -> None:
-        """Add a phrase to the raid filter.
+        """Adds a phrase to the raid filter.
 
         Example usage
         --------------
-        !raid <phrase>
+        /raid phrase:<phrase>
 
         Parameters
         ----------
         phrase : str
             "Phrase to add"
+            
         """
 
         # these are phrases that when said by a whitename, automatically bans them.
@@ -96,16 +97,17 @@ class AntiRaid(commands.Cog):
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Remove a phrase from the raid filter.", permissions=slash_perms.mod_and_up())
     async def removeraid(self, ctx: BlooContext, phrase: Option(str, description="Phrase to remove")) -> None:
-        """Remove a phrase from the raid filter.
+        """Removes a phrase from the raid filter.
 
         Example usage
         --------------
-        !removeraid <phrase>
+        /removeraid phrase:<phrase>
 
         Parameters
         ----------
         phrase : str
             "Phrase to remove"
+            
         """
 
         word = phrase.lower()
@@ -122,11 +124,17 @@ class AntiRaid(commands.Cog):
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Toggle banning of *today's* new accounts in join spam detector.", permissions=slash_perms.mod_and_up())
     async def spammode(self, ctx: BlooContext, mode: Option(bool, description="True if you don't want to ban, False otherwise", required=False) = None) -> None:
-        """Toggle banning of *today's* new accounts in join spam detector.
+        """Toggles banning of *today's* new accounts in join spam detector.
 
         Example usage
         --------------
-        !spammode true
+        /spammode mode:<mode>
+        
+        Parameters
+        ----------
+        mode : bool
+            "Should we ban today's new accounts in the join spam detector?"
+            
         """
 
         if mode is None:
@@ -138,12 +146,19 @@ class AntiRaid(commands.Cog):
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Verify a user so they won't be banned by antiraid filters.", permissions=slash_perms.admin_and_up())
     async def verify(self, ctx: BlooContext, user: Option(discord.Member, description="User to verify"), mode: Option(bool, required=False) = None) -> None:
-        """Verify a user so they won't be banned by antiraid filters.
+        """Verifies a user so they won't be banned by antiraid filters.
 
         Example usage
         --------------
-        !verify @user
-        !verify @user true/false
+        /verify @user
+        
+        Parameters
+        ----------
+        user : discord.Member
+            "User to verify"
+        mode : bool, optional
+            "Value to set this user's verification to"
+            
         """
 
         profile = user_service.get_user(user.id)

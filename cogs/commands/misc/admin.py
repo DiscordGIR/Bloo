@@ -1,14 +1,12 @@
-import traceback
 import discord
 from discord.commands import slash_command
-
 from discord.ext import commands
-from utils.context import BlooContext, PromptData
 
+import traceback
+from utils.context import BlooContext, PromptData
 from utils.permissions.checks import PermissionsFailure, admin_and_up
 from utils.permissions.slash_perms import slash_perms
 from utils.config import cfg
-
 
 class Admin(commands.Cog):
     def __init__(self, bot):
@@ -18,6 +16,11 @@ class Admin(commands.Cog):
     @slash_command(guild_ids=[cfg.guild_id], description="Change bot's profile picture", permissions=slash_perms.mod_and_up())
     async def setpfp(self, ctx: BlooContext):
         """Set the bot's profile picture (admin only)
+        
+        Example usage
+        ------------
+        /setpfp
+        
         """
         
         await ctx.defer(ephemeral=True)

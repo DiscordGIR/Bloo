@@ -1,15 +1,15 @@
+import discord
+from discord.commands import Option, slash_command
+from discord.ext import commands
+from discord.utils import format_dt
+
 import datetime
 import random
 import traceback
-
-import discord
 import humanize
 import pytimeparse
 from data.model.giveaway import Giveaway as GiveawayDB
 from data.services.guild_service import guild_service
-from discord.commands import Option, slash_command
-from discord.ext import commands
-from discord.utils import format_dt
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.checks import PermissionsFailure, admin_and_up
@@ -25,6 +25,24 @@ class Giveaway(commands.Cog):
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Start a giveaway.", permissions=slash_perms.admin_and_up())
     async def giveawaystart(self, ctx: BlooContext, name: Option(str, description="Name of the giveaway"), sponsor: Option(discord.Member, description="Who sponsored the giveaway"), time: Option(str, description="How long should the giveaway last?"), winners: Option(int, description="How many winners?"), channel: Option(discord.TextChannel, description="Where to post the giveaway")):
+        """Starts a giveaway
+        
+        Example usage
+        -------------
+        /giveawaystart name:<giveawayname> sponsor:<giveawaysponsor> time:<giveawaytime> winners:<giveawaywinnernumber> channel:<giveawaychannel>
+        
+        Parameters
+        ----------
+        name : str
+            "Title to give giveaway"
+        sponsor : discord.Member
+            "Sponsor of the giveaway"
+        winners : number
+            "Number of winners"
+        channel : discord.Channel
+            "Channel to start giveaway in"
+            
+        """
         delta = pytimeparse.parse(time)
         if delta is None:
             raise commands.BadArgument("Invalid time passed in.")
@@ -66,7 +84,18 @@ class Giveaway(commands.Cog):
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Pick a new winner of an already ended giveaway.", permissions=slash_perms.admin_and_up())
     async def giveawayreroll(self, ctx: BlooContext, message_id: str):
-
+        """Picks a new winner of an already ended giveaway
+        
+        Example usage
+        -------------
+        /giveawayreroll <messageid>
+        
+        Parameters
+        ----------
+        message_id : str
+            "ID of giveaway message"
+            
+        """
         g = guild_service.get_giveaway(_id=int(message_id))
 
         if g is None:
@@ -99,6 +128,18 @@ class Giveaway(commands.Cog):
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="End a giveaway early.", permissions=slash_perms.admin_and_up())
     async def giveawayend(self, ctx: BlooContext, message_id: str):
+        """Ends a giveaway early
+        
+        Example usage
+        -------------
+        /giveawayreroll <messageid>
+        
+        Parameters
+        ----------
+        message_id : str
+            "ID of giveaway message"
+            
+        """
         giveaway = guild_service.get_giveaway(_id=int(message_id))
         if giveaway is None:
             raise commands.BadArgument(

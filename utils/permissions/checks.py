@@ -1,4 +1,5 @@
 from discord.ext import commands
+
 from data.services.guild_service import guild_service
 from utils.context import BlooContext
 from utils.permissions.permissions import permissions
@@ -7,19 +8,15 @@ class PermissionsFailure(commands.BadArgument):
     def __init__(self, message):
         super().__init__(message)
 
-
 def always_whisper():
-    """Always respond ephemerally
-    """
+    """Always respond ephemerally"""
     async def predicate(ctx: BlooContext):
         ctx.whisper = True
         return True
     return commands.check(predicate)
 
-
 def whisper():
-    """If the user is not a moderator and the invoked channel is not #bot-commands, send the response to the command ephemerally
-    """
+    """If the user is not a moderator and the invoked channel is not #bot-commands, send the response to the command ephemerally"""
     async def predicate(ctx: BlooContext):
         bot_chan = guild_service.get_guild()
         if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id != bot_chan:
@@ -29,8 +26,8 @@ def whisper():
         return True
     return commands.check(predicate)
 
-
 def memplus_and_up():
+    """If the user is not at least a Member Plus, deny command access"""
     async def predicate(ctx: BlooContext):
         if not permissions.has(ctx.guild, ctx.author, 1):
             raise PermissionsFailure("You do not have permission to use this command.")
@@ -39,6 +36,7 @@ def memplus_and_up():
     return commands.check(predicate)
 
 def mempro_and_up():
+    """If the user is not at least a Member Pro, deny command access"""
     async def predicate(ctx: BlooContext):
         if not permissions.has(ctx.guild, ctx.author, 2):
             raise PermissionsFailure("You do not have permission to use this command.")
@@ -47,6 +45,7 @@ def mempro_and_up():
     return commands.check(predicate)
 
 def memed_and_up():
+    """If the user is not at least a Member Edition, deny command access"""
     async def predicate(ctx: BlooContext):
         if not permissions.has(ctx.guild, ctx.author, 3):
             raise PermissionsFailure("You do not have permission to use this command.")
@@ -55,6 +54,7 @@ def memed_and_up():
     return commands.check(predicate)
 
 def genius_and_up():
+    """If the member is not at least a Genius™️, deny command access"""
     async def predicate(ctx: BlooContext):
         if not permissions.has(ctx.guild, ctx.author, 4):
             raise PermissionsFailure("You do not have permission to use this command.")
@@ -67,6 +67,7 @@ def genius_and_up():
 ####################
 
 def submod_or_admin_and_up():
+    """If the user is not a submod OR is not at least an Administrator, deny command access"""
     async def predicate(ctx: BlooContext):
         db = guild_service.get_guild()
         submod = ctx.guild.get_role(db.role_sub_mod)
@@ -81,6 +82,7 @@ def submod_or_admin_and_up():
     return commands.check(predicate)
 
 def genius_or_submod_and_up():
+    """If the user is not at least a Genius™️ or a submod, deny command access"""
     async def predicate(ctx: BlooContext):
         db = guild_service.get_guild()
         submod = ctx.guild.get_role(db.role_sub_mod)
@@ -95,6 +97,7 @@ def genius_or_submod_and_up():
     return commands.check(predicate)
 
 def mod_and_up():
+    """If the user is not at least a Moderator, deny command access"""
     async def predicate(ctx: BlooContext):
         if not permissions.has(ctx.guild, ctx.author, 5):
             raise PermissionsFailure(
@@ -104,6 +107,7 @@ def mod_and_up():
     return commands.check(predicate)
 
 def admin_and_up():
+    """If the user is not at least an Administrator, deny command access"""
     async def predicate(ctx: BlooContext):
         if not permissions.has(ctx.guild, ctx.author, 6):
             raise PermissionsFailure(
@@ -117,6 +121,7 @@ def admin_and_up():
 ####################
 
 def guild_owner_and_up():
+    """If the user is not the guild owner, deny command access"""
     async def predicate(ctx: BlooContext):
         if not permissions.has(ctx.guild, ctx.author, 7):
             raise PermissionsFailure(
@@ -126,6 +131,7 @@ def guild_owner_and_up():
     return commands.check(predicate)
 
 def bot_owner_and_up():
+    """If the user is not the bot owner, deny command access"""
     async def predicate(ctx: BlooContext):
         if not permissions.has(ctx.guild, ctx.author, 9):
             raise PermissionsFailure(
@@ -135,6 +141,7 @@ def bot_owner_and_up():
     return commands.check(predicate)
 
 def ensure_invokee_role_lower_than_bot():
+    """If the invokee's role is higher than the bot's, deny command access"""
     async def predicate(ctx: BlooContext):
         if ctx.me.top_role < ctx.author.top_role:
             raise PermissionsFailure(

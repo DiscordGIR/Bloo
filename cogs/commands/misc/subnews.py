@@ -1,9 +1,9 @@
-import traceback
-
 import discord
-from data.services.guild_service import guild_service
 from discord.commands import slash_command
 from discord.ext import commands
+
+import traceback
+from data.services.guild_service import guild_service
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
 from utils.permissions.checks import PermissionsFailure, submod_or_admin_and_up
@@ -17,17 +17,22 @@ class SubNews(commands.Cog):
     @submod_or_admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Post a new subreddit news post", permissions=slash_perms.submod_or_admin_and_up())
     async def subnews(self, ctx: BlooContext):
+        """Posts a new subreddit news post
+        
+        Example usage
+        -------------
+        /subnews
+        
+        """
         db_guild = guild_service.get_guild()
 
         channel = ctx.guild.get_channel(db_guild.channel_subnews)
         if not channel:
-            raise commands.BadArgument(
-                "A subreddit news channel was not found. Contact Slim.")
+            raise commands.BadArgument("A subreddit news channel was not found. Contact Slim.")
 
         subnews = ctx.guild.get_role(db_guild.role_sub_news)
         if not subnews:
-            raise commands.BadArgument(
-                "A subbredit news role was not found. Conact Slim")
+            raise commands.BadArgument("A subbredit news role was not found. Conact Slim")
 
         await ctx.defer(ephemeral=True)
         prompt = PromptData(

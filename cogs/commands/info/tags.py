@@ -1,25 +1,35 @@
-import traceback
-from io import BytesIO
-
 import discord
-from data.model.tag import Tag
-from data.services.guild_service import guild_service
 from discord.commands import Option, slash_command
 from discord.ext import commands
+
+import traceback
+from io import BytesIO
+from data.model.tag import Tag
+from data.services.guild_service import guild_service
 from utils.autocompleters.tags import tags_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
-from utils.permissions.checks import (PermissionsFailure,
-                                      genius_or_submod_and_up)
+from utils.permissions.checks import (PermissionsFailure, genius_or_submod_and_up)
 from utils.permissions.slash_perms import slash_perms
-
 
 class Tags(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @slash_command(guild_ids=[cfg.guild_id], description="Make bot say something")
+    @slash_command(guild_ids=[cfg.guild_id], description="Display a tag")
     async def tag(self, ctx: BlooContext, name: Option(str, description="Tag name", autocomplete=tags_autocomplete)):
+        """Displays a tag.
+        
+        Example usage
+        -------------
+        /tag name:<tagname>
+        
+        Parameters
+        ----------
+        name : str
+            "Name of tag to display"
+        
+        """
         name = name.lower()
         tag = guild_service.get_tag(name)
 
@@ -48,14 +58,13 @@ class Tags(commands.Cog):
 
         Example usage
         -------------
-        !addtag roblox This is the content
+        /addtag roblox
 
         Parameters
         ----------
         name : str
             "Name of the tag"
-        content : str
-            "Content of the tag"
+        
         """
 
         if not name.isalnum():
@@ -112,7 +121,7 @@ class Tags(commands.Cog):
 
         Example usage
         --------------
-        !deltag <tagname>
+        /deltag name:<tagname>
 
         Parameters
         ----------

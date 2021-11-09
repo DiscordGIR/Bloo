@@ -28,7 +28,6 @@ async def get_devices():
 
     return res_devices
 
-
 async def device_autocomplete(ctx: AutocompleteContext):
     devices = await get_devices()
     devices.sort()

@@ -1,15 +1,15 @@
+import discord
+from discord.commands import Option, slash_command
+from discord.ext import commands
+
 import io
 import json
 import re
 import traceback
 import urllib
-from datetime import datetime
-
 import aiohttp
-import discord
+from datetime import datetime
 from colorthief import ColorThief
-from discord.commands import Option, slash_command
-from discord.ext import commands
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import Guild
@@ -19,6 +19,23 @@ from utils.permissions.permissions import permissions
 
 
 async def format_page(entry, all_pages, current_page, ctx):
+    """Formats the page for the tweak embed.
+    
+    Parameters
+    ----------
+    entry : dict
+        "The dictionary for the entry"
+    all_pages : list
+        "All entries that we will eventually iterate through"
+    current_page : number
+        "The number of the page that we are currently on"
+        
+    Returns
+    -------
+    discord.Embed
+        "The embed that we will send"
+    
+    """
     titleKey = entry.get('name')
     if entry.get('name') is None:
         titleKey = entry.get('identifier')
@@ -58,6 +75,19 @@ async def format_page(entry, all_pages, current_page, ctx):
 
 
 async def search(query):
+    """Search for a tweak in Canister's catalogue
+
+    Parameters
+    ----------
+    query : str
+        "Query to search for"
+
+    Returns
+    -------
+    list
+        "List of packages that Canister found matching the query"
+    
+    """
     async with aiohttp.ClientSession() as client:
         async with client.get(f'https://api.canister.me/v1/community/packages/search?query={urllib.parse.quote(query)}&searchFields=identifier,name&responseFields=identifier,header,tintColor,name,price,description,packageIcon,repository.uri,repository.name,author,maintainer,latestVersion,nativeDepiction,depiction') as resp:
             if resp.status == 200:
@@ -69,7 +99,6 @@ async def search(query):
             else:
                 return None
 
-
 async def canister(bot, ctx: BlooContext, interaction: bool, whisper: bool, query: str):
     result = list(await search(query))
     if len(result) == 0:
@@ -78,7 +107,6 @@ async def canister(bot, ctx: BlooContext, interaction: bool, whisper: bool, quer
         return
     menu = Menu(result, ctx.channel, format_page, interaction, ctx, whisper)
     await menu.init_menu()
-
 
 class Canister(commands.Cog):
     def __init__(self, bot):
@@ -115,6 +143,20 @@ class Canister(commands.Cog):
 
     @slash_command(guild_ids=[cfg.guild_id], description="Search for a tweak")
     async def tweak(self, ctx: BlooContext, query: Option(str, description="Tweak to search for."), whisper: Option(bool, description="Whisper? (No by default)", required=False)) -> None:
+        """Search for a tweak.
+        
+        Example usage
+        -------------
+        /tweak query:<query>
+        
+        Parameters
+        ----------
+        query : str
+            "Tweak to search for"
+        whisper : bool
+            "Should we whisper?"
+        
+        """
         should_whisper = False
         if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == Guild.channel_general:
             should_whisper = True

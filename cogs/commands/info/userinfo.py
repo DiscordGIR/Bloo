@@ -1,14 +1,13 @@
+import discord
+from discord.commands import (Option, message_command, slash_command, user_command)
+from discord.ext import commands
+from discord.utils import format_dt
+
 import traceback
 from datetime import datetime
 from math import floor
 from typing import Union
-
-import discord
 from data.services.user_service import user_service
-from discord.commands import (Option, message_command, slash_command,
-                              user_command)
-from discord.ext import commands
-from discord.utils import format_dt
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.menu import Menu
@@ -16,8 +15,24 @@ from utils.permissions.checks import PermissionsFailure, whisper
 from utils.permissions.converters import user_resolver
 from utils.permissions.permissions import permissions
 
-
 async def format_xptop_page(entry, all_pages, current_page, ctx):
+    """Formats the page for the xptop embed.
+    
+    Parameters
+    ----------
+    entry : dict
+        "The dictionary for the entry"
+    all_pages : list
+        "All entries that we will eventually iterate through"
+    current_page : number
+        "The number of the page that we are currently on"
+        
+    Returns
+    -------
+    discord.Embed
+        "The embed that we will send"
+    
+    """
     embed = discord.Embed(title=f'Leaderboard', color=discord.Color.blurple())
     for i, user in entry:
         member = ctx.guild.get_member(user._id)
@@ -39,6 +54,23 @@ async def format_xptop_page(entry, all_pages, current_page, ctx):
 
 
 async def format_cases_page(entry, all_pages, current_page, ctx):
+    """Formats the page for the cases embed.
+    
+    Parameters
+    ----------
+    entry : dict
+        "The dictionary for the entry"
+    all_pages : list
+        "All entries that we will eventually iterate through"
+    current_page : number
+        "The number of the page that we are currently on"
+        
+    Returns
+    -------
+    discord.Embed
+        "The embed that we will send"
+    
+    """
     page_count = 0
     pun_map = {
         "KICK": "Kicked",
@@ -101,6 +133,18 @@ class UserInfo(commands.Cog):
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info of another user or yourself.")
     async def userinfo(self, ctx: BlooContext, user: Option(discord.Member, description="User to get info of", required=False)) -> None:
+        """Gets info of another user or yourself.
+        
+        Example usage
+        -------------
+        /userinfo user:<user>
+        
+        Parameters
+        ----------
+        user : discord.Member, optional
+            "Member to get info of"
+            
+        """
         await self.handle_userinfo(ctx, user)
 
     @whisper()
@@ -170,7 +214,7 @@ class UserInfo(commands.Cog):
 
         Example usage
         --------------
-        !xp <@user/ID (optional)
+        /xp user:<user>
 
         Parameters
         ----------
@@ -205,11 +249,11 @@ class UserInfo(commands.Cog):
 
         Example usage
         --------------
-        !warnpoints <@user/ID>
+        /warnpoints <@user/ID>
 
         Parameters
         ----------
-        user : discord.Member
+        user : discord.Member, optional
             "User whose warnpoints to show"
 
         """
@@ -226,8 +270,7 @@ class UserInfo(commands.Cog):
         # fetch user profile from database
         results = user_service.get_user(user.id)
 
-        embed = discord.Embed(title="Warn Points",
-                              color=discord.Color.orange())
+        embed = discord.Embed(title="Warn Points", color=discord.Color.orange())
         embed.set_thumbnail(url=user.avatar)
         embed.add_field(
             name="Member", value=f'{user.mention}\n{user}\n({user.id})', inline=True)
@@ -241,9 +284,11 @@ class UserInfo(commands.Cog):
     @slash_command(guild_ids=[cfg.guild_id], description="Show the XP leaderboard.")
     async def xptop(self, ctx: BlooContext):
         """Show XP leaderboard for top 100, ranked highest to lowest.
+        
         Example usage
         --------------
-        !xptop
+        /xptop
+        
         """
 
         results = enumerate(user_service.leaderboard())
@@ -255,13 +300,16 @@ class UserInfo(commands.Cog):
     @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's cases")
     async def cases(self, ctx: BlooContext, user: Option(discord.Member, description="Member to show cases of", required=False)):
         """Show list of cases of a user (mod only)
+        
         Example usage
         --------------
-        !cases <@user/ID>
+        /cases user:<@user/ID>
+        
         Parameters
         ----------
-        user : typing.Union[discord.Member,int]
+        user : discord.Member, optional
             "User we want to get cases of, doesn't have to be in guild"
+            
         """
 
         # if an invokee is not provided in command, call command on the invoker

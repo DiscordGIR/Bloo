@@ -1,4 +1,5 @@
 from discord.commands.permissions import Permission
+
 from typing import List
 from utils.permissions.permissions import permissions
 from data.services.guild_service import guild_service
@@ -41,6 +42,5 @@ class SlashPerms:
 
     def bot_owner_and_up(self) -> List[Permission]:
         return permissions.calculate_permissions(9)
-
 
 slash_perms = SlashPerms()

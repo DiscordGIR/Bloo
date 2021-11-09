@@ -21,6 +21,14 @@ class MenuButtons(ui.View):
         self.sent = False
         
     async def launch(self, embed):
+        """Starts a menu
+        
+        Parameters
+        ----------
+        embed : discord.Embed
+            "First embed to send"
+            
+        """
         self.embed = embed
         # See which buttons we actually need enabled
         self.first.disabled = True

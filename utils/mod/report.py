@@ -1,12 +1,26 @@
 import discord
 from discord.utils import format_dt
-from data.model.filterword import FilterWord
+
 from data.services import user_service
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 from utils.views.report import ReportActions
 
 async def report(bot: discord.Client, message: discord.Message, word: str, invite=None):
+    """Deals with a report
+    
+    Parameters
+    ----------
+    bot : discord.Client
+        "Bot object"
+    message : discord.Message
+        "Filtered message"
+    word : str
+        "Filtered word"
+    invite : bool
+        "Was the filtered word an invite?"
+        
+    """
     db_guild = guild_service.get_guild()
     channel = message.guild.get_channel(db_guild.channel_reports)
 
@@ -24,8 +38,17 @@ async def report(bot: discord.Client, message: discord.Message, word: str, invit
     ctx = await bot.get_context(report_msg)
     await view.start(ctx)
 
-
 def prepare_ping_string(db_guild, message):
+    """Prepares modping string
+    
+    Parameters
+    ----------
+    db_guild
+        "Guild DB"
+    message : discord.Message
+        "Message object"
+        
+    """
     ping_string = ""
     role = message.guild.get_role(db_guild.role_moderator)
     for member in role.members:
@@ -35,12 +58,21 @@ def prepare_ping_string(db_guild, message):
 
     return ping_string
 
-
 def prepare_embed(message: discord.Message, word: str = None, title="Word filter"):
+    """Prepares embed
+    
+    Parameters
+    ----------
+    message : discord.Message
+        "Message object"
+    word : str
+        "Filtered word"
+    title : str
+        "Embed title"
+        
+    """
     member = message.author
     user_info = user_service.get_user(member.id)
-    joined = member.joined_at.strftime("%B %d, %Y, %I:%M %p")
-    created = member.created_at.strftime("%B %d, %Y, %I:%M %p")
     rd = user_service.rundown(member.id)
     rd_text = ""
     for r in rd:

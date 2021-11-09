@@ -1,4 +1,5 @@
 import discord
+
 from typing import Callable
 from utils.context import BlooContext
 from utils.views.menu import MenuButtons
@@ -15,6 +16,7 @@ class Menu():
         self.kwargs = kwargs
 
     async def init_menu(self):
+        """Initializes a menu"""
         def chunks(lst, n):
             """Yield successive n-sized chunks from lst."""
             for i in range(0, len(lst), n):

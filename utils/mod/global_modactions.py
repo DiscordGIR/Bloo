@@ -7,6 +7,20 @@ from utils.mod.mod_logs import prepare_mute_log
 from utils.mod.modactions_helpers import notify_user, submit_public_log
 
 async def mute(ctx, member, dur_seconds, reason):
+    """Mutes a member
+    
+    Parameters
+    ----------
+    ctx : BlooContext
+        "Bot context"
+    member : discord.Member
+        "Member to mute"
+    dur_seconds : int
+        "Mute duration in settings"
+    reason : str
+        "Reason for mute"
+    
+    """
     mute_role = guild_service.get_guild().role_mute
     mute_role = ctx.guild.get_role(mute_role)
 

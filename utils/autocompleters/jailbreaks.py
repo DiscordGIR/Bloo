@@ -26,7 +26,6 @@ async def get_jailbreaks():
 
     return res_apps
 
-
 async def jb_autocomplete(ctx: AutocompleteContext):
     apps = await get_jailbreaks()
     apps.sort()

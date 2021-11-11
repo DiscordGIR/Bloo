@@ -6,7 +6,7 @@ import json
 import re
 import traceback
 import aiohttp
-from utils.autocompleters.devices import device_autocomplete
+from utils.autocompleters import device_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.checks import (PermissionsFailure, always_whisper, ensure_invokee_role_lower_than_bot, whisper)

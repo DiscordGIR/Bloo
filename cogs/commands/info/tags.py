@@ -6,7 +6,7 @@ import traceback
 from io import BytesIO
 from data.model.tag import Tag
 from data.services.guild_service import guild_service
-from utils.autocompleters.tags import tags_autocomplete
+from utils.autocompleters import tags_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
 from utils.permissions.checks import (PermissionsFailure, genius_or_submod_and_up)

@@ -14,7 +14,7 @@ from colorthief import ColorThief
 from PIL import Image
 from data.services.guild_service import guild_service
 from utils.async_cache import async_cacher
-from utils.autocompleters.jailbreaks import jb_autocomplete
+from utils.autocompleters import jb_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import Guild

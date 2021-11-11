@@ -153,4 +153,7 @@ class UserService:
         cases.reverse()
         return cases[0:3]
 
+    def retrieve_birthdays(self, date):
+        return User.objects(birthday=date)
+
 user_service = UserService()

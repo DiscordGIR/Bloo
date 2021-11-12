@@ -246,15 +246,12 @@ class AntiRaidMonitor(commands.Cog):
         """
 
         if len(set(message.mentions)) > 4 or len(set(message.role_mentions)) > 2:
-            mute = self.bot.get_command("mute")
-            if mute is not None:
-                # TODO: look into this
-                ctx = await self.bot.get_context(message)
-                user = message.author
-                ctx.message.author = ctx.author = ctx.me
-                await mute(ctx=ctx, user=user, reason="Ping spam")
-                ctx.message.author = ctx.author = user
-                return True
+            user = message.author
+            ctx = await self.bot.get_context(message, cls=BlooOldContext)
+            ctx.message.author = ctx.author = ctx.me
+            await mute(ctx, user, reason="Ping spam")
+            ctx.message.author = ctx.author = user
+            return True
 
         return False
     
@@ -272,20 +269,12 @@ class AntiRaidMonitor(commands.Cog):
         if bucket.update_rate_limit(current):
             if message.author.id in self.spam_user_mapping:
                 return True
-            
-            # mute = self.bot.get_command("mute")
-            # if mute is not None:
-            #     ctx = await self.bot.get_context(message)
-            #     # TODO: here too
-            #     user = message.author
-            #     ctx.message.author = ctx.author = ctx.me
-            #     try:
-            #         await mute(ctx=ctx, user=user, reason="Message spam")
-            #     except Exception:
-            #         pass
-            #     ctx.message.author = ctx.author = user
+
+            user = message.author
             ctx = await self.bot.get_context(message, cls=BlooOldContext)
-            await mute(ctx, message.author, reason="Message spam")
+            ctx.message.author = ctx.author = ctx.me
+            await mute(ctx, user, reason="Message spam")
+            ctx.message.author = ctx.author = user
             return True
     
     async def raid_phrase_detected(self, message):

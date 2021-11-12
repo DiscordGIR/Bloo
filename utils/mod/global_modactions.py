@@ -55,7 +55,6 @@ async def mute(ctx, member, dur_seconds = None, reason = "No reason."):
     u = user_service.get_user(id=member.id)
     u.is_muted = True
     u.save()
-
     await member.add_roles(mute_role)
 
     log = prepare_mute_log(ctx.author, member, case)
@@ -143,5 +142,6 @@ async def ban(ctx, user, reason = "No reason."):
         # hackban for user not currently in guild
         await ctx.guild.ban(discord.Object(id=user.id))
 
+    ctx.bot.ban_cache.ban(user.id)
     await ctx.send(embed=log, delete_after=10)
     await submit_public_log(ctx, db_guild, user, log)

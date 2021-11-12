@@ -3,6 +3,7 @@ import re
 
 import aiohttp
 from data.services.guild_service import guild_service
+from data.services.user_service import user_service
 from discord.commands.context import AutocompleteContext
 
 from utils.async_cache import async_cacher
@@ -83,3 +84,10 @@ async def tags_autocomplete(ctx: AutocompleteContext):
     tags.sort()
     tags = tags[:25]
     return [tag for tag in tags if tag.lower().startswith(ctx.value.lower())]
+
+async def liftwarn_autocomplete(ctx: AutocompleteContext):
+    cases = [case._id for case in user_service.get_cases(int(ctx.options["user"])).cases if case._type == "WARN" and not case.lifted]
+    cases.sort(reverse=True)
+    cases = cases[:25]
+
+    return [case for case in cases if str(case).startswith(str(ctx.value))]

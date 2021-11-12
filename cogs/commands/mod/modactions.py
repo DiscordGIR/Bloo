@@ -11,6 +11,7 @@ from datetime import datetime, timedelta
 from data.model.case import Case
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
+from utils.autocompleters import liftwarn_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
 from utils.mod.mod_logs import (prepare_editreason_log, prepare_liftwarn_log, prepare_mute_log, prepare_removepoints_log, prepare_unban_log, prepare_unmute_log, prepare_warn_log)
@@ -448,7 +449,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Lift a warn", permissions=slash_perms.mod_and_up())
-    async def liftwarn(self, ctx: BlooContext, user: Option(discord.Member, description="User to lift warn of"), case_id: Option(int), reason: Option(str, required=False) = "No reason.") -> None:
+    async def liftwarn(self, ctx: BlooContext, user: Option(discord.Member, description="User to lift warn of"), case_id: Option(int, autocomplete=liftwarn_autocomplete), reason: Option(str, required=False) = "No reason.") -> None:
         """Marks a warn as lifted and remove points. (mod only)
 
         Example usage

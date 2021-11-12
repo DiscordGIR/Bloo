@@ -1,5 +1,6 @@
 import discord
 from discord.commands import Option, slash_command
+from discord.commands.commands import message_command, user_command
 from discord.ext import commands
 
 import base64
@@ -234,6 +235,19 @@ class Misc(commands.Cog):
         if member is None:
             member = ctx.author
 
+        await self.handle_avatar(ctx, member)
+    
+    @whisper()
+    @user_command(guild_ids=[cfg.guild_id], name="View avatar")
+    async def avatar_rc(self, ctx: BlooContext, member: discord.Member):
+        await self.handle_avatar(ctx, member)
+    
+    @whisper()
+    @message_command(guild_ids=[cfg.guild_id], name="View avatar")
+    async def avatar_msg(self, ctx: BlooContext, message: discord.Message):
+        await self.handle_avatar(ctx, message.author)
+    
+    async def handle_avatar(self, ctx, member: discord.Member):
         embed = discord.Embed(title=f"{member}'s avatar")
         animated = ["gif", "png", "jpeg", "webp"]
         not_animated = ["png", "jpeg", "webp"]
@@ -320,6 +334,7 @@ class Misc(commands.Cog):
     @jailbreak.error
     @remindme.error
     @jumbo.error
+    @avatar.error
     async def info_error(self, ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original

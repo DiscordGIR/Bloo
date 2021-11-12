@@ -20,6 +20,7 @@ initial_extensions = [
         "cogs.commands.misc.genius",
         "cogs.commands.misc.giveaway",
         "cogs.commands.misc.canister",
+        "cogs.commands.misc.misc",
         "cogs.commands.misc.subnews",
         "cogs.commands.mod.antiraid",
         "cogs.commands.mod.filter",

@@ -23,7 +23,7 @@ class ModUtils(commands.Cog):
 
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="", permissions=slash_perms.mod_and_up())
+    @slash_command(guild_ids=[cfg.guild_id], description="Get information about a user (join/creation date, xp, etc.)", permissions=slash_perms.mod_and_up())
     async def rundown(self, ctx: BlooContext, user: discord.Member):
         await ctx.respond(embed = await self.prepare_rundown_embed(ctx, user))
 

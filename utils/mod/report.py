@@ -1,14 +1,14 @@
 import discord
-from discord.utils import format_dt
-
 from data.services import user_service
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
-from utils.views.report import ReportActions
+from discord.utils import format_dt
+from utils.views.report import RaidPhraseReportActions, ReportActions, SpamReportActions
+
 
 async def report(bot: discord.Client, message: discord.Message, word: str, invite=None):
     """Deals with a report
-    
+
     Parameters
     ----------
     bot : discord.Client
@@ -19,7 +19,7 @@ async def report(bot: discord.Client, message: discord.Message, word: str, invit
         "Filtered word"
     invite : bool
         "Was the filtered word an invite?"
-        
+
     """
     db_guild = guild_service.get_guild()
     channel = message.guild.get_channel(db_guild.channel_reports)
@@ -35,19 +35,133 @@ async def report(bot: discord.Client, message: discord.Message, word: str, invit
         embed = prepare_embed(message, word)
         report_msg = await channel.send(ping_string, embed=embed, view=view)
 
+
+async def report_raid_phrase(bot: discord.Client, message: discord.Message, domain: str):
+    """Deals with a report
+
+    Parameters
+    ----------
+    bot : discord.Client
+        "Bot object"
+    message : discord.Message
+        "Filtered message"
+    word : str
+        "Filtered word"
+    invite : bool
+        "Was the filtered word an invite?"
+
+    """
+    db_guild = guild_service.get_guild()
+    channel = message.guild.get_channel(db_guild.channel_reports)
+
+    # TODO revert everywhere
+    # ping_string = prepare_ping_string(db_guild, message)
+    ping_string = ""
+    view = RaidPhraseReportActions(message.author, domain)
+
+    embed = prepare_embed(
+        message, domain, title=f"Possible new raid phrase detected\n{domain}")
+    report_msg = await channel.send(ping_string, embed=embed, view=view)
+
     ctx = await bot.get_context(report_msg)
     await view.start(ctx)
 
+
+async def report_spam(self, msg, user, title):
+    channel = msg.guild.get_channel(guild_service.get_guild().channel_reports)
+    # ping_string = await self.prepare_ping_string(msg)
+    ping_string = ""
+
+    view = SpamReportActions(user)
+    embed = await self.prepare_embed(user, msg, title=title)
+
+    report_msg = await channel.send(ping_string, embed=embed, view=view)
+
+    ctx = await self.bot.get_context(report_msg)
+    await view.start(ctx)
+
+
+async def report_raid(self, user, msg=None):
+    embed = discord.Embed()
+    embed.title = "Possible raid occurring"
+    embed.description = "The raid filter has been triggered 5 or more times in the past 10 seconds. I am automatically locking all the channels. Use `!unfreeze` when you're done."
+    embed.color = discord.Color.red()
+    embed.set_thumbnail(url=user.avatar_url)
+    embed.add_field(name="Member", value=f"{user} ({user.mention})")
+    if msg is not None:
+        embed.add_field(name="Message", value=msg.content, inline=False)
+
+    db_guild = guild_service.get_guild()
+    reports_channel = user.guild.get_channel(db_guild.channel_reports)
+    await reports_channel.send(f"<@&{db_guild.role_moderator}>", embed=embed, allowed_mentions=discord.AllowedMentions(roles=True))
+
+    #              ping_string = ""
+    # view = RaidPhraseReportActions(message.author)
+
+    # embed = prepare_embed(message, domain, title=f"Possible new raid phrase detected\n{domain}")
+    # report_msg = await channel.send(ping_string, embed=embed, view=view)
+
+    # ctx = await bot.get_context(report_msg)
+    # await view.start(ctx)
+    # if reaction == '✅':
+    #     ctx.author = ctx.message.author = reactor
+    #     unmute = self.bot.get_command("unmute")
+    #     if unmute is not None:
+    #         try:
+    #             await unmute(ctx=ctx, user=user, reason="Reviewed by a moderator.")
+    #         except Exception:
+    #             pass
+    #         await report_msg.delete()
+    #     else:
+    #         await ctx.send_warning("I wasn't able to unmute them.")
+    #     return
+
+    # elif reaction == '💀':
+    #     ctx.author = ctx.message.author = reactor
+    #     ban = self.bot.get_command("ban")
+    #     if ban is not None:
+    #         try:
+    #             await ban(ctx=ctx, user=user, reason="Spam detected")
+    #         except Exception:
+    #             pass
+    #         await report_msg.delete()
+    #     else:
+    #         await ctx.send_warning("I wasn't able to ban them.")
+    #     return
+    # elif reaction == '⚠️':
+    #     ctx.author = ctx.message.author = reactor
+    #     now = datetime.datetime.now()
+    #     delta = await self.prompt_time(ctx)
+    #     if delta is None:
+    #         continue
+
+    #     try:
+    #         time = now + datetime.timedelta(seconds=delta)
+    #         ctx.tasks.schedule_unmute(user.id, time)
+
+    #         await ctx.send_success(title="Done!", description=f"{user.mention} was muted for {humanize.naturaldelta(time - now)}.", delete_after=5)
+    #         await report_msg.delete()
+
+    #         try:
+    #             await user.send(embed=discord.Embed(title="Ping spam unmute", description=f"A moderator has reviewed your ping spam report. You will be unmuted in {humanize.naturaldelta(time - now)}.", color=discord.Color.orange()))
+    #         except Exception:
+    #             pass
+
+    #         return
+    #     except Exception:
+    #         return
+
+
 def prepare_ping_string(db_guild, message):
     """Prepares modping string
-    
+
     Parameters
     ----------
     db_guild
         "Guild DB"
     message : discord.Message
         "Message object"
-        
+
     """
     ping_string = ""
     role = message.guild.get_role(db_guild.role_moderator)
@@ -58,9 +172,10 @@ def prepare_ping_string(db_guild, message):
 
     return ping_string
 
+
 def prepare_embed(message: discord.Message, word: str = None, title="Word filter"):
     """Prepares embed
-    
+
     Parameters
     ----------
     message : discord.Message
@@ -69,7 +184,7 @@ def prepare_embed(message: discord.Message, word: str = None, title="Word filter
         "Filtered word"
     title : str
         "Embed title"
-        
+
     """
     member = message.author
     user_info = user_service.get_user(member.id)

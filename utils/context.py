@@ -104,7 +104,7 @@ class BlooContext(discord.context.ApplicationContext):
         embed = discord.Embed(title=info.title if not info.reprompt else f"That wasn't a valid {info.value_name}. {info.title if info.title is not None else ''}", description=info.description, color=discord.Color.blurple() if not info.reprompt else discord.Color.orange())
         embed.set_footer(text="Send 'cancel' to cancel.")
 
-        await self.respond_or_edit(embed=embed, ephemeral=True)
+        await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=None)
         try:
             response = await self.bot.wait_for('message', check=wait_check, timeout=info.timeout)
         except TimeoutError:

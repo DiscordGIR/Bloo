@@ -1,5 +1,6 @@
 import discord
 from discord.commands import Option, slash_command
+from discord.commands.commands import message_command, user_command
 from discord.ext import commands
 from discord.utils import escape_markdown, escape_mentions
 
@@ -11,12 +12,13 @@ from data.model.case import Case
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 from utils.config import cfg
-from utils.context import BlooContext
+from utils.context import BlooContext, PromptData
 from utils.mod.mod_logs import (prepare_editreason_log, prepare_liftwarn_log, prepare_mute_log, prepare_removepoints_log, prepare_unban_log, prepare_unmute_log, prepare_warn_log)
 from utils.mod.modactions_helpers import (add_ban_case, add_kick_case, notify_user, notify_user_warn, submit_public_log)
-from utils.permissions.checks import PermissionsFailure, mod_and_up, whisper
+from utils.permissions.checks import PermissionsFailure, always_whisper, mod_and_up, whisper
 from utils.permissions.converters import (mods_and_above_external_resolver, mods_and_above_member_resolver, user_resolver)
 from utils.permissions.slash_perms import slash_perms
+from utils.views.modactions import WarnView
 
 class ModActions(commands.Cog):
     def __init__(self, bot):
@@ -45,7 +47,52 @@ class ModActions(commands.Cog):
 
         if points < 1:  # can't warn for negative/0 points
             raise commands.BadArgument(message="Points can't be lower than 1.")
+        
+        await self.handle_warn(ctx, user, points, reason)
 
+    @mod_and_up()
+    @always_whisper()
+    @user_command(guild_ids=[cfg.guild_id], name="Warn 50 points")
+    async def warn_rc(self, ctx: BlooContext, user: discord.Member) -> None:
+        # view = WarnView(ctx, user, self.handle_warn)
+        # await ctx.respond(embed=discord.Embed(description=f"How many points do you want to warn {user.mention}?", color=discord.Color.blurple()), view=view, ephemeral=True)
+        user = await mods_and_above_external_resolver(ctx, user)
+        prompt_data = PromptData(value_name="Reason", 
+                                description=f"Reason for warning {user.mention}?",
+                                convertor=str,
+                                )
+        await ctx.defer(ephemeral=True)
+        ctx.author = ctx.user
+        reason = await ctx.prompt(prompt_data)
+        if reason is None:
+            await ctx.send_warning("Cancelled")
+            return
+
+        await self.handle_warn(ctx, user, 50, reason)
+        await ctx.send_success("Done!")
+    
+    @mod_and_up()
+    @always_whisper()
+    @message_command(guild_ids=[cfg.guild_id], name="Warn 50 points")
+    async def warn_msg(self, ctx: BlooContext, message: discord.Message) -> None:
+        # view = WarnView(ctx, message.author, self.handle_warn)
+        # await ctx.respond(embed=discord.Embed(f"How many points do you want to warn {message.author.mention}?", color=discord.Color.blurple()), view=view, ephemeral=True)
+        user = await mods_and_above_external_resolver(ctx, message.author)
+        prompt_data = PromptData(value_name="Reason", 
+                                description=f"Reason for warning {user.mention}?",
+                                convertor=str,
+                                )
+        await ctx.defer(ephemeral=True)
+        ctx.author = ctx.user
+        reason = await ctx.prompt(prompt_data)
+        if reason is None:
+            await ctx.send_warning("Cancelled")
+            return
+
+        await self.handle_warn(ctx, user, 50, reason)
+        await ctx.send_success("Done!")
+
+    async def handle_warn(self, ctx, user, points, reason):
         db_guild = guild_service.get_guild()
 
         reason = escape_markdown(reason)
@@ -609,6 +656,8 @@ class ModActions(commands.Cog):
     @unban.error
     @ban.error
     @warn.error
+    @warn_rc.error
+    @warn_msg.error
     @purge.error
     @kick.error
     @roblox.error

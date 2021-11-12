@@ -41,7 +41,8 @@ class Birthday(commands.Cog):
         if not guild:
             return
 
-        birthday_role = guild.get_role(guild_service.get_guild().role_birthday)
+        db_guild = guild_service.get_guild()
+        birthday_role = guild.get_role(db_guild.role_birthday)
         if not birthday_role:
             return
 
@@ -54,7 +55,7 @@ class Birthday(commands.Cog):
             if user is None:
                 return
 
-            await self.give_user_birthday_role(user, guild)
+            await give_user_birthday_role(self.bot, db_guild, user, guild)
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Set your birthday. The birthday role will be given to you on that day.")

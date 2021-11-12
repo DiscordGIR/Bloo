@@ -191,6 +191,12 @@ class AntiRaidMonitor(commands.Cog):
         # don't trigger if this user isn't a whitename
         if permissions.has(message.guild, message.author, 1):
             return False
+        
+        # don't spam this
+        bucket = self.spam_report_cooldown.get_bucket(message)
+        current = message.created_at.replace(tzinfo=timezone.utc).timestamp()
+        if bucket.update_rate_limit(current):
+            return False
 
         return True
 

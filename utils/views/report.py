@@ -2,6 +2,7 @@ import discord
 from discord import ui
 from discord.ext.commands import Context
 import pytimeparse
+from data.services.guild_service import guild_service
 from utils.context import PromptData
 from utils.mod.global_modactions import ban, mute, unmute
 from utils.permissions.permissions import permissions
@@ -59,8 +60,8 @@ class RaidPhraseReportActions(ui.View):
             return
         try:
             await unmute(self.ctx, self.author, reason="Reviewed by a moderator.")
-        except:
-            await self.ctx.send_warning("I wasn't able to unmute them.")
+        except Exception:
+            await self.ctx.send_warning("I wasn't able to unmute them.", delete_after=5)
         finally:
             await self.ctx.message.delete()
         
@@ -70,17 +71,18 @@ class RaidPhraseReportActions(ui.View):
             return
         try:
             await ban(self.ctx, self.author, reason="Raid phrase detected")
-        except Exception:
-            await self.ctx.send_warning("I wasn't able to ban them.")
-        finally:
-            await self.ctx.message.delete()
+            self.ctx.bot.ban_cache.ban(self.author.id)
+        except Exception as e:
+            print(e)
+            await self.ctx.send_warning("I wasn't able to ban them.", delete_after=5)
 
-        done = await self.bot.settings.add_raid_phrase(self.domain)
+        done = guild_service.add_raid_phrase(self.domain)
         if done:
             await self.ctx.send_success(f"{self.domain} was added to the raid phrase list.", delete_after=5)
         else:
-            await self.ctx.send_success(f"{self.domain} was already in the raid phrase list.", delete_after=5)
-        return
+            await self.ctx.send_warning(f"{self.domain} was already in the raid phrase list.", delete_after=5)
+
+        await self.ctx.message.delete()
 
 class SpamReportActions(ui.View):
     def __init__(self, author: discord.Member):
@@ -103,11 +105,11 @@ class SpamReportActions(ui.View):
         try:
             await unmute(self.ctx, self.author, reason="Reviewed by a moderator.")
         except:
-            await self.ctx.send_warning("I wasn't able to unmute them.")
+            await self.ctx.send_warning("I wasn't able to unmute them.", delete_after=5)
         finally:
             await self.ctx.message.delete()
         
-    @ui.button(emoji="💀", label="Ban and add raidphrase", style=discord.ButtonStyle.primary)
+    @ui.button(emoji="💀", label="Ban", style=discord.ButtonStyle.primary)
     async def ban(self, button: ui.Button, interaction: discord.Interaction):
         if not self.check(interaction):
             return
@@ -127,7 +129,8 @@ class SpamReportActions(ui.View):
                                         description="Please enter a duration for the mute (i.e 15m).",
                                         convertor=pytimeparse.parse,
                                         )
+        await interaction.response.defer()
+        self.ctx.author = interaction.user
         duration = await self.ctx.prompt(prompt_data)
-        await unmute(self.ctx, self.author, reason="Reviewed by a moderator.")
         await mute(self.ctx, self.author, duration, reason="A moderator has reviewed your spam report.")
         await self.ctx.message.delete()

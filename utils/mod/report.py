@@ -3,6 +3,7 @@ from data.services import user_service
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 from discord.utils import format_dt
+from utils.context import BlooOldContext
 from utils.views.report import RaidPhraseReportActions, ReportActions, SpamReportActions
 
 
@@ -63,25 +64,25 @@ async def report_raid_phrase(bot: discord.Client, message: discord.Message, doma
         message, domain, title=f"Possible new raid phrase detected\n{domain}")
     report_msg = await channel.send(ping_string, embed=embed, view=view)
 
-    ctx = await bot.get_context(report_msg)
+    ctx = await bot.get_context(report_msg, cls=BlooOldContext)
     await view.start(ctx)
 
 
-async def report_spam(self, msg, user, title):
+async def report_spam(bot, msg, user, title):
     channel = msg.guild.get_channel(guild_service.get_guild().channel_reports)
     # ping_string = await self.prepare_ping_string(msg)
     ping_string = ""
 
     view = SpamReportActions(user)
-    embed = await self.prepare_embed(user, msg, title=title)
+    embed = prepare_embed(msg, title=title)
 
     report_msg = await channel.send(ping_string, embed=embed, view=view)
 
-    ctx = await self.bot.get_context(report_msg)
+    ctx = await bot.get_context(report_msg, cls=BlooOldContext)
     await view.start(ctx)
 
 
-async def report_raid(self, user, msg=None):
+async def report_raid(user, msg=None):
     embed = discord.Embed()
     embed.title = "Possible raid occurring"
     embed.description = "The raid filter has been triggered 5 or more times in the past 10 seconds. I am automatically locking all the channels. Use `!unfreeze` when you're done."

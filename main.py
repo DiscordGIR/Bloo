@@ -24,6 +24,7 @@ initial_extensions = [
         "cogs.commands.mod.antiraid",
         "cogs.commands.mod.filter",
         "cogs.commands.mod.modactions",
+        "cogs.monitors.antiraid",
         "cogs.monitors.applenews",
         "cogs.monitors.birthday",
         "cogs.monitors.boosteremojis",

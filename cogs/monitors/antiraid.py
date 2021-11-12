@@ -11,10 +11,11 @@ from discord.ext import commands
 from expiringdict import ExpiringDict
 from fold_to_ascii import fold
 from utils.config import cfg
+from utils.context import BlooOldContext
 from utils.message_cooldown import MessageTextBucket
 from utils.mod.global_modactions import mute
 from utils.mod.mod_logs import prepare_ban_log
-from utils.mod.report import report_raid, report_raid_phrase
+from utils.mod.report import report_raid, report_raid_phrase, report_spam
 from utils.permissions.permissions import permissions
 
 
@@ -102,7 +103,7 @@ class AntiRaidMonitor(commands.Cog):
         (after May 1st 2021) join within 45 minutes of each other"""
         
         # skip if the user was created within the last 15 minutes
-        if member.created_at > datetime.now() - timedelta(minutes=15):
+        if member.created_at > datetime.now(member.created_at.tzinfo) - timedelta(minutes=15):
             return
 
         # skip user if we manually verified them, i.e they were approved by a moderator
@@ -111,7 +112,7 @@ class AntiRaidMonitor(commands.Cog):
             return
 
         # skip if it's an older account (before May 1st 2021)
-        if member.created_at < datetime.strptime("01/05/21 00:00:00", '%d/%m/%y %H:%M:%S'):
+        if member.created_at < datetime.strptime("01/05/21 00:00:00", '%d/%m/%y %H:%M:%S').replace(tzinfo=member.created_at.tzinfo):
             return 
         
         # this setting disables the filter for accounts created from "Today"
@@ -221,7 +222,7 @@ class AntiRaidMonitor(commands.Cog):
                     title = "Ping spam detected"
                 else:
                     title = "Message spam detected"
-                await self.bot.report.report_spam(message, user, title=title)
+                await report_spam(self.bot, message, user, title=title)
             else:
                 users = list(self.spam_user_mapping.keys())
                 for user in users:
@@ -272,18 +273,20 @@ class AntiRaidMonitor(commands.Cog):
             if message.author.id in self.spam_user_mapping:
                 return True
             
-            mute = self.bot.get_command("mute")
-            if mute is not None:
-                ctx = await self.bot.get_context(message)
-                # TODO: here too
-                user = message.author
-                ctx.message.author = ctx.author = ctx.me
-                try:
-                    await mute(ctx=ctx, user=user, reason="Message spam")
-                except Exception:
-                    pass
-                ctx.message.author = ctx.author = user
-                return True
+            # mute = self.bot.get_command("mute")
+            # if mute is not None:
+            #     ctx = await self.bot.get_context(message)
+            #     # TODO: here too
+            #     user = message.author
+            #     ctx.message.author = ctx.author = ctx.me
+            #     try:
+            #         await mute(ctx=ctx, user=user, reason="Message spam")
+            #     except Exception:
+            #         pass
+            #     ctx.message.author = ctx.author = user
+            ctx = await self.bot.get_context(message, cls=BlooOldContext)
+            await mute(ctx, message.author, reason="Message spam")
+            return True
     
     async def raid_phrase_detected(self, message):
         """Raid phrases are specific phrases (such as known scam URLs), and upon saying them, whitenames
@@ -333,7 +336,7 @@ class AntiRaidMonitor(commands.Cog):
         ctx = await self.bot.get_context(message)
         user = message.author
         ctx.message.author = ctx.author = ctx.me
-        await mute(ctx=ctx, user=user, reason="Possible new raid phrase detected")
+        await mute(ctx, user, reason="Possible new raid phrase detected")
         ctx.message.author = ctx.author = user
 
         # report the user to mods
@@ -380,7 +383,7 @@ class AntiRaidMonitor(commands.Cog):
             public_logs = user.guild.get_channel(db_guild.channel_public)
             if public_logs:
                 log.remove_author()
-                log.set_thumbnail(url=user.avatar_url)
+                log.set_thumbnail(url=user.display_avatar)
                 await public_logs.send(embed=log)
 
     async def freeze_server(self, guild):

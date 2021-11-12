@@ -8,7 +8,7 @@ from data.services.user_service import user_service
 from utils.mod.mod_logs import prepare_mute_log, prepare_unmute_log
 from utils.mod.modactions_helpers import add_ban_case, notify_user, submit_public_log
 
-async def mute(ctx, member, dur_seconds, reason):
+async def mute(ctx, member, dur_seconds = None, reason = "No reason."):
     """Mutes a member
     
     Parameters
@@ -26,9 +26,6 @@ async def mute(ctx, member, dur_seconds, reason):
     mute_role = guild_service.get_guild().role_mute
     mute_role = ctx.guild.get_role(mute_role)
 
-    if mute_role in member.roles:
-        return
-
     now = datetime.now()
 
     db_guild = guild_service.get_guild()
@@ -41,7 +38,7 @@ async def mute(ctx, member, dur_seconds, reason):
         reason=reason,
     )
 
-    if dur_seconds != 0:
+    if dur_seconds:
         try:
             time = now + timedelta(seconds=dur_seconds)
             case.until = time
@@ -112,12 +109,12 @@ async def unmute(ctx, member, reason: str = "No reason.") -> None:
 
     log = prepare_unmute_log(ctx.author, member, case)
 
-    await ctx.respond(embed=log, delete_after=10)
+    await ctx.send(embed=log, delete_after=10)
 
     dmed = await notify_user(member, f"You have been unmuted in {ctx.guild.name}", log)
     await submit_public_log(ctx, db_guild, member, log, dmed)
         
-async def ban(self, ctx, user, reason = "No reason."):
+async def ban(ctx, user, reason = "No reason."):
     """Bans a user (mod only)
 
     Example usage
@@ -137,13 +134,6 @@ async def ban(self, ctx, user, reason = "No reason."):
 
     member_is_external = isinstance(user, discord.User)
 
-    # if the ID given is of a user who isn't in the guild, try to fetch the profile
-    if member_is_external:
-        async with ctx.typing():
-            if self.bot.ban_cache.is_banned(user.id):
-                raise commands.BadArgument("That user is already banned!")
-
-    self.bot.ban_cache.ban(user.id)
     log = await add_ban_case(ctx, user, reason, db_guild)
 
     if not member_is_external:
@@ -153,5 +143,5 @@ async def ban(self, ctx, user, reason = "No reason."):
         # hackban for user not currently in guild
         await ctx.guild.ban(discord.Object(id=user.id))
 
-    await ctx.respond(embed=log, delete_after=10)
+    await ctx.send(embed=log, delete_after=10)
     await submit_public_log(ctx, db_guild, user, log)

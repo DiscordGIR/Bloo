@@ -312,8 +312,6 @@ class AntiRaidMonitor(commands.Cog):
                         if word.false_positive and word.word.lower() not in folded_message.split():
                             continue
 
-                        ctx = await self.bot.get_context(message)
-                        # TODO HERE TOO
                         await self.raid_ban(message.author)
                         return True
         return False

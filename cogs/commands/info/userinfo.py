@@ -315,19 +315,14 @@ class UserInfo(commands.Cog):
         # if an invokee is not provided in command, call command on the invoker
         # (get invoker's cases)
         user = user or ctx.author
-
+        # if user not in guild, fetch their profile from the Discord API
+        if isinstance(user, int): # TODO this is fucked, pycord bug
+           user = user_resolver(ctx, user)
+           
         # users can only invoke on themselves if they aren't mods
         if not permissions.has(ctx.guild, ctx.author, 5) and user.id != ctx.author.id:
             raise PermissionsFailure(
                 f"You don't have permissions to check others' warnpoints.")
-
-        # if user not in guild, fetch their profile from the Discord API
-        if isinstance(user, int):
-            try:
-                user_1 = await self.bot.fetch_user(user)
-            except Exception:
-                return await ctx.send_error(f"Couldn't find user with ID {user}")
-            user = user_1
 
         # fetch user's cases from our database
         results = user_service.get_cases(user.id)

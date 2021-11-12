@@ -42,7 +42,9 @@ class AntiRaidMonitor(commands.Cog):
         self.raid_detection_threshold = commands.CooldownMapping.from_cooldown(rate=4, per=15.0, type=commands.BucketType.guild)
         # cooldown to only send one raid alert for moderators per 10 minutes
         self.raid_alert_cooldown = commands.CooldownMapping.from_cooldown(1, 600.0, commands.BucketType.guild)
-
+        # cooldown to only send one report per spamming member
+        self.spam_report_cooldown = commands.CooldownMapping.from_cooldown(rate=1, per=10.0, type=commands.BucketType.member)
+        
         # stores the users that trigger self.join_raid_detection_threshold so we can ban them
         self.join_user_mapping = ExpiringDict(max_len=100, max_age_seconds=10)
         # stores the users that trigger self.message_spam_detection_threshold so we can ban them
@@ -246,12 +248,15 @@ class AntiRaidMonitor(commands.Cog):
         """
 
         if len(set(message.mentions)) > 4 or len(set(message.role_mentions)) > 2:
-            user = message.author
-            ctx = await self.bot.get_context(message, cls=BlooOldContext)
-            ctx.message.author = ctx.author = ctx.me
-            await mute(ctx, user, reason="Ping spam")
-            ctx.message.author = ctx.author = user
-            return True
+            bucket = self.spam_report_cooldown.get_bucket(message)
+            current = message.created_at.replace(tzinfo=timezone.utc).timestamp()
+            if not bucket.update_rate_limit(current):
+                user = message.author
+                ctx = await self.bot.get_context(message, cls=BlooOldContext)
+                ctx.message.author = ctx.author = ctx.me
+                await mute(ctx, user, reason="Ping spam")
+                ctx.message.author = ctx.author = user
+                return True
 
         return False
     
@@ -267,16 +272,18 @@ class AntiRaidMonitor(commands.Cog):
         current = message.created_at.replace(tzinfo=timezone.utc).timestamp()
 
         if bucket.update_rate_limit(current):
-            if message.author.id in self.spam_user_mapping:
+            bucket = self.spam_report_cooldown.get_bucket(message)
+            current = message.created_at.replace(tzinfo=timezone.utc).timestamp()
+            if not bucket.update_rate_limit(current):
+                user = message.author
+                ctx = await self.bot.get_context(message, cls=BlooOldContext)
+                ctx.message.author = ctx.author = ctx.me
+                await mute(ctx, user, reason="Message spam")
+                ctx.message.author = ctx.author = user
                 return True
+        
+        return False
 
-            user = message.author
-            ctx = await self.bot.get_context(message, cls=BlooOldContext)
-            ctx.message.author = ctx.author = ctx.me
-            await mute(ctx, user, reason="Message spam")
-            ctx.message.author = ctx.author = user
-            return True
-    
     async def raid_phrase_detected(self, message):
         """Raid phrases are specific phrases (such as known scam URLs), and upon saying them, whitenames
         will immediately be banned. Uses the same system as filters to search messages for the phrases.

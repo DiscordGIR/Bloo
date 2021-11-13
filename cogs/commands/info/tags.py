@@ -13,10 +13,22 @@ from utils.autocompleters import tags_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
 from utils.permissions.checks import (PermissionsFailure,
-                                      genius_or_submod_and_up)
+                                      genius_or_submod_and_up, whisper)
 from utils.permissions.slash_perms import slash_perms
 from utils.permissions.permissions import permissions
+from utils.menu import Menu
 
+async def format_tag_page(entry, all_pages, current_page, ctx):
+        embed = discord.Embed(
+            title=f'All tags', color=discord.Color.blurple())
+        for tag in entry:
+            desc = f"Added by: {tag.added_by_tag}\nUsed {tag.use_count} times"
+            if tag.image.read() is not None:
+                desc += "\nHas image attachment"
+            embed.add_field(name=tag.name, value=desc)
+        embed.set_footer(
+            text=f"Page {current_page} of {len(all_pages)}")
+        return embed
 
 class Tags(commands.Cog):
     def __init__(self, bot):
@@ -146,6 +158,23 @@ class Tags(commands.Cog):
         guild_service.remove_tag(name)
         await ctx.send_warning(f"Deleted tag {tag.name}.")
 
+    @whisper()
+    @slash_command(guild_ids=[cfg.guild_id], description="List all tags")
+    async def taglist(self, ctx: BlooContext):
+        """List all tags
+        """
+
+        tags = sorted(guild_service.get_guild().tags, key=lambda tag: tag.name)
+
+        if len(tags) == 0:
+            raise commands.BadArgument("There are no tags defined.")
+        
+        menu = Menu(tags, ctx.channel, per_page=12,
+                    format_page=format_tag_page, interaction=True, ctx=ctx, whisper=ctx.whisper)
+
+        await menu.start()
+
+
     async def prepare_tag_embed(self, tag):
         """Given a tag object, prepare the appropriate embed for it
 
@@ -173,7 +202,7 @@ class Tags(commands.Cog):
 
     # @edittag.error
     @tag.error
-    # @taglist.error
+    @taglist.error
     @deltag.error
     @addtag.error
     async def info_error(self,  ctx: BlooContext, error):

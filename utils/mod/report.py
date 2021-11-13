@@ -36,6 +36,8 @@ async def report(bot: discord.Client, message: discord.Message, word: str, invit
         embed = prepare_embed(message, word)
         report_msg = await channel.send(ping_string, embed=embed, view=view)
 
+    ctx = await bot.get_context(report_msg)
+    await view.start(ctx)
 
 async def report_raid_phrase(bot: discord.Client, message: discord.Message, domain: str):
     """Deals with a report

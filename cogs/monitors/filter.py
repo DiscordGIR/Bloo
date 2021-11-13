@@ -54,9 +54,8 @@ class Filter(commands.Cog):
             return
 
         dev_role = message.guild.get_role(db_guild.role_dev)
-
         # TODO: test this thoroughly
-        should_delete = False
+        triggered = False
         for word in triggered_words:
             if word.piracy:
                 # ignore if it's a dev saying piracy in #development
@@ -65,19 +64,19 @@ class Filter(commands.Cog):
 
             if word.notify:
                 await self.delete(message)
-                await self.do_filter_notify(message.author, message.channel, word.word)
                 await self.ratelimit(message)
+                await self.do_filter_notify(message, word.word)
                 await report(self.bot, message, word.word)
                 return
 
-            should_delete = True
+            triggered = True
 
-        if should_delete:
+        if triggered:
             await self.delete(message)
             await self.ratelimit(message)
+            await self.do_filter_notify(message, word.word)
 
-        await self.do_filter_notify(message.author, message.channel, word.word)
-        return should_delete
+        return triggered
 
     async def do_invite_filter(self, message, db_guild):
         invites = re.findall(self.invite_filter, message.content, flags=re.S)
@@ -148,19 +147,31 @@ class Filter(commands.Cog):
             except Exception:
                 return
 
-    async def do_filter_notify(self, member, channel, word):
-        message = f"Your message contained a word you aren't allowed to say in {member.guild.name}. This could be either hate speech or the name of a piracy tool/source. Please refrain from saying it!"
+    async def do_filter_notify(self, message: discord.Message, word):
+        member = message.author
+        channel = message.channel
+        message_to_user = f"Your message contained a word you aren't allowed to say in {member.guild.name}. This could be either hate speech or the name of a piracy tool/source. Please refrain from saying it!"
         footer = "Repeatedly triggering the filter will automatically result in a mute."
         try:
             embed = discord.Embed(
-                description=f"{message}\n\nFiltered word found: **{word}**", color=discord.Color.orange())
+                description=f"{message_to_user}\n\nFiltered word found: **{word}**", color=discord.Color.orange())
             embed.set_footer(text=footer)
             await member.send(embed=embed)
         except Exception:
-            embed = discord.Embed(description=message,
+            embed = discord.Embed(description=message_to_user,
                                   color=discord.Color.orange())
             embed.set_footer(text=footer)
             await channel.send(member.mention, embed=embed, delete_after=10)
+
+        log_embed = discord.Embed(title="Filter Triggered")
+        log_embed.color = discord.Color.red()
+        log_embed.add_field(name="Member", value=f"{member} ({member.mention})")
+        log_embed.add_field(name="Word", value=word)
+        log_embed.add_field(name="Message", value=message.content, inline=False)
+
+        log_channel = message.guild.get_channel(guild_service.get_guild().channel_private)
+        if log_channel is not None:
+            await log_channel.send(embed=log_embed)
 
     async def delete(self, message):
         try:

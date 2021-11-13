@@ -20,6 +20,17 @@ class Filter(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        await self.run_filter(message)
+
+    @commands.Cog.listener()
+    async def on_message_edit(self, _, message):
+        await self.run_filter(message)
+
+    @commands.Cog.listener()
+    async def on_member_update(self, _, member: discord.Member):
+        await self.nick_filter(member)
+
+    async def run_filter(self, message: discord.Message):
         if not message.guild:
             return
         if message.guild.id != cfg.guild_id:
@@ -47,6 +58,21 @@ class Filter(commands.Cog):
         if await self.do_spoiler_newline_filter(message, db_guild):
             return
 
+    async def nick_filter(self, member):
+        triggered_words = find_triggered_filters(
+            member.display_name, member)
+        
+        if not triggered_words:
+            return
+        
+        await member.edit(nick="change name pls")
+        embed = discord.Embed(title="Nickname changed", color=discord.Color.orange())
+        embed.description = f"Your nickname contained the word **{triggered_words[0].word}** which is a filtered word. Please change your nickname or ask a Moderator to do it for you."
+        try:
+            await member.send(embed=embed)
+        except Exception:
+            pass
+
     async def bad_word_filter(self, message, db_guild) -> bool:
         triggered_words = find_triggered_filters(
             message.content, message.author)
@@ -54,7 +80,7 @@ class Filter(commands.Cog):
             return
 
         dev_role = message.guild.get_role(db_guild.role_dev)
-        # TODO: test this thoroughly
+        
         triggered = False
         for word in triggered_words:
             if word.piracy:
@@ -116,6 +142,12 @@ class Filter(commands.Cog):
         SPOILER FILTER
         """
         if re.search(self.spoiler_filter, message.content, flags=re.S):
+            # ignore if dev in dev channel
+            dev_role = message.guild.get_role(db_guild.role_dev)
+            if message.channel.id == db_guild.channel_development and dev_role in message.author.roles:
+                return False
+
+            print("del")
             await self.delete(message)
             return True
 

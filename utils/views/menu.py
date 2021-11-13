@@ -81,7 +81,7 @@ class MenuButtons(ui.View):
             # Pull down actual current page
             self.current_page = 1
             # Prepare our embed
-            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
+            embed = await self.page_formatter(entries=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
             # Launch!
             await self.launch(embed)
     
@@ -94,7 +94,7 @@ class MenuButtons(ui.View):
             # Pull down actual current page
             self.current_page = (self.current_page - 1)
             # Prepare our embed
-            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
+            embed = await self.page_formatter(entries=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
             # Launch!
             await self.launch(embed)
             
@@ -114,7 +114,7 @@ class MenuButtons(ui.View):
             # Bump up actual current page
             self.current_page = (self.current_page + 1)
             # Prepare our embed
-            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
+            embed = await self.page_formatter(entries=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
             # Launch!
             await self.launch(embed)
             
@@ -127,7 +127,7 @@ class MenuButtons(ui.View):
             # Pull down actual current page
             self.current_page = (self.array_current_page + 1)
             # Prepare our embed
-            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
+            embed = await self.page_formatter(entries=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
             # Launch!
             await self.launch(embed)
 

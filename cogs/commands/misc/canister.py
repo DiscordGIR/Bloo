@@ -18,13 +18,13 @@ from utils.permissions.checks import PermissionsFailure
 from utils.permissions.permissions import permissions
 
 
-async def format_page(entry, all_pages, current_page, ctx):
+async def format_page(entries, all_pages, current_page, ctx):
     """Formats the page for the tweak embed.
     
     Parameters
     ----------
-    entry : dict
-        "The dictionary for the entry"
+    entries : List[dict]
+        "The list of dictionaries for each tweak"
     all_pages : list
         "All entries that we will eventually iterate through"
     current_page : number
@@ -36,6 +36,7 @@ async def format_page(entry, all_pages, current_page, ctx):
         "The embed that we will send"
     
     """
+    entry = entries[0]
     titleKey = entry.get('name')
     if entry.get('name') is None:
         titleKey = entry.get('identifier')
@@ -106,7 +107,7 @@ async def canister(bot, ctx: BlooContext, interaction: bool, whisper: bool, quer
             await ctx.send_error("That package isn't registered with Canister's database.")
         return
     menu = Menu(result, ctx.channel, format_page, interaction, ctx, whisper)
-    await menu.init_menu()
+    await menu.start()
 
 class Canister(commands.Cog):
     def __init__(self, bot):

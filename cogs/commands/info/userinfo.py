@@ -292,7 +292,7 @@ class UserInfo(commands.Cog):
         results = [(i, m) for (i, m) in results if ctx.guild.get_member(
             m._id) is not None][0:100]
         menu = Menu(results, ctx.channel, format_xptop_page, True, ctx, True, per_page=10)
-        await menu.init_menu()
+        await menu.start()
 
     @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's cases")
     async def cases(self, ctx: BlooContext, user: Option(discord.Member, description="Member to show cases of", required=False)):
@@ -337,7 +337,7 @@ class UserInfo(commands.Cog):
         ctx.case_user = user
 
         menu = Menu(cases, ctx.channel, format_cases_page, True, ctx, True, per_page=10)
-        await menu.init_menu()
+        await menu.start()
 
     @cases.error
     @userinfo_rc.error

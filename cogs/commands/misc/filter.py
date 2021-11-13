@@ -13,13 +13,13 @@ from utils.permissions.slash_perms import slash_perms
 from utils.permissions.permissions import permissions
 from utils.menu import Menu
 
-async def format_filter_page(entry, all_pages, current_page, _):
+async def format_filter_page(entries, all_pages, current_page, _):
     """Formats the page for the filtered words embed
     
     Parameters
     ----------
-    entry : dict
-        "The dictionary for the entry"
+    entries : List[dict]
+        "The list of entries"
     all_pages : list
         "All entries that we will eventually iterate through"
     current_page : number
@@ -33,7 +33,7 @@ async def format_filter_page(entry, all_pages, current_page, _):
     """
     embed = discord.Embed(
         title=f'Filtered words', color=discord.Color.blurple())
-    for word in entry:
+    for word in entries:
         notify_flag = ""
         piracy_flag = ""
         flags_check = ""
@@ -132,13 +132,8 @@ class Filters(commands.Cog):
         
         filters = sorted(filters, key=lambda word: word.word.lower())
 
-        def chunks(lst, n):
-            """Yield successive n-sized chunks from lst."""
-            for i in range(0, len(lst), n):
-                yield lst[i:i + n]
-
-        menu = Menu(list(chunks(filters, 12)), ctx.channel,
-                    format_page=format_filter_page, interaction=True, ctx=ctx, whisper=False)
+        menu = Menu(filters, ctx.channel, per_page=12,
+                    start=format_filter_page, interaction=True, ctx=ctx, whisper=False)
 
         await menu.start()
 

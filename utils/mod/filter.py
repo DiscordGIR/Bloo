@@ -44,16 +44,3 @@ def find_triggered_filters(input, member: discord.Member) -> List[FilterWord]:
 
             words_found.append(word)
     return words_found
-
-    # dev_role = message.guild.get_role(self.settings.guild().role_dev)
-    # if not (word.piracy and message.channel.id == self.settings.guild().channel_development and dev_role in message.author.roles):
-    # ignore if this is a piracy word and the channel is #development and the user has dev role
-    # word_found = True
-    # await self.delete(message)
-    # if not reported:
-    #     await self.do_filter_notify(message.author, message.channel, word.word)
-    #     await self.ratelimit(message)
-    #     reported = True
-    # if word.notify:
-    #     await self.report.report(message, message.author, word.word)
-    #     return True

@@ -4,8 +4,7 @@ from utils.context import BlooContext
 
 class Select(ui.Select):
     def __init__(self, versions):
-        super().__init__(custom_id="Some identifier", placeholder="Select a version...", min_values=1, max_values=1,
-                         options=[discord.SelectOption(label=version) for version in versions])
+        super().__init__(custom_id="Some identifier", placeholder="Select a version...", min_values=1, max_values=1,options=[discord.SelectOption(label=version) for version in versions])
         self.value = None
 
     async def callback(self, interaction: discord.Interaction):

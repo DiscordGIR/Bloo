@@ -1,12 +1,27 @@
 import discord
-from discord.utils import format_dt
-from data.model.filterword import FilterWord
 from data.services import user_service
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
-from utils.views.report import ReportActions
+from discord.utils import format_dt
+from utils.context import BlooOldContext
+from utils.views.report import RaidPhraseReportActions, ReportActions, SpamReportActions
+
 
 async def report(bot: discord.Client, message: discord.Message, word: str, invite=None):
+    """Deals with a report
+
+    Parameters
+    ----------
+    bot : discord.Client
+        "Bot object"
+    message : discord.Message
+        "Filtered message"
+    word : str
+        "Filtered word"
+    invite : bool
+        "Was the filtered word an invite?"
+
+    """
     db_guild = guild_service.get_guild()
     channel = message.guild.get_channel(db_guild.channel_reports)
 
@@ -25,7 +40,77 @@ async def report(bot: discord.Client, message: discord.Message, word: str, invit
     await view.start(ctx)
 
 
+async def report_raid_phrase(bot: discord.Client, message: discord.Message, domain: str):
+    """Deals with a report
+
+    Parameters
+    ----------
+    bot : discord.Client
+        "Bot object"
+    message : discord.Message
+        "Filtered message"
+    word : str
+        "Filtered word"
+    invite : bool
+        "Was the filtered word an invite?"
+
+    """
+    db_guild = guild_service.get_guild()
+    channel = message.guild.get_channel(db_guild.channel_reports)
+
+    # TODO revert everywhere
+    # ping_string = prepare_ping_string(db_guild, message)
+    ping_string = ""
+    view = RaidPhraseReportActions(message.author, domain)
+
+    embed = prepare_embed(
+        message, domain, title=f"Possible new raid phrase detected\n{domain}")
+    report_msg = await channel.send(ping_string, embed=embed, view=view)
+
+    ctx = await bot.get_context(report_msg, cls=BlooOldContext)
+    await view.start(ctx)
+
+
+async def report_spam(bot, msg, user, title):
+    channel = msg.guild.get_channel(guild_service.get_guild().channel_reports)
+    # ping_string = await self.prepare_ping_string(msg)
+    ping_string = ""
+
+    view = SpamReportActions(user)
+    embed = prepare_embed(msg, title=title)
+
+    report_msg = await channel.send(ping_string, embed=embed, view=view)
+
+    ctx = await bot.get_context(report_msg, cls=BlooOldContext)
+    await view.start(ctx)
+
+
+async def report_raid(user, msg=None):
+    embed = discord.Embed()
+    embed.title = "Possible raid occurring"
+    embed.description = "The raid filter has been triggered 5 or more times in the past 10 seconds. I am automatically locking all the channels. Use `/unfreeze` when you're done."
+    embed.color = discord.Color.red()
+    embed.set_thumbnail(url=user.display_avatar)
+    embed.add_field(name="Member", value=f"{user} ({user.mention})")
+    if msg is not None:
+        embed.add_field(name="Message", value=msg.content, inline=False)
+
+    db_guild = guild_service.get_guild()
+    reports_channel = user.guild.get_channel(db_guild.channel_reports)
+    await reports_channel.send(f"<@&{db_guild.role_moderator}>", embed=embed, allowed_mentions=discord.AllowedMentions(roles=True))
+
+
 def prepare_ping_string(db_guild, message):
+    """Prepares modping string
+
+    Parameters
+    ----------
+    db_guild
+        "Guild DB"
+    message : discord.Message
+        "Message object"
+
+    """
     ping_string = ""
     role = message.guild.get_role(db_guild.role_moderator)
     for member in role.members:
@@ -37,10 +122,20 @@ def prepare_ping_string(db_guild, message):
 
 
 def prepare_embed(message: discord.Message, word: str = None, title="Word filter"):
+    """Prepares embed
+
+    Parameters
+    ----------
+    message : discord.Message
+        "Message object"
+    word : str
+        "Filtered word"
+    title : str
+        "Embed title"
+
+    """
     member = message.author
     user_info = user_service.get_user(member.id)
-    joined = member.joined_at.strftime("%B %d, %Y, %I:%M %p")
-    created = member.created_at.strftime("%B %d, %Y, %I:%M %p")
     rd = user_service.rundown(member.id)
     rd_text = ""
     for r in rd:

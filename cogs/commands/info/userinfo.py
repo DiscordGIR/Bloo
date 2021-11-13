@@ -17,18 +17,35 @@ from utils.permissions.converters import user_resolver
 from utils.permissions.permissions import permissions
 
 
-async def format_xptop_page(entry, all_pages, current_page, ctx):
+async def format_xptop_page(entries, all_pages, current_page, ctx):
+    """Formats the page for the xptop embed.
+
+    Parameters
+    ----------
+    entry : dict
+        "The dictionary for the entry"
+    all_pages : list
+        "All entries that we will eventually iterate through"
+    current_page : number
+        "The number of the page that we are currently on"
+
+    Returns
+    -------
+    discord.Embed
+        "The embed that we will send"
+
+    """
     embed = discord.Embed(title=f'Leaderboard', color=discord.Color.blurple())
-    for i, user in entry:
+    for i, user in entries:
         member = ctx.guild.get_member(user._id)
         trophy = ''
         if current_page == 1:
-            if i == entry[0][0]:
+            if i == entries[0][0]:
                 trophy = ':first_place:'
                 embed.set_thumbnail(url=member.avatar)
-            if i == entry[1][0]:
+            if i == entries[1][0]:
                 trophy = ':second_place:'
-            if i == entry[2][0]:
+            if i == entries[2][0]:
                 trophy = ':third_place:'
 
         embed.add_field(name=f"#{i+1} - Level {user.level}",
@@ -38,7 +55,24 @@ async def format_xptop_page(entry, all_pages, current_page, ctx):
     return embed
 
 
-async def format_cases_page(entry, all_pages, current_page, ctx):
+async def format_cases_page(entries, all_pages, current_page, ctx):
+    """Formats the page for the cases embed.
+
+    Parameters
+    ----------
+    entry : dict
+        "The dictionary for the entry"
+    all_pages : list
+        "All entries that we will eventually iterate through"
+    current_page : number
+        "The number of the page that we are currently on"
+
+    Returns
+    -------
+    discord.Embed
+        "The embed that we will send"
+
+    """
     page_count = 0
     pun_map = {
         "KICK": "Kicked",
@@ -56,8 +90,8 @@ async def format_cases_page(entry, all_pages, current_page, ctx):
             page_count = page_count + 1
     embed = discord.Embed(
         title=f'Cases - {u.warn_points} warn points', color=discord.Color.blurple())
-    embed.set_author(name=user, icon_url=user.avatar)
-    for case in entry:
+    embed.set_author(name=user, icon_url=user.display_avatar)
+    for case in entries:
         timestamp = case.date
         formatted = f"{format_dt(timestamp, style='F')} ({format_dt(timestamp, style='R')})"
         if case._type == "WARN" or case._type == "LIFTWARN":
@@ -101,6 +135,18 @@ class UserInfo(commands.Cog):
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info of another user or yourself.")
     async def userinfo(self, ctx: BlooContext, user: Option(discord.Member, description="User to get info of", required=False)) -> None:
+        """Gets info of another user or yourself.
+
+        Example usage
+        -------------
+        /userinfo user:<user>
+
+        Parameters
+        ----------
+        user : discord.Member, optional
+            "Member to get info of"
+
+        """
         await self.handle_userinfo(ctx, user)
 
     @whisper()
@@ -113,7 +159,7 @@ class UserInfo(commands.Cog):
     async def userinfo_msg(self, ctx: BlooContext, message: discord.Message) -> None:
         await self.handle_userinfo(ctx, message.author)
 
-    async def handle_userinfo(self, ctx: BlooContext, user: Union[discord.User, discord.Member]):
+    async def handle_userinfo(self, ctx: BlooContext, user: Union[int, discord.Member]):
         is_mod = permissions.has(ctx.guild, ctx.author, 5)
         if user is None:
             user = ctx.author
@@ -147,7 +193,7 @@ class UserInfo(commands.Cog):
 
         embed = discord.Embed(title=f"User Information", color=user.color)
         embed.set_author(name=user)
-        embed.set_thumbnail(url=user.avatar)
+        embed.set_thumbnail(url=user.display_avatar)
         embed.add_field(name="Username",
                         value=f'{user} ({user.mention})', inline=True)
         embed.add_field(
@@ -160,7 +206,6 @@ class UserInfo(commands.Cog):
             name="Join date", value=joined, inline=True)
         embed.add_field(name="Account creation date",
                         value=f"{format_dt(user.created_at, style='F')} ({format_dt(user.created_at, style='R')})", inline=True)
-        embed.set_footer(text=f"Requested by {ctx.author}")
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @whisper()
@@ -170,7 +215,7 @@ class UserInfo(commands.Cog):
 
         Example usage
         --------------
-        !xp <@user/ID (optional)
+        /xp user:<user>
 
         Parameters
         ----------
@@ -194,7 +239,6 @@ class UserInfo(commands.Cog):
         rank, overall = user_service.leaderboard_rank(results.xp)
         embed.add_field(
             name="Rank", value=f"{rank}/{overall}" if not results.is_clem else f"{overall}/{overall}", inline=True)
-        embed.set_footer(text=f"Requested by {ctx.author}")
 
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
@@ -205,11 +249,11 @@ class UserInfo(commands.Cog):
 
         Example usage
         --------------
-        !warnpoints <@user/ID>
+        /warnpoints <@user/ID>
 
         Parameters
         ----------
-        user : discord.Member
+        user : discord.Member, optional
             "User whose warnpoints to show"
 
         """
@@ -228,12 +272,11 @@ class UserInfo(commands.Cog):
 
         embed = discord.Embed(title="Warn Points",
                               color=discord.Color.orange())
-        embed.set_thumbnail(url=user.avatar)
+        embed.set_thumbnail(url=user.display_avatar)
         embed.add_field(
             name="Member", value=f'{user.mention}\n{user}\n({user.id})', inline=True)
         embed.add_field(name="Warn Points",
                         value=results.warn_points, inline=True)
-        embed.set_footer(text=f"Requested by {ctx.author}")
 
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
@@ -241,74 +284,65 @@ class UserInfo(commands.Cog):
     @slash_command(guild_ids=[cfg.guild_id], description="Show the XP leaderboard.")
     async def xptop(self, ctx: BlooContext):
         """Show XP leaderboard for top 100, ranked highest to lowest.
+
         Example usage
         --------------
-        !xptop
+        /xptop
+
         """
 
-        def chunks(lst, n):
-            """Yield successive n-sized chunks from lst."""
-            for i in range(0, len(lst), n):
-                yield lst[i:i + n]
         results = enumerate(user_service.leaderboard())
         results = [(i, m) for (i, m) in results if ctx.guild.get_member(
             m._id) is not None][0:100]
-        menu = Menu(list(chunks(results, 10)), ctx.channel,
-                    format_xptop_page, True, ctx, True)
-        await menu.init_menu()
+        menu = Menu(results, ctx.channel, format_page=format_xptop_page,
+                    interaction=True, ctx=ctx, whisper=ctx.whisper, per_page=10)
+        await menu.start()
 
     @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's cases")
     async def cases(self, ctx: BlooContext, user: Option(discord.Member, description="Member to show cases of", required=False)):
         """Show list of cases of a user (mod only)
+
         Example usage
         --------------
-        !cases <@user/ID>
+        /cases user:<@user/ID>
+
         Parameters
         ----------
-        user : typing.Union[discord.Member,int]
+        user : discord.Member, optional
             "User we want to get cases of, doesn't have to be in guild"
+
         """
 
         # if an invokee is not provided in command, call command on the invoker
         # (get invoker's cases)
-        user = user or ctx.author
+        if user is None:
+            user = ctx.author
+        elif isinstance(user, str) or isinstance(user, int):
+            user = await user_resolver(ctx, user)
 
         # users can only invoke on themselves if they aren't mods
         if not permissions.has(ctx.guild, ctx.author, 5) and user.id != ctx.author.id:
             raise PermissionsFailure(
                 f"You don't have permissions to check others' warnpoints.")
 
-        # if user not in guild, fetch their profile from the Discord API
-        if isinstance(user, int):
-            try:
-                user_1 = await self.bot.fetch_user(user)
-            except Exception:
-                return await ctx.send_error(f"Couldn't find user with ID {user}")
-            user = user_1
-
         # fetch user's cases from our database
         results = user_service.get_cases(user.id)
         if len(results.cases) == 0:
             if isinstance(user, int):
-                return await ctx.send_error(f'User with ID {user.id} had no cases.')
+                return await ctx.send_error(f'User with ID {user.id} has no cases.')
             else:
-                return await ctx.send_error(f'{user.mention} had no cases.')
+                return await ctx.send_error(f'{user.mention} has no cases.')
 
         # filter out unmute cases because they are irrelevant
         cases = [case for case in results.cases if case._type != "UNMUTE"]
         # reverse so newest cases are first
         cases.reverse()
 
-        def chunks(lst, n):
-            """Yield successive n-sized chunks from lst."""
-            for i in range(0, len(lst), n):
-                yield lst[i:i + n]
-
         ctx.case_user = user
 
-        menu = Menu(list(chunks(cases, 10)), ctx.channel,
-                    format_cases_page, True, ctx, True)
-        await menu.init_menu()
+        menu = Menu(cases, channel=ctx.channel, format_page=format_cases_page,
+                    interaction=True, ctx=ctx, whisper=ctx.whisper, per_page=10)
+        await menu.start()
 
     @cases.error
     @userinfo_rc.error

@@ -1,20 +1,21 @@
+import discord
+from discord.commands import Option, slash_command
+from discord.commands.commands import message_command, user_command
+from discord.ext import commands
+
 import base64
 import datetime
 import io
 import json
 import traceback
-
 import aiohttp
-import discord
 import humanize
 import pytimeparse
 from colorthief import ColorThief
-from data.services.guild_service import guild_service
-from discord.commands import Option, slash_command
-from discord.ext import commands
 from PIL import Image
+from data.services.guild_service import guild_service
 from utils.async_cache import async_cacher
-from utils.autocompleters.jailbreaks import jb_autocomplete
+from utils.autocompleters import jb_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import Guild
@@ -24,6 +25,13 @@ from utils.permissions.permissions import permissions
 
 @async_cacher()
 async def get_jailbreaks_jba():
+    """Gets all apps on Jailbreaks.app
+    
+    Returns
+    -------
+    dict
+        "Apps"
+    """
     res_apps = []
     async with aiohttp.ClientSession() as session:
         async with session.get("https://jailbreaks.app/json/apps.json") as resp:
@@ -35,6 +43,13 @@ async def get_jailbreaks_jba():
 
 @async_cacher()
 async def get_jailbreaks():
+    """Gets all jailbreaks on stkc's API
+    
+    Returns
+    -------
+    list
+        "Jailbreaks"
+    """
     response = {}
     async with aiohttp.ClientSession() as client:
         async with client.get('https://assets.stkc.win/jailbreaks.json') as resp:
@@ -45,6 +60,19 @@ async def get_jailbreaks():
 
 
 async def iterate_apps(query) -> dict:
+    """Iterates through Jailbreaks.app apps, looking for a matching query
+    
+    Parameters
+    ----------
+    query : str
+        "App to look for"
+        
+    Returns
+    -------
+    dict
+        "List of apps that match the query"
+    
+    """
     apps = await get_jailbreaks_jba()
     for possibleApp in apps:
         if possibleApp.get('name').lower() == query.lower().replace("œ", "oe"):
@@ -116,16 +144,19 @@ class Misc(commands.Cog):
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Send yourself a reminder after a given time gap")
     async def remindme(self, ctx: BlooContext, dur: str, *, reminder: str):
-        """Send yourself a reminder after a given time gap
+        """Sends you a reminder after a given time gap
+        
         Example usage
         -------------
         /remindme 1h bake the cake
+        
         Parameters
         ----------
         dur : str
             "After when to send the reminder"
         reminder : str
             "What to remind you of"
+            
         """
         now = datetime.datetime.now()
         delta = pytimeparse.parse(dur)
@@ -147,11 +178,24 @@ class Misc(commands.Cog):
 
     @slash_command(guild_ids=[cfg.guild_id], description="Post large version of a given emoji")
     async def jumbo(self, ctx: BlooContext, emoji: str):
+        """Posts large version of a given emoji
+        
+        Example usage
+        -------------
+        /jumbo <emote>
+        
+        Parameters
+        ----------
+        emoji : str
+            "Emoji to enlarge"
+        
+        """
         # non-mod users will be ratelimited
         bot_chan = guild_service.get_guild().channel_botspam
         if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id != bot_chan:
-            # TODO: add ratelimit
-            ...
+            bucket = self.spam_cooldown.get_bucket(ctx.interaction)
+            if bucket.update_rate_limit():
+                raise commands.BadArgument("This command is on cooldown.")
 
         # is this a regular Unicode emoji?
         try:
@@ -177,9 +221,34 @@ class Misc(commands.Cog):
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get avatar of another user or yourself.")
     async def avatar(self, ctx: BlooContext, member: Option(discord.Member, description="User to get avatar of", required=False)) -> None:
+        """Posts large version of a given emoji
+        
+        Example usage
+        -------------
+        /avatar member:<member>
+        
+        Parameters
+        ----------
+        member : discord.Member, optional
+            "Member to get avatar of"
+        
+        """
         if member is None:
             member = ctx.author
 
+        await self.handle_avatar(ctx, member)
+    
+    @whisper()
+    @user_command(guild_ids=[cfg.guild_id], name="View avatar")
+    async def avatar_rc(self, ctx: BlooContext, member: discord.Member):
+        await self.handle_avatar(ctx, member)
+    
+    @whisper()
+    @message_command(guild_ids=[cfg.guild_id], name="View avatar")
+    async def avatar_msg(self, ctx: BlooContext, message: discord.Message):
+        await self.handle_avatar(ctx, message.author)
+    
+    async def handle_avatar(self, ctx, member: discord.Member):
         embed = discord.Embed(title=f"{member}'s avatar")
         animated = ["gif", "png", "jpeg", "webp"]
         not_animated = ["png", "jpeg", "webp"]
@@ -194,7 +263,6 @@ class Misc(commands.Cog):
 
         embed.set_image(url=member.avatar.replace(size=4096))
         embed.color = discord.Color.random()
-        embed.set_footer(text=f"Requested by {ctx.author}")
 
         view = PFPView(ctx)
         if member.guild_avatar is not None:
@@ -205,6 +273,20 @@ class Misc(commands.Cog):
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info about a jailbreak.")
     async def jailbreak(self, ctx: BlooContext, name: Option(str, description="Name of the jailbreak", autocomplete=jb_autocomplete, required=True), whisper: Option(bool, description="Whisper? (No by default)", required=False)) -> None:
+        """Fetches info of jailbreak
+        
+        Example usage
+        -------------
+        /jailbreak name:<name>
+        
+        Parameters
+        ----------
+        name : str
+            "Name of jailbreak"
+        whisper : bool, optional
+            "Should we whisper?"
+        
+        """
         should_whisper = False
         if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == Guild.channel_general:
             should_whisper = True
@@ -252,6 +334,7 @@ class Misc(commands.Cog):
     @jailbreak.error
     @remindme.error
     @jumbo.error
+    @avatar.error
     async def info_error(self, ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original

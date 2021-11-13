@@ -22,8 +22,7 @@ job_defaults = {
 BOT_GLOBAL = None
 
 class Tasks():
-    """Job scheduler for unmute, using APScheduler
-    """
+    """Job scheduler for unmute, using APScheduler"""
 
     def __init__(self, bot: discord.Client):
         """Initialize scheduler
@@ -32,6 +31,7 @@ class Tasks():
         ----------
         bot : discord.Client
             instance of Discord client
+            
         """
 
         global BOT_GLOBAL
@@ -62,6 +62,7 @@ class Tasks():
             User to unmute
         date : datetime.datetime
             When to unmute
+            
         """
 
         self.tasks.add_job(unmute_callback, 'date', id=str(
@@ -76,6 +77,7 @@ class Tasks():
             User to remove role
         date : datetime.datetime
             When to remove role
+            
         """
 
         self.tasks.add_job(remove_bday_callback, 'date', id=str(
@@ -88,6 +90,7 @@ class Tasks():
         ----------
         id : int
             User whose unmute task we want to cancel
+            
         """
 
         self.tasks.remove_job(str(id), 'default')
@@ -99,6 +102,7 @@ class Tasks():
         ----------
         id : int
             User whose task we want to cancel
+            
         """
         self.tasks.remove_job(str(id+1), 'default')
 
@@ -114,6 +118,7 @@ class Tasks():
             Giveaway message ID
         date : datetime.datetime
             When to end the giveaway
+            
         """
 
         self.tasks.add_job(end_giveaway_callback, 'date', id=str(
@@ -130,6 +135,7 @@ class Tasks():
             What to remind them of
         date : datetime.datetime
             When to remind
+            
         """
 
         self.tasks.add_job(reminder_callback, 'date', id=str(
@@ -144,6 +150,7 @@ def unmute_callback(id: int) -> None:
     ----------
     id : int
         User who we want to unmute
+        
     """
 
     BOT_GLOBAL.loop.create_task(remove_mute(id))
@@ -156,6 +163,7 @@ async def remove_mute(id: int) -> None:
     ----------
     id : int
         User to unmute
+        
     """
 
     db_guild = guild_service.get_guild()
@@ -226,6 +234,7 @@ async def remind(id, reminder):
         ID of user to remind
     reminder : str
         body of reminder
+        
     """
 
     guild = BOT_GLOBAL.get_guild(cfg.guild_id)
@@ -241,7 +250,7 @@ async def remind(id, reminder):
         await member.send(embed=embed)
     except Exception:
         channel = guild.get_channel(
-            BOT_GLOBAL.settings.guild().channel_botspam)
+            guild_service.get_guild().channel_botspam)
         await channel.send(member.mention, embed=embed)
 
 
@@ -253,6 +262,7 @@ def remove_bday_callback(id: int) -> None:
     ----------
     id : int
         User who we want to unmute
+        
     """
 
     BOT_GLOBAL.loop.create_task(remove_bday(id))
@@ -265,6 +275,7 @@ async def remove_bday(id: int) -> None:
     ----------
     id : int
         User to remove role of
+        
     """
 
     db_guild = guild_service.get_guild()
@@ -291,6 +302,7 @@ def end_giveaway_callback(channel_id: int, message_id: int, winners: int) -> Non
         ID of the channel that the giveaway is in
     message_id : int
         Message ID of the giveaway
+        
     """
 
     BOT_GLOBAL.loop.create_task(end_giveaway(channel_id, message_id, winners))
@@ -306,6 +318,7 @@ async def end_giveaway(channel_id: int, message_id: int, winners: int) -> None:
         ID of the channel that the giveaway is in
     message_id : int
         Message ID of the giveaway
+        
     """
 
     guild = BOT_GLOBAL.get_guild(cfg.guild_id)

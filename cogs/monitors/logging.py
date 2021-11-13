@@ -1,14 +1,15 @@
+import discord
+from discord.ext import commands
+from discord.utils import format_dt
+
 from datetime import datetime
 from io import BytesIO
-from typing import List
+from typing import List, Union
 
 import discord
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
-from discord.ext import commands
-from discord.utils import format_dt
 from utils.config import cfg
-
 
 class Logging(commands.Cog):
     def __init__(self, bot):
@@ -64,9 +65,14 @@ class Logging(commands.Cog):
 
         if member.guild.id != cfg.guild_id:
             return
-
+        
         db_guild = guild_service.get_guild()
         channel = member.guild.get_channel(db_guild.channel_private)
+
+        async for action in member.guild.audit_logs(limit=1, action=discord.AuditLogAction.kick):
+            if action.target.id == member.id:
+                await self.on_member_kick(action, channel)
+                return
 
         embed = discord.Embed(title="Member left")
         embed.color = discord.Color.purple()
@@ -215,10 +221,88 @@ class Logging(commands.Cog):
         embed.timestamp = datetime.now()
         await channel.send(embed=embed)
         await channel.send(file=discord.File(output, 'message.txt'))
+        
+    @commands.Cog.listener()
+    async def on_member_ban(self, guild, user: Union[discord.User, discord.Member]):
+        if not guild.id == cfg.guild_id:
+            return
+        
+        db_guild = guild_service.get_guild()
+        channel = guild.get_channel(db_guild.channel_private)
+
+        embed = discord.Embed(title="Member Banned")
+        embed.color = discord.Color.red()
+        embed.add_field(
+            name="User", value=f'{user} ({user.mention})', inline=True)
+        embed.timestamp = datetime.now()
+        embed.set_footer(text=user.id)
+        
+        async for action in guild.audit_logs(limit=1, action=discord.AuditLogAction.ban):
+            if action.target.id == user.id:
+                embed.title = "Member Left"
+                embed.color = discord.Color.purple()
+                embed.add_field(name="Banned by", value=f'{action.user} ({action.user.mention})', inline=True)
+                await channel.send(embed=embed)
+                return
+
+        await channel.send(embed=embed)
+   
+    @commands.Cog.listener()
+    async def on_member_unban(self, guild, user: discord.User):
+        if not guild.id == cfg.guild_id:
+            return
+        
+        db_guild = guild_service.get_guild()
+        channel = guild.get_channel(db_guild.channel_private)
+        
+        embed = discord.Embed(title="User Unbanned")
+        embed.color = discord.Color.yellow()
+        embed.add_field(
+            name="User", value=f'{user} ({user.mention})', inline=True)
+        embed.timestamp = datetime.now()
+        embed.set_footer(text=user.id)
+        
+        async for action in guild.audit_logs(limit=1, action=discord.AuditLogAction.unban):
+            if action.target.id == user.id:
+                embed.add_field(name="Unbanned by", value=f'{action.user} ({action.user.mention})', inline=True)
+                await channel.send(embed=embed)
+                return
+
+        await channel.send(embed=embed)
+
+    async def on_member_kick(self, action: discord.AuditLogEntry, channel: discord.TextChannel):
+        embed = discord.Embed(title="Member Left")
+        embed.color = discord.Color.purple()
+        embed.add_field(
+            name="User", value=f'{action.target} ({action.target.mention})', inline=True)
+        embed.add_field(
+            name="Kicked by", value=f'{action.user} ({action.user.mention})', inline=True)
+        embed.timestamp = datetime.now()
+        embed.set_footer(text=action.user.id)
+        await channel.send(embed=embed)
+        
+    @commands.Cog.listener()
+    async def on_user_update(self, before: discord.User, after: discord.User):
+        if before.name == after.name and before.discriminator == after.discriminator:
+            return
+        
+        db_guild = guild_service.get_guild()
+        guild = self.bot.get_guild(cfg.guild_id)
+        channel = guild.get_channel(db_guild.channel_private)
+        
+        embed = discord.Embed(title="User Updated")
+        embed.color = discord.Color.magenta()
+        embed.add_field(
+            name="Before", value=f'{before} ({before.mention})', inline=True)
+        embed.add_field(
+            name="After", value=f'{after} ({after.mention})', inline=True)
+        embed.timestamp = datetime.now()
+        embed.set_footer(text=before.id)
+        await channel.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_member_update(self, before: discord.Message, after: discord.Message):
-        if not after.guild.id == cfg.guild_id:
+        if after.guild.id != cfg.guild_id:
             return
         if not before or not after:
             return
@@ -267,11 +351,15 @@ class Logging(commands.Cog):
 
         embed.set_thumbnail(url=member.display_avatar)
         embed.add_field(
-            name="Member", value=f'{member} ({member.mention})', inline=False)
+            name="Member", value=f'{member} ({member.mention})', inline=True)
         embed.add_field(
-            name="Role difference", value=', '.join(roles), inline=False)
+            name="Role difference", value=', '.join(roles), inline=True)
         embed.timestamp = datetime.now()
         embed.set_footer(text=member.id)
+        
+        async for action in member.guild.audit_logs(limit=1, action=discord.AuditLogAction.member_role_update):
+            if action.target.id == member.id:
+                embed.add_field(name="Updated by", value=f'{action.user} ({action.user.mention})', inline=False)
 
         db_guild = guild_service.get_guild()
         private = member.guild.get_channel(db_guild.channel_private)

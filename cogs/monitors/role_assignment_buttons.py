@@ -1,15 +1,14 @@
-import traceback
-
 import discord
-from data.services.guild_service import guild_service
 from discord.commands import Option, slash_command
 from discord.ext import commands
+
+import traceback
+from data.services.guild_service import guild_service
 from utils.config import cfg
 from utils.context import BlooContext, PromptData, PromptDataReaction
 from utils.permissions.checks import PermissionsFailure, admin_and_up
 from utils.permissions.slash_perms import slash_perms
 from utils.views.role_buttons import ReactionRoleButton
-
 
 class RoleAssignButtons(commands.Cog):
     def __init__(self, bot):

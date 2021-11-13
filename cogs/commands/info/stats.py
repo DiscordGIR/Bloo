@@ -1,18 +1,17 @@
-import os
-import platform
-import traceback
-from datetime import datetime
-from math import floor
-
 import discord
-import psutil
 from discord.commands import Option, slash_command
 from discord.ext import commands
 from discord.utils import format_dt
+
+import os
+import platform
+import traceback
+import psutil
+from datetime import datetime
+from math import floor
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.checks import PermissionsFailure, whisper
-
 
 class Stats(commands.Cog):
     def __init__(self, bot):
@@ -20,8 +19,15 @@ class Stats(commands.Cog):
         self.start_time = datetime.now()
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Pong!")
+    @slash_command(guild_ids=[cfg.guild_id], description="Test server latency by measuring how long it takes to edit a message")
     async def ping(self, ctx: BlooContext) -> None:
+        """Tests server latency by measuring how long it takes to edit a message.
+        
+        Example usage
+        -------------
+        /ping
+        
+        """
         embed = discord.Embed(
             title="Pong!", color=discord.Color.blurple())
         embed.set_thumbnail(url=self.bot.user.display_avatar)
@@ -40,16 +46,34 @@ class Stats(commands.Cog):
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get number of users of a role")
     async def roleinfo(self, ctx: BlooContext, role: Option(discord.Role, description="Role to view info of")) -> None:
+        """Displays information about a specific role.
+        
+        Example usage
+        -------------
+        /roleinfo role:<role>
+        
+        Parameters
+        ----------
+        role : role
+            "role to get information about"
+            
+        """
         embed = discord.Embed(title="Role Statistics")
         embed.description = f"{len(role.members)} members have role {role.mention}"
         embed.color = role.color
-        embed.set_footer(text=f"Requested by {ctx.author}")
 
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Statistics about the bot")
     async def stats(self, ctx: BlooContext) -> None:
+        """Displays statistics about the bot.
+        
+        Example usage
+        -------------
+        /stats
+        
+        """
         process = psutil.Process(os.getpid())
 
         embed = discord.Embed(
@@ -66,6 +90,13 @@ class Stats(commands.Cog):
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Displays info about the server")
     async def serverinfo(self, ctx: BlooContext):
+        """Displays info about the server.
+        
+        Example usage
+        -------------
+        /serverinfo
+        
+        """
         guild = ctx.guild
         embed = discord.Embed(title="Server Information", color=discord.Color.blurple())
         embed.set_thumbnail(url=guild.icon)
@@ -79,7 +110,6 @@ class Stats(commands.Cog):
         embed.add_field(name="Owner", value=guild.owner.mention, inline=True)
         embed.add_field(name="Created", value=f"{format_dt(guild.created_at, style='F')} ({format_dt(guild.created_at, style='R')})", inline=True)
 
-        embed.set_footer(text=f"Requested by {ctx.author}")
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @ping.error

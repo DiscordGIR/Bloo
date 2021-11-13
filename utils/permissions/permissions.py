@@ -1,5 +1,6 @@
 import discord
 from discord.commands.permissions import Permission
+
 from typing import List
 from data.model.guild import Guild
 from data.services.guild_service import guild_service
@@ -28,6 +29,7 @@ class Permissions:
             Instance of Discord client to look up a user's roles, permissions, etc.
         settings : Settings
             State of the bot
+            
         """
 
         the_guild: Guild = guild_service.get_guild()
@@ -119,6 +121,7 @@ class Permissions:
         -------
         bool
             True if the user has that level, otherwise False.
+            
         """
 
         return self._permissions[level](guild, member)

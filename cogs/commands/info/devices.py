@@ -1,19 +1,16 @@
-import json
-import re
-import traceback
-
-import aiohttp
 import discord
 from discord.commands import Option, slash_command
 from discord.ext import commands
-from utils.autocompleters.devices import device_autocomplete
+
+import json
+import re
+import traceback
+import aiohttp
+from utils.autocompleters import device_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.permissions.checks import (PermissionsFailure, always_whisper,
-                                      ensure_invokee_role_lower_than_bot,
-                                      whisper)
+from utils.permissions.checks import (PermissionsFailure, always_whisper, ensure_invokee_role_lower_than_bot, whisper)
 from utils.views.devices import Confirm, FirmwareDropdown
-
 
 class Devices(commands.Cog):
     def __init__(self, bot):
@@ -28,16 +25,16 @@ class Devices(commands.Cog):
     @always_whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Add device to nickname")
     async def adddevice(self, ctx: BlooContext, device: Option(str, description="Name of your device", autocomplete=device_autocomplete)) -> None:
-        """Add device name to your nickname, i.e `SlimShadyIAm [iPhone 12, 14.2]`. See !listdevices to see the list of possible devices.
+        """Add device name to your nickname, i.e `SlimShadyIAm [iPhone 12, 14.2]`. See /listdevices for valid device inputs.
 
         Example usage
         -------------
-        !adddevice <device name>
+        /adddevice device:<devicename>
 
         Parameters
         ----------
         device : str
-            "device user wants to use"
+            "device user wants to set nickname to"
 
         """
         new_nick = ctx.author.display_name
@@ -62,7 +59,7 @@ class Devices(commands.Cog):
 
         if not device.split(" ")[0].lower() in self.possible_devices:
             raise commands.BadArgument(
-                "Unsupported device. Please see `!listdevices` for possible devices.")
+                "Unsupported device. Please see `/listdevices` for possible devices.")
 
         the_device = await self.find_device_from_ipsw_me(device)
 
@@ -177,7 +174,7 @@ class Devices(commands.Cog):
 
         Example usage
         -------------
-        !removedevice
+        /removedevice
 
         """
 
@@ -195,12 +192,13 @@ class Devices(commands.Cog):
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="List all devices you can set your nickname to")
     async def listdevices(self, ctx: BlooContext) -> None:
-        #     """List all possible devices you can set your nickname to.
+        """List all possible devices you can set your nickname to.
 
-        #     Example usage
-        #     -------------
-        #     !listdevices
-        #     """
+        Example usage
+        -------------
+        /listdevices
+        
+        """
 
         devices_dict = {
             'iPhone': set(),
@@ -235,8 +233,6 @@ class Devices(commands.Cog):
             temp.sort()
             embed.add_field(name=key, value=', '.join(
                 map(str, temp)), inline=False)
-
-        embed.set_footer(text=f"Requested by {ctx.author}")
 
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 

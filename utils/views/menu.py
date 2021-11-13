@@ -18,8 +18,17 @@ class MenuButtons(ui.View):
         self.ctx = ctx
         self.msg = None
         self.embed = None
+        self.sent = False
         
     async def launch(self, embed):
+        """Starts a menu
+        
+        Parameters
+        ----------
+        embed : discord.Embed
+            "First embed to send"
+            
+        """
         self.embed = embed
         # See which buttons we actually need enabled
         self.first.disabled = True
@@ -47,11 +56,19 @@ class MenuButtons(ui.View):
         
         if componentEnabled:
             if self.is_interaction:
-                await msg_send_method(embed=embed, view=self, ephemeral=self.should_whisper)
+                if not self.sent:
+                    await msg_send_method(embed=embed, view=self, ephemeral=self.should_whisper)
+                else:
+                    await msg_send_method(embed=embed, view=self)
+                self.sent = True
             else:
                 self.msg = await msg_send_method(embed=embed, view=self)
         elif self.is_interaction:
-            await msg_send_method(embed=embed, ephemeral=self.should_whisper)
+            if not self.sent:
+                await msg_send_method(embed=embed, ephemeral=self.should_whisper)
+            else:
+                await msg_send_method(embed=embed)
+            self.sent = True
         else:
             self.msg = await msg_send_method(embed=embed)
     
@@ -64,7 +81,7 @@ class MenuButtons(ui.View):
             # Pull down actual current page
             self.current_page = 1
             # Prepare our embed
-            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
+            embed = await self.page_formatter(entries=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
             # Launch!
             await self.launch(embed)
     
@@ -77,7 +94,7 @@ class MenuButtons(ui.View):
             # Pull down actual current page
             self.current_page = (self.current_page - 1)
             # Prepare our embed
-            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
+            embed = await self.page_formatter(entries=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
             # Launch!
             await self.launch(embed)
             
@@ -97,7 +114,7 @@ class MenuButtons(ui.View):
             # Bump up actual current page
             self.current_page = (self.current_page + 1)
             # Prepare our embed
-            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
+            embed = await self.page_formatter(entries=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
             # Launch!
             await self.launch(embed)
             
@@ -110,7 +127,7 @@ class MenuButtons(ui.View):
             # Pull down actual current page
             self.current_page = (self.array_current_page + 1)
             # Prepare our embed
-            embed = await self.page_formatter(entry=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
+            embed = await self.page_formatter(entries=self.pages[self.array_current_page], all_pages=self.pages, current_page=self.current_page, ctx=self.ctx)
             # Launch!
             await self.launch(embed)
 

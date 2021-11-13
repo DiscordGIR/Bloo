@@ -263,7 +263,6 @@ class Misc(commands.Cog):
 
         embed.set_image(url=member.avatar.replace(size=4096))
         embed.color = discord.Color.random()
-        embed.set_footer(text=f"Requested by {ctx.author}")
 
         view = PFPView(ctx)
         if member.guild_avatar is not None:

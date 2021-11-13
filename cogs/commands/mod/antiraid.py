@@ -178,8 +178,8 @@ class AntiRaid(commands.Cog):
 
         Example usage
         --------------
-        !lock
-        !lock #channel
+        /lock
+        /lock #channel
             
         Parameters
         ----------
@@ -202,8 +202,8 @@ class AntiRaid(commands.Cog):
 
         Example usage
         --------------
-        !unlock 
-        !unlock #channel
+        /unlock 
+        /unlock #channel
             
         Parameters
         ----------
@@ -254,7 +254,7 @@ class AntiRaid(commands.Cog):
 
         Example usage
         --------------
-        !freeze
+        /freeze
         """
         
         channels = guild_service.get_locked_channels()
@@ -282,7 +282,7 @@ class AntiRaid(commands.Cog):
 
         Example usage
         --------------
-        !unfreeze
+        /unfreeze
         """
 
         channels = guild_service.get_locked_channels()

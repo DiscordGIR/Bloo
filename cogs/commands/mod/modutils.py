@@ -253,7 +253,6 @@ class ModUtils(commands.Cog):
         else:
             embed.add_field(name=f"Recent cases",
                             value="This user has no cases.", inline=False)
-        embed.set_footer(text=f"Requested by {ctx.author}")
 
         return embed
 

@@ -234,8 +234,6 @@ class Devices(commands.Cog):
             embed.add_field(name=key, value=', '.join(
                 map(str, temp)), inline=False)
 
-        embed.set_footer(text=f"Requested by {ctx.author}")
-
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @removedevice.error

@@ -204,7 +204,6 @@ class UserInfo(commands.Cog):
             name="Join date", value=joined, inline=True)
         embed.add_field(name="Account creation date",
                         value=f"{format_dt(user.created_at, style='F')} ({format_dt(user.created_at, style='R')})", inline=True)
-        embed.set_footer(text=f"Requested by {ctx.author}")
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @whisper()
@@ -238,7 +237,6 @@ class UserInfo(commands.Cog):
         rank, overall = user_service.leaderboard_rank(results.xp)
         embed.add_field(
             name="Rank", value=f"{rank}/{overall}" if not results.is_clem else f"{overall}/{overall}", inline=True)
-        embed.set_footer(text=f"Requested by {ctx.author}")
 
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
@@ -276,7 +274,6 @@ class UserInfo(commands.Cog):
             name="Member", value=f'{user.mention}\n{user}\n({user.id})', inline=True)
         embed.add_field(name="Warn Points",
                         value=results.warn_points, inline=True)
-        embed.set_footer(text=f"Requested by {ctx.author}")
 
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 

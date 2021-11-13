@@ -61,7 +61,6 @@ class Stats(commands.Cog):
         embed = discord.Embed(title="Role Statistics")
         embed.description = f"{len(role.members)} members have role {role.mention}"
         embed.color = role.color
-        embed.set_footer(text=f"Requested by {ctx.author}")
 
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
@@ -111,7 +110,6 @@ class Stats(commands.Cog):
         embed.add_field(name="Owner", value=guild.owner.mention, inline=True)
         embed.add_field(name="Created", value=f"{format_dt(guild.created_at, style='F')} ({format_dt(guild.created_at, style='R')})", inline=True)
 
-        embed.set_footer(text=f"Requested by {ctx.author}")
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @ping.error

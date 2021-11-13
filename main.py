@@ -12,6 +12,8 @@ from utils.permissions.permissions import permissions
 from utils.tasks import Tasks
 
 initial_extensions = [
+        "cogs.monitors.filter",
+        "cogs.monitors.antiraid",
         "cogs.commands.info.stats",
         "cogs.commands.info.devices",
         "cogs.commands.info.userinfo",
@@ -26,11 +28,9 @@ initial_extensions = [
         "cogs.commands.mod.filter",
         "cogs.commands.mod.modactions",
         "cogs.commands.mod.modutils",
-        "cogs.monitors.antiraid",
         "cogs.monitors.applenews",
         "cogs.monitors.birthday",
         "cogs.monitors.boosteremojis",
-        "cogs.monitors.filter",
         "cogs.monitors.logging",
         "cogs.monitors.role_assignment_buttons",
         "cogs.monitors.xp",

@@ -39,6 +39,7 @@ async def report(bot: discord.Client, message: discord.Message, word: str, invit
     ctx = await bot.get_context(report_msg)
     await view.start(ctx)
 
+
 async def report_raid_phrase(bot: discord.Client, message: discord.Message, domain: str):
     """Deals with a report
 
@@ -97,62 +98,6 @@ async def report_raid(user, msg=None):
     db_guild = guild_service.get_guild()
     reports_channel = user.guild.get_channel(db_guild.channel_reports)
     await reports_channel.send(f"<@&{db_guild.role_moderator}>", embed=embed, allowed_mentions=discord.AllowedMentions(roles=True))
-
-    #              ping_string = ""
-    # view = RaidPhraseReportActions(message.author)
-
-    # embed = prepare_embed(message, domain, title=f"Possible new raid phrase detected\n{domain}")
-    # report_msg = await channel.send(ping_string, embed=embed, view=view)
-
-    # ctx = await bot.get_context(report_msg)
-    # await view.start(ctx)
-    # if reaction == '✅':
-    #     ctx.author = ctx.message.author = reactor
-    #     unmute = self.bot.get_command("unmute")
-    #     if unmute is not None:
-    #         try:
-    #             await unmute(ctx=ctx, user=user, reason="Reviewed by a moderator.")
-    #         except Exception:
-    #             pass
-    #         await report_msg.delete()
-    #     else:
-    #         await ctx.send_warning("I wasn't able to unmute them.")
-    #     return
-
-    # elif reaction == '💀':
-    #     ctx.author = ctx.message.author = reactor
-    #     ban = self.bot.get_command("ban")
-    #     if ban is not None:
-    #         try:
-    #             await ban(ctx=ctx, user=user, reason="Spam detected")
-    #         except Exception:
-    #             pass
-    #         await report_msg.delete()
-    #     else:
-    #         await ctx.send_warning("I wasn't able to ban them.")
-    #     return
-    # elif reaction == '⚠️':
-    #     ctx.author = ctx.message.author = reactor
-    #     now = datetime.datetime.now()
-    #     delta = await self.prompt_time(ctx)
-    #     if delta is None:
-    #         continue
-
-    #     try:
-    #         time = now + datetime.timedelta(seconds=delta)
-    #         ctx.tasks.schedule_unmute(user.id, time)
-
-    #         await ctx.send_success(title="Done!", description=f"{user.mention} was muted for {humanize.naturaldelta(time - now)}.", delete_after=5)
-    #         await report_msg.delete()
-
-    #         try:
-    #             await user.send(embed=discord.Embed(title="Ping spam unmute", description=f"A moderator has reviewed your ping spam report. You will be unmuted in {humanize.naturaldelta(time - now)}.", color=discord.Color.orange()))
-    #         except Exception:
-    #             pass
-
-    #         return
-    #     except Exception:
-    #         return
 
 
 def prepare_ping_string(db_guild, message):

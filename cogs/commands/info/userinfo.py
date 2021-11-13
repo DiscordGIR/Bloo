@@ -1,13 +1,14 @@
-import discord
-from discord.commands import (Option, message_command, slash_command, user_command)
-from discord.ext import commands
-from discord.utils import format_dt
-
 import traceback
 from datetime import datetime
 from math import floor
 from typing import Union
+
+import discord
 from data.services.user_service import user_service
+from discord.commands import (Option, message_command, slash_command,
+                              user_command)
+from discord.ext import commands
+from discord.utils import format_dt
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.menu import Menu
@@ -15,9 +16,10 @@ from utils.permissions.checks import PermissionsFailure, whisper
 from utils.permissions.converters import user_resolver
 from utils.permissions.permissions import permissions
 
+
 async def format_xptop_page(entries, all_pages, current_page, ctx):
     """Formats the page for the xptop embed.
-    
+
     Parameters
     ----------
     entry : dict
@@ -26,12 +28,12 @@ async def format_xptop_page(entries, all_pages, current_page, ctx):
         "All entries that we will eventually iterate through"
     current_page : number
         "The number of the page that we are currently on"
-        
+
     Returns
     -------
     discord.Embed
         "The embed that we will send"
-    
+
     """
     embed = discord.Embed(title=f'Leaderboard', color=discord.Color.blurple())
     for i, user in entries:
@@ -53,9 +55,9 @@ async def format_xptop_page(entries, all_pages, current_page, ctx):
     return embed
 
 
-async def format_cases_page(entry, all_pages, current_page, ctx):
+async def format_cases_page(entries, all_pages, current_page, ctx):
     """Formats the page for the cases embed.
-    
+
     Parameters
     ----------
     entry : dict
@@ -64,12 +66,12 @@ async def format_cases_page(entry, all_pages, current_page, ctx):
         "All entries that we will eventually iterate through"
     current_page : number
         "The number of the page that we are currently on"
-        
+
     Returns
     -------
     discord.Embed
         "The embed that we will send"
-    
+
     """
     page_count = 0
     pun_map = {
@@ -88,8 +90,8 @@ async def format_cases_page(entry, all_pages, current_page, ctx):
             page_count = page_count + 1
     embed = discord.Embed(
         title=f'Cases - {u.warn_points} warn points', color=discord.Color.blurple())
-    embed.set_author(name=user, icon_url=user.avatar)
-    for case in entry:
+    embed.set_author(name=user, icon_url=user.display_avatar)
+    for case in entries:
         timestamp = case.date
         formatted = f"{format_dt(timestamp, style='F')} ({format_dt(timestamp, style='R')})"
         if case._type == "WARN" or case._type == "LIFTWARN":
@@ -134,16 +136,16 @@ class UserInfo(commands.Cog):
     @slash_command(guild_ids=[cfg.guild_id], description="Get info of another user or yourself.")
     async def userinfo(self, ctx: BlooContext, user: Option(discord.Member, description="User to get info of", required=False)) -> None:
         """Gets info of another user or yourself.
-        
+
         Example usage
         -------------
         /userinfo user:<user>
-        
+
         Parameters
         ----------
         user : discord.Member, optional
             "Member to get info of"
-            
+
         """
         await self.handle_userinfo(ctx, user)
 
@@ -191,7 +193,7 @@ class UserInfo(commands.Cog):
 
         embed = discord.Embed(title=f"User Information", color=user.color)
         embed.set_author(name=user)
-        embed.set_thumbnail(url=user.avatar)
+        embed.set_thumbnail(url=user.display_avatar)
         embed.add_field(name="Username",
                         value=f'{user} ({user.mention})', inline=True)
         embed.add_field(
@@ -268,8 +270,9 @@ class UserInfo(commands.Cog):
         # fetch user profile from database
         results = user_service.get_user(user.id)
 
-        embed = discord.Embed(title="Warn Points", color=discord.Color.orange())
-        embed.set_thumbnail(url=user.avatar)
+        embed = discord.Embed(title="Warn Points",
+                              color=discord.Color.orange())
+        embed.set_thumbnail(url=user.display_avatar)
         embed.add_field(
             name="Member", value=f'{user.mention}\n{user}\n({user.id})', inline=True)
         embed.add_field(name="Warn Points",
@@ -281,41 +284,42 @@ class UserInfo(commands.Cog):
     @slash_command(guild_ids=[cfg.guild_id], description="Show the XP leaderboard.")
     async def xptop(self, ctx: BlooContext):
         """Show XP leaderboard for top 100, ranked highest to lowest.
-        
+
         Example usage
         --------------
         /xptop
-        
+
         """
 
         results = enumerate(user_service.leaderboard())
         results = [(i, m) for (i, m) in results if ctx.guild.get_member(
             m._id) is not None][0:100]
-        menu = Menu(results, ctx.channel, format_xptop_page, True, ctx, True, per_page=10)
+        menu = Menu(results, ctx.channel, format_page=format_xptop_page,
+                    interaction=True, ctx=ctx, whisper=ctx.whisper, per_page=10)
         await menu.start()
 
     @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's cases")
     async def cases(self, ctx: BlooContext, user: Option(discord.Member, description="Member to show cases of", required=False)):
         """Show list of cases of a user (mod only)
-        
+
         Example usage
         --------------
         /cases user:<@user/ID>
-        
+
         Parameters
         ----------
         user : discord.Member, optional
             "User we want to get cases of, doesn't have to be in guild"
-            
+
         """
 
         # if an invokee is not provided in command, call command on the invoker
         # (get invoker's cases)
         user = user or ctx.author
         # if user not in guild, fetch their profile from the Discord API
-        if isinstance(user, int): # TODO this is fucked, pycord bug
-           user = user_resolver(ctx, user)
-           
+        if isinstance(user, int):  # TODO this is fucked, pycord bug
+            user = user_resolver(ctx, user)
+
         # users can only invoke on themselves if they aren't mods
         if not permissions.has(ctx.guild, ctx.author, 5) and user.id != ctx.author.id:
             raise PermissionsFailure(
@@ -336,7 +340,8 @@ class UserInfo(commands.Cog):
 
         ctx.case_user = user
 
-        menu = Menu(cases, ctx.channel, format_cases_page, True, ctx, True, per_page=10)
+        menu = Menu(cases, channel=ctx.channel, format_page=format_cases_page,
+                    interaction=True, ctx=ctx, whisper=ctx.whisper, per_page=10)
         await menu.start()
 
     @cases.error

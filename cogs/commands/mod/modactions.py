@@ -583,7 +583,7 @@ class ModActions(commands.Cog):
         else:
             await ctx.respond(f"We updated the case but weren't able to find a corresponding message in {public_chan.mention}!", embed=log, delete_after=10)
             log.remove_author()
-            log.set_thumbnail(url=user.avatar_url)
+            log.set_thumbnail(url=user.display_avatar)
             await public_chan.send(user.mention if not dmed else "", embed=log)
 
     @mod_and_up()

@@ -1,20 +1,27 @@
-import discord
-from discord.commands import Option, slash_command
-from discord.ext import commands
-
 import traceback
+from datetime import datetime
 from io import BytesIO
+
+import discord
+from utils.message_cooldown import MessageTextBucket
 from data.model.tag import Tag
 from data.services.guild_service import guild_service
+from discord.commands import Option, slash_command
+from discord.ext import commands
+from discord.ext.commands.cooldowns import CooldownMapping
 from utils.autocompleters import tags_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
-from utils.permissions.checks import (PermissionsFailure, genius_or_submod_and_up)
+from utils.permissions.checks import (PermissionsFailure,
+                                      genius_or_submod_and_up)
 from utils.permissions.slash_perms import slash_perms
+from utils.permissions.permissions import permissions
+
 
 class Tags(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.tag_cooldown = CooldownMapping.from_cooldown(1, 5, MessageTextBucket.custom)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Display a tag")
     async def tag(self, ctx: BlooContext, name: Option(str, description="Tag name", autocomplete=tags_autocomplete)):
@@ -37,11 +44,11 @@ class Tags(commands.Cog):
             raise commands.BadArgument("That tag does not exist.")
 
         # run cooldown so tag can't be spammed
-        # bucket = self.tag_cooldown.get_bucket(tag.name)
-        # current = ctx.message.created_at.replace(tzinfo=datetime.timezone.utc).timestamp()
-        # # ratelimit only if the invoker is not a moderator
-        # if bucket.update_rate_limit(current) and not (ctx.permissions.hasAtLeast(ctx.guild, ctx.author, 5) or ctx.guild.get_role(ctx.settings.guild().role_sub_mod) in ctx.author.roles):
-        #     raise commands.BadArgument("That tag is on cooldown.")
+        bucket = self.tag_cooldown.get_bucket(tag.name)
+        current = datetime.now().timestamp()
+        # ratelimit only if the invoker is not a moderator
+        if bucket.update_rate_limit(current) and not (permissions.has(ctx.guild, ctx.author, 5) or ctx.guild.get_role(guild_service.get_guild().role_sub_mod) in ctx.author.roles):
+            raise commands.BadArgument("That tag is on cooldown.")
 
         # if the Tag has an image, add it to the embed
         file = tag.image.read()

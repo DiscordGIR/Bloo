@@ -15,7 +15,7 @@ from utils.permissions.checks import PermissionsFailure, whisper
 from utils.permissions.converters import user_resolver
 from utils.permissions.permissions import permissions
 
-async def format_xptop_page(entry, all_pages, current_page, ctx):
+async def format_xptop_page(entries, all_pages, current_page, ctx):
     """Formats the page for the xptop embed.
     
     Parameters
@@ -34,16 +34,16 @@ async def format_xptop_page(entry, all_pages, current_page, ctx):
     
     """
     embed = discord.Embed(title=f'Leaderboard', color=discord.Color.blurple())
-    for i, user in entry:
+    for i, user in entries:
         member = ctx.guild.get_member(user._id)
         trophy = ''
         if current_page == 1:
-            if i == entry[0][0]:
+            if i == entries[0][0]:
                 trophy = ':first_place:'
                 embed.set_thumbnail(url=member.avatar)
-            if i == entry[1][0]:
+            if i == entries[1][0]:
                 trophy = ':second_place:'
-            if i == entry[2][0]:
+            if i == entries[2][0]:
                 trophy = ':third_place:'
 
         embed.add_field(name=f"#{i+1} - Level {user.level}",

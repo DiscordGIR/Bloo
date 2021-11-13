@@ -18,10 +18,10 @@ from utils.permissions.slash_perms import slash_perms
 from utils.permissions.permissions import permissions
 from utils.menu import Menu
 
-async def format_tag_page(entry, all_pages, current_page, ctx):
+async def format_tag_page(entries, all_pages, current_page, ctx):
         embed = discord.Embed(
             title=f'All tags', color=discord.Color.blurple())
-        for tag in entry:
+        for tag in entries:
             desc = f"Added by: {tag.added_by_tag}\nUsed {tag.use_count} times"
             if tag.image.read() is not None:
                 desc += "\nHas image attachment"

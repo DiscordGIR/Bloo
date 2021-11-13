@@ -132,12 +132,7 @@ class Filters(commands.Cog):
         
         filters = sorted(filters, key=lambda word: word.word.lower())
 
-        def chunks(lst, n):
-            """Yield successive n-sized chunks from lst."""
-            for i in range(0, len(lst), n):
-                yield lst[i:i + n]
-
-        menu = Menu(list(chunks(filters, 12)), ctx.channel,
+        menu = Menu(filters, ctx.channel, per_page=12,
                     format_page=format_filter_page, interaction=True, ctx=ctx, whisper=False)
 
         await menu.start()

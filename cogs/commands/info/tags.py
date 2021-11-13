@@ -134,6 +134,66 @@ class Tags(commands.Cog):
         await ctx.respond(f"Added new tag!", file=_file or discord.utils.MISSING, embed=await self.prepare_tag_embed(tag))
 
     @genius_or_submod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Edit an existing tag", permissions=slash_perms.genius_or_submod_and_up())
+    async def edittag(self, ctx: BlooContext, name: str) -> None:
+        """Edit a tag's body, optionally attach an image.
+        
+        Example usage
+        -------------
+        !edittag roblox this would be the body
+
+        Parameters
+        ----------
+        name : str
+            "Name of tag to edit"
+        """
+
+        if len(name.split()) > 1:
+            raise commands.BadArgument(
+                "Tag names can't be longer than 1 word.")
+
+        name = name.lower()
+        tag = guild_service.get_tag(name)
+        
+        if tag is None:
+            raise commands.BadArgument("That tag does not exist.")
+        
+        await ctx.defer(ephemeral=True)
+        prompt = PromptData(
+            value_name="description",
+            description="Please enter the content of this tag, and optionally attach an image.",
+            convertor=str,
+            raw=True)
+        description, response = await ctx.prompt(prompt)
+        tag.content = description
+        
+        if len(response.attachments) > 0:
+            # ensure the attached file is an image
+            image = response.attachments[0]
+            _type = image.content_type
+            if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
+                raise commands.BadArgument("Attached file was not an image.")
+            else:
+                image = await image.read()
+            
+            # save image bytes
+            if tag.image is not None:
+                tag.image.replace(image, content_type=_type)
+            else:
+                tag.image.put(image, content_type=_type)
+        else:
+            tag.image = None
+
+        if not guild_service.edit_tag(tag):
+            raise commands.BadArgument("An error occurred editing that tag.")
+        
+        _file = tag.image.read()
+        if _file is not None:
+            _file = discord.File(BytesIO(_file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
+        
+        await ctx.respond(f"Tag edited!", file=_file or discord.utils.MISSING, embed=await self.prepare_tag_embed(tag))
+
+    @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Delete a tag", permissions=slash_perms.genius_or_submod_and_up())
     async def deltag(self, ctx: BlooContext, name: Option(str, description="Name of tag to delete", autocomplete=tags_autocomplete)):
         """Delete tag (geniuses only)
@@ -200,7 +260,7 @@ class Tags(commands.Cog):
             text=f"Added by {tag.added_by_tag} | Used {tag.use_count} times")
         return embed
 
-    # @edittag.error
+    @edittag.error
     @tag.error
     @taglist.error
     @deltag.error

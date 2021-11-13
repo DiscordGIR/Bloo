@@ -71,6 +71,41 @@ class Tags(commands.Cog):
         await ctx.respond(embed=await self.prepare_tag_embed(tag), file=file)
 
     @genius_or_submod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Display a tag", permissions=slash_perms.genius_or_submod_and_up())
+    async def rawtag(self, ctx: BlooContext, name: Option(str, description="Tag name", autocomplete=tags_autocomplete)):
+        """Post raw body of a tag
+        
+        Example usage
+        -------------
+        !rawtag roblox
+
+        Parameters
+        ----------
+        name : str
+            "Name of tag to use"
+        """
+
+        name = name.lower()
+        tag = guild_service.get_tag(name)
+        
+        if tag is None:
+            raise commands.BadArgument("That tag does not exist.")
+
+        # if the Tag has an image, add it to the embed
+        file = tag.image.read()
+        if file is not None:
+            file = discord.File(BytesIO(file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
+        
+        response = discord.utils.escape_markdown(tag.content)
+        parts = [response[i:i+2000] for i in range(0, len(response), 2000)]
+
+        for i, part in enumerate(parts):
+            if i == 0:
+                await ctx.respond(part)
+            else:
+                await ctx.send(part, file=file if i == len(parts) - 1 else discord.utils.MISSING)
+
+    @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Add a new tag", permissions=slash_perms.genius_or_submod_and_up())
     async def addtag(self, ctx: BlooContext, name: str) -> None:
         """Add a tag. Optionally attach an iamge. (Genius only)
@@ -135,7 +170,7 @@ class Tags(commands.Cog):
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Edit an existing tag", permissions=slash_perms.genius_or_submod_and_up())
-    async def edittag(self, ctx: BlooContext, name: str) -> None:
+    async def edittag(self, ctx: BlooContext, name: Option(str, autocomplete=tags_autocomplete)) -> None:
         """Edit a tag's body, optionally attach an image.
         
         Example usage

@@ -159,7 +159,7 @@ class UserInfo(commands.Cog):
     async def userinfo_msg(self, ctx: BlooContext, message: discord.Message) -> None:
         await self.handle_userinfo(ctx, message.author)
 
-    async def handle_userinfo(self, ctx: BlooContext, user: Union[discord.User, discord.Member]):
+    async def handle_userinfo(self, ctx: BlooContext, user: Union[int, discord.Member]):
         is_mod = permissions.has(ctx.guild, ctx.author, 5)
         if user is None:
             user = ctx.author
@@ -315,10 +315,10 @@ class UserInfo(commands.Cog):
 
         # if an invokee is not provided in command, call command on the invoker
         # (get invoker's cases)
-        user = user or ctx.author
-        # if user not in guild, fetch their profile from the Discord API
-        if isinstance(user, int):  # TODO this is fucked, pycord bug
-            user = user_resolver(ctx, user)
+        if user is None:
+            user = ctx.author
+        elif isinstance(user, str) or isinstance(user, int):
+            user = await user_resolver(ctx, user)
 
         # users can only invoke on themselves if they aren't mods
         if not permissions.has(ctx.guild, ctx.author, 5) and user.id != ctx.author.id:

@@ -88,9 +88,9 @@ class AntiRaid(commands.Cog):
     #             for phrase in new_phrases:
     #                 await ctx.settings.add_raid_phrase(phrase)
 
-    #         await ctx.send_success(f"Added {len(new_phrases)} phrases to the raid filter.", delete_after=5)
+    #         await ctx.send_success(f"Added {len(new_phrases)} phrases to the raid filter.")
     #     else:
-    #         await ctx.send_warning("Cancelled.", delete_after=5)
+    #         await ctx.send_warning("Cancelled.")
 
     #     await ctx.message.delete(delay=5)
 
@@ -171,6 +171,168 @@ class AntiRaid(commands.Cog):
 
         await ctx.send_success(description=f"{'**Verified**' if profile.raid_verified else '**Unverified**'} user {user.mention}.")
 
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Lock a channel.", permissions=slash_perms.admin_and_up())
+    async def lock(self,  ctx: BlooContext, channel: Option(discord.TextChannel, description="Channel to lock", required=False) = None):
+        """Lock a channel (admin only)
+
+        Example usage
+        --------------
+        !lock
+        !lock #channel
+            
+        Parameters
+        ----------
+        channel : discord.TextChannel, optional
+            "Channel to lock"
+        """
+
+        if channel is None:
+            channel = ctx.channel
+            
+        if await self.lock_unlock_channel(ctx, channel, True) is not None:
+            await ctx.send_success(f"Locked {channel.mention}!")
+        else:
+            raise commands.BadArgument(f"{channel.mention} already locked or my permissions are wrong.")
+
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Unlock a channel.", permissions=slash_perms.admin_and_up())
+    async def unlock(self,  ctx: BlooContext, channel: Option(discord.TextChannel, description="Channel to unlock", required=False)  = None):
+        """Unlock a channel (admin only)
+
+        Example usage
+        --------------
+        !unlock 
+        !unlock #channel
+            
+        Parameters
+        ----------
+        channel : discord.TextChannel, optional
+            "Channel to unlock"
+        """
+
+        if channel is None:
+            channel = ctx.channel
+            
+        if await self.lock_unlock_channel(ctx, channel) is not None:
+            await ctx.send_success(f"Unocked {channel.mention}!")
+        else:
+            raise commands.BadArgument(f"{channel.mention} already unlocked or my permissions are wrong.")
+
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Mark a channel as automatically freezable during a raid", permissions=slash_perms.admin_and_up())
+    async def freezeable(self,  ctx: BlooContext, channel: Option(discord.TextChannel, description="Channel to mark freezeable", required=False) = None):
+        """Mark a channel as automatically freezable during a raid (admin only)
+
+        Parameters
+        ----------
+        channel : discord.TextChannel, optional
+            "Channel to mark, current channel by default"
+        """
+
+        channel = channel or ctx.channel
+        if channel.id in guild_service.get_locked_channels():
+            raise commands.BadArgument("That channel is already lockable.")
+        
+        guild_service.add_locked_channels(channel.id)
+        await ctx.send_success(f"Added {channel.mention} as lockable channel!")
+
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Mark a channel as automatically not freezable during a raid", permissions=slash_perms.admin_and_up())
+    async def unfreezeable(self,  ctx: BlooContext, channel: Option(discord.TextChannel, description="Channel to mark as not freezeable", required=False) = None):
+        channel = channel or ctx.channel
+        if channel.id not in guild_service.get_locked_channels():
+            raise commands.BadArgument("That channel isn't already lockable.")
+        
+        guild_service.remove_locked_channels(channel.id)
+        await ctx.send_success(f"Removed {channel.mention} as lockable channel!")
+            
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Freeze all channels", permissions=slash_perms.admin_and_up())
+    async def freeze(self, ctx):
+        """Freeze all channels (admin only)
+
+        Example usage
+        --------------
+        !freeze
+        """
+        
+        channels = guild_service.get_locked_channels()
+        if not channels:
+            raise commands.BadArgument("No freezeable channels! Set some using `!freezeable`.")
+        
+        locked = []
+        await ctx.defer()
+        for channel in channels:
+            channel = ctx.guild.get_channel(channel)
+            if channel is not None:
+                if await self.lock_unlock_channel(ctx, channel, lock=True):
+                    locked.append(channel)
+        
+        if locked:              
+            await ctx.send_success(f"Locked {len(locked)} channels!")
+        else:
+            raise commands.BadArgument("Server is already locked or my permissions are wrong.")
+        
+    
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Unfreeze all channels", permissions=slash_perms.admin_and_up())
+    async def unfreeze(self, ctx):
+        """Unreeze all channels (admin only)
+
+        Example usage
+        --------------
+        !unfreeze
+        """
+
+        channels = guild_service.get_locked_channels()
+        if not channels:
+            raise commands.BadArgument("No unfreezeable channels! Set some using `!freezeable`.")
+        
+        unlocked = []
+        await ctx.defer()
+        for channel in channels:
+            channel = ctx.guild.get_channel(channel)
+            if channel is not None:
+                if await self.lock_unlock_channel(ctx, channel, lock=None):
+                    unlocked.append(channel)
+        
+        if unlocked:              
+            await ctx.send_success(f"Unlocked {len(unlocked)} channels!")
+        else:
+            raise commands.BadArgument("Server is already unlocked or my permissions are wrong.")
+
+    async def lock_unlock_channel(self,  ctx: BlooContext, channel, lock=None):
+        db_guild = guild_service.get_guild()
+        
+        default_role = ctx.guild.default_role
+        member_plus = ctx.guild.get_role(db_guild.role_memberplus)   
+        
+        default_perms = channel.overwrites_for(default_role)
+        memberplus_perms = channel.overwrites_for(member_plus)
+
+        if lock and default_perms.send_messages is None and memberplus_perms.send_messages is None:
+            default_perms.send_messages = False
+            memberplus_perms.send_messages = True
+        elif lock is None and (not default_perms.send_messages) and memberplus_perms.send_messages:
+            default_perms.send_messages = None
+            memberplus_perms.send_messages = None
+        else:
+            return
+        
+        try:
+            await channel.set_permissions(default_role, overwrite=default_perms, reason="Locked!" if lock else "Unlocked!")
+            await channel.set_permissions(member_plus, overwrite=memberplus_perms, reason="Locked!" if lock else "Unlocked!")
+            return True
+        except Exception:
+            return
+
+    @lock.error
+    @unlock.error
+    @freezeable.error
+    @unfreezeable.error
+    @freeze.error
+    @unfreeze.error
     @verify.error
     @spammode.error
     @removeraid.error

@@ -174,4 +174,14 @@ class GuildService:
             return True
         return False
 
+    def get_locked_channels(self):
+        return self.get_guild().locked_channels
+
+    def add_locked_channels(self, channel):
+        Guild.objects(_id=cfg.guild_id).update_one(push__locked_channels=channel)
+
+    def remove_locked_channels(self, channel):
+        Guild.objects(_id=cfg.guild_id).update_one(pull__locked_channels=channel)
+
+
 guild_service = GuildService()

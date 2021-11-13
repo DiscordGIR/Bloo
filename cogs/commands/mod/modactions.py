@@ -645,12 +645,6 @@ class ModActions(commands.Cog):
         await ctx.respond(embed=log, delete_after=10)
         await submit_public_log(ctx, db_guild, user, log, dmed)
 
-    # @lock.error
-    # @unlock.error
-    # @freezeable.error
-    # @unfreezeable.error
-    # @freeze.error
-    # @unfreeze.error
     @unmute.error
     @mute.error
     @liftwarn.error

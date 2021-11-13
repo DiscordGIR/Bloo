@@ -250,7 +250,7 @@ async def remind(id, reminder):
         await member.send(embed=embed)
     except Exception:
         channel = guild.get_channel(
-            BOT_GLOBAL.settings.guild().channel_botspam)
+            guild_service.get_guild().channel_botspam)
         await channel.send(member.mention, embed=embed)
 
 

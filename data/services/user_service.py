@@ -155,5 +155,25 @@ class UserService:
 
     def retrieve_birthdays(self, date):
         return User.objects(birthday=date)
+    
+    def transfer_profile(self, oldmember, newmember):
+        u = self.get_user(oldmember)
+        u._id = newmember
+        u.save()
+        
+        u2 = self.get_user(oldmember)
+        u2.xp = 0
+        u2.level = 0
+        u2.save()
+        
+        cases = self.get_cases(oldmember)
+        cases._id = newmember
+        cases.save()
+        
+        cases2 = self.get_cases(oldmember)
+        cases2.cases = []
+        cases2.save()
+        
+        return u, len(cases.cases)
 
 user_service = UserService()

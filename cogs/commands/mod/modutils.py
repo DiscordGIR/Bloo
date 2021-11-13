@@ -6,12 +6,14 @@ import pytz
 from data.model.case import Case
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
-from discord.commands.commands import slash_command
+from discord.commands.commands import Option, slash_command
 from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
 from discord.utils import format_dt
+from utils.autocompleters import date_autocompleter
 from utils.config import cfg
 from utils.context import BlooContext
+from utils.mod.give_birthday_role import MONTH_MAPPING
 from utils.permissions.checks import (PermissionsFailure, admin_and_up,
                                       guild_owner_and_up, mod_and_up, whisper)
 from utils.permissions.slash_perms import slash_perms
@@ -164,7 +166,13 @@ class ModUtils(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Override a user's birthday", permissions=slash_perms.mod_and_up())
-    async def setbirthday(self, ctx: BlooContext, user: discord.Member, month: int, date: int):
+    async def setbirthday(self, ctx: BlooContext, user: discord.Member, month: Option(str, choices=list(MONTH_MAPPING.keys())), date: Option(int, autocomplete=date_autocompleter)):
+        month = MONTH_MAPPING.get(month)
+        if month is None:
+            raise commands.BadArgument("You gave an invalid date")
+
+        month = month["value"]
+        
         if user.id == self.bot.user.id:
             await ctx.send_error("You can't call that on me :(")
             raise commands.BadArgument("You can't call that on me :(")

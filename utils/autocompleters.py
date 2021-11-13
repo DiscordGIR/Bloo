@@ -85,9 +85,20 @@ async def tags_autocomplete(ctx: AutocompleteContext):
     tags = tags[:25]
     return [tag for tag in tags if tag.lower().startswith(ctx.value.lower())]
 
+
 async def liftwarn_autocomplete(ctx: AutocompleteContext):
-    cases = [case._id for case in user_service.get_cases(int(ctx.options["user"])).cases if case._type == "WARN" and not case.lifted]
+    print("HERE")
+    cases = [case._id for case in user_service.get_cases(
+        int(ctx.options["user"])).cases if case._type == "WARN" and not case.lifted]
     cases.sort(reverse=True)
     cases = cases[:25]
 
     return [case for case in cases if str(case).startswith(str(ctx.value))]
+
+
+async def filterwords_autocomplete(ctx: AutocompleteContext):
+    words = [word.word for word in guild_service.get_guild().filter_words]
+    words.sort()
+    words = words[:25]
+
+    return [word for word in words if str(word).startswith(str(ctx.value))]

@@ -1,19 +1,22 @@
-import discord
-from discord.commands import Option, slash_command
-from discord.ext import commands
-
 import traceback
+
+import discord
+from data.model.filterword import FilterWord
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
-from data.model.filterword import FilterWord
+from discord.commands import Option, slash_command
+from discord.ext import commands
+from utils.autocompleters import filterwords_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.permissions.checks import (PermissionsFailure, admin_and_up, mod_and_up)
-from utils.permissions.slash_perms import slash_perms
-from utils.permissions.permissions import permissions
 from utils.menu import Menu
+from utils.permissions.checks import (PermissionsFailure, admin_and_up,
+                                      mod_and_up)
+from utils.permissions.permissions import permissions
+from utils.permissions.slash_perms import slash_perms
 
-async def format_filter_page(entry, all_pages, current_page, _):
+
+async def format_filter_page(entries, all_pages, current_page, ctx):
     """Formats the page for the filtered words embed
     
     Parameters
@@ -33,7 +36,7 @@ async def format_filter_page(entry, all_pages, current_page, _):
     """
     embed = discord.Embed(
         title=f'Filtered words', color=discord.Color.blurple())
-    for word in entry:
+    for word in entries:
         notify_flag = ""
         piracy_flag = ""
         flags_check = ""
@@ -84,7 +87,7 @@ class Filters(commands.Cog):
 
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Add a word to filter", permissions=slash_perms.admin_and_up())
-    async def filteradd(self, ctx: BlooContext, notify: Option(bool, description="Whether to generate a report or not when this word is filtered"), bypass: Option(int, description="Level that bypasses this filter"), *, phrase: str) -> None:
+    async def filter(self, ctx: BlooContext, notify: Option(bool, description="Whether to generate a report or not when this word is filtered"), bypass: Option(int, description="Level that bypasses this filter"), *, phrase: str) -> None:
         """Adds a word to filter (admin only)
 
         Example usage
@@ -139,7 +142,7 @@ class Filters(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Mark a word as piracy, will be ignored in #dev", permissions=slash_perms.mod_and_up())
-    async def piracy(self, ctx: BlooContext, *, word: str):
+    async def piracy(self, ctx: BlooContext, *, word: Option(str, autocomplete=filterwords_autocomplete)):
         """Marks a word as piracy, will be ignored in #dev (admin only)
 
         Example usage
@@ -168,7 +171,7 @@ class Filters(commands.Cog):
 
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Remove word from filter", permissions=slash_perms.admin_and_up())
-    async def filterremove(self, ctx: BlooContext, *, word: str):
+    async def filterremove(self, ctx: BlooContext, *, word: Option(str, autocomplete=filterwords_autocomplete)):
         """Removes a word from filter (admin only)
 
         Example usage
@@ -323,7 +326,7 @@ class Filters(commands.Cog):
     @whitelist.error
     @blacklist.error
     @filterremove.error
-    @filteradd.error
+    @filter.error
     @filterlist.error
     @offlineping.error
     @ignorechannel.error

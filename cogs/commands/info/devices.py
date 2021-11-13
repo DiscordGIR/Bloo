@@ -59,7 +59,7 @@ class Devices(commands.Cog):
 
         if not device.split(" ")[0].lower() in self.possible_devices:
             raise commands.BadArgument(
-                "Unsupported device. Please see `!listdevices` for possible devices.")
+                "Unsupported device. Please see `/listdevices` for possible devices.")
 
         the_device = await self.find_device_from_ipsw_me(device)
 

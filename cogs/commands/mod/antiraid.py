@@ -215,7 +215,7 @@ class AntiRaid(commands.Cog):
             channel = ctx.channel
             
         if await self.lock_unlock_channel(ctx, channel) is not None:
-            await ctx.send_success(f"Unocked {channel.mention}!")
+            await ctx.send_success(f"Unlocked {channel.mention}!")
         else:
             raise commands.BadArgument(f"{channel.mention} already unlocked or my permissions are wrong.")
 
@@ -259,7 +259,7 @@ class AntiRaid(commands.Cog):
         
         channels = guild_service.get_locked_channels()
         if not channels:
-            raise commands.BadArgument("No freezeable channels! Set some using `!freezeable`.")
+            raise commands.BadArgument("No freezeable channels! Set some using `/freezeable`.")
         
         locked = []
         await ctx.defer()
@@ -287,7 +287,7 @@ class AntiRaid(commands.Cog):
 
         channels = guild_service.get_locked_channels()
         if not channels:
-            raise commands.BadArgument("No unfreezeable channels! Set some using `!freezeable`.")
+            raise commands.BadArgument("No unfreezeable channels! Set some using `/freezeable`.")
         
         unlocked = []
         await ctx.defer()

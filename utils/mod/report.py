@@ -85,7 +85,7 @@ async def report_spam(bot, msg, user, title):
 async def report_raid(user, msg=None):
     embed = discord.Embed()
     embed.title = "Possible raid occurring"
-    embed.description = "The raid filter has been triggered 5 or more times in the past 10 seconds. I am automatically locking all the channels. Use `!unfreeze` when you're done."
+    embed.description = "The raid filter has been triggered 5 or more times in the past 10 seconds. I am automatically locking all the channels. Use `/unfreeze` when you're done."
     embed.color = discord.Color.red()
     embed.set_thumbnail(url=user.display_avatar)
     embed.add_field(name="Member", value=f"{user} ({user.mention})")

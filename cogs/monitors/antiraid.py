@@ -215,7 +215,7 @@ class AntiRaidMonitor(commands.Cog):
             # yes! notify the mods and lock the server.
             raid_alert_bucket = self.raid_alert_cooldown.get_bucket(message)
             if not raid_alert_bucket.update_rate_limit(current):
-                await self.bot.report.report_raid(user, message)
+                await report_raid(user, message)
                 do_freeze = True
 
 

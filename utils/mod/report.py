@@ -87,7 +87,7 @@ async def report_raid(user, msg=None):
     embed.title = "Possible raid occurring"
     embed.description = "The raid filter has been triggered 5 or more times in the past 10 seconds. I am automatically locking all the channels. Use `!unfreeze` when you're done."
     embed.color = discord.Color.red()
-    embed.set_thumbnail(url=user.avatar_url)
+    embed.set_thumbnail(url=user.display_avatar)
     embed.add_field(name="Member", value=f"{user} ({user.mention})")
     if msg is not None:
         embed.add_field(name="Message", value=msg.content, inline=False)

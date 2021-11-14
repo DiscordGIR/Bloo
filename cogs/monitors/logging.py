@@ -92,8 +92,13 @@ class Logging(commands.Cog):
             return
         if member.bot:
             return
+        if reaction.message.author.bot:
+            return
+        if reaction.message.channel.is_news():
+            return
 
         db_guild = guild_service.get_guild()
+
         webhook = db_guild.emoji_logging_webhook
         if webhook is None:
             channel = member.guild.get_channel(db_guild.channel_emoji_log)
@@ -105,14 +110,13 @@ class Logging(commands.Cog):
             db_guild.save()
 
 
-        content=f"{reaction.emoji}\n\n[Link to message]({reaction.message.jump_url}) | **{member.id}**"
+        content = f"{reaction.emoji}\n\n{reaction.message.channel.mention} | [Link to message]({reaction.message.jump_url}) | **{member.id}**"
         body = {
             "username": str(member),
             "avatar_url": member.display_avatar,
             "content": content
         }
-        
-        embed = discord.Embed(description=reaction.emoji, color=discord.Color.random(), timestamp=datetime.now())
+
         async with aiohttp.ClientSession() as session:
             the_webhook: discord.Webhook = discord.Webhook.from_url(webhook, session=session)
             # send message to webhook

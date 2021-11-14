@@ -66,17 +66,16 @@ class Blootooth(commands.Cog):
             "files": [discord.File(BytesIO(await file.read()), filename=file.filename) for file in message.attachments]
         }
         
-        preamble = f"**{member.id}**: "
-        post=f"\n\n[Link to message]({message.jump_url})"
+        footer=f"\n\n[Link to message]({message.jump_url}) | **{member.id}**"
         content = message.content
         for mention in message.raw_role_mentions:
             content = content.replace(f"<@&{mention}>", f"`@{message.guild.get_role(mention)}`")
 
-        characters_left = 2000 - len(content) - len(preamble) - len(post) - 3
+        characters_left = 2000 - len(content) - len(footer) - 3
         if characters_left <= 0:
-            content = content[:2000 - len(preamble) - len(post) - 3] + "..."
+            content = content[:2000 - len(footer) - 3] + "..."
             
-        body["content"] = f"{preamble}{content}{post}"
+        body["content"] = f"{content}{footer}"
         return body
 
 def setup(bot):

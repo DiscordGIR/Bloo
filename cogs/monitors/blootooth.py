@@ -1,3 +1,4 @@
+from io import BytesIO
 import aiohttp
 import discord
 from discord.ext import commands
@@ -35,7 +36,7 @@ class Blootooth(commands.Cog):
             the_webhook: discord.Webhook = discord.Webhook.from_url(random.choice(webhooks), session=session)
             # send message to webhook
             message_body = await self.prepare_message_body(message)
-            await the_webhook.send(**message_body, allowed_mentions=discord.AllowedMentions(users=False))
+            await the_webhook.send(**message_body, allowed_mentions=discord.AllowedMentions(users=False, everyone=False, roles=False))
     
     async def handle_new_channel(self, channel: discord.TextChannel, db_guild: Guild):
         # we have not seen this channel yet; let's create a channel in the Blootooth server
@@ -49,7 +50,7 @@ class Blootooth(commands.Cog):
             category = await guild.create_category(name=channel.category.name)
         blootooth_channel = await category.create_text_channel(name=channel.name)
         webhooks = []
-        for i in range(3):
+        for i in range(1):
             webhooks.append((await blootooth_channel.create_webhook(name=f"Webhook {blootooth_channel.name} {i}")).url)
         guild_service.set_nsa_mapping(channel.id, webhooks)
         
@@ -62,9 +63,20 @@ class Blootooth(commands.Cog):
             "username": str(member),
             "avatar_url": member.display_avatar,
             "embeds": message.embeds or discord.utils.MISSING,
+            "files": [discord.File(BytesIO(await file.read()), filename=file.filename) for file in message.attachments]
         }
         
-        body["content"] = f"**{member.id}**: {message.content}\n\n[Link to message]({message.jump_url})"
+        preamble = f"**{member.id}**: "
+        post=f"\n\n[Link to message]({message.jump_url})"
+        content = message.content
+        for mention in message.raw_role_mentions:
+            content = content.replace(f"<@&{mention}>", f"`@{message.guild.get_role(mention)}`")
+
+        characters_left = 2000 - len(content) - len(preamble) - len(post) - 3
+        if characters_left <= 0:
+            content = content[:2000 - len(preamble) - len(post) - 3] + "..."
+            
+        body["content"] = f"{preamble}{content}{post}"
         return body
 
 def setup(bot):

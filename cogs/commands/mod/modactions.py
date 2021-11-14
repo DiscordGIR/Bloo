@@ -222,8 +222,7 @@ class ModActions(commands.Cog):
                 case.punishment = humanize.naturaldelta(
                     time - now, minimum_unit="seconds")
                 ctx.tasks.schedule_unmute(member.id, time)
-            except Exception as e:
-                print(e)
+            except Exception:
                 raise commands.BadArgument(
                     "An error occured, this user is probably already muted")
         else:

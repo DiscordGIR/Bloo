@@ -147,7 +147,6 @@ class Filter(commands.Cog):
             if message.channel.id == db_guild.channel_development and dev_role in message.author.roles:
                 return False
 
-            print("del")
             await self.delete(message)
             return True
 

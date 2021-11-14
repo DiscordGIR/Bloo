@@ -72,8 +72,7 @@ class RaidPhraseReportActions(ui.View):
         try:
             await ban(self.ctx, self.author, reason="Raid phrase detected")
             self.ctx.bot.ban_cache.ban(self.author.id)
-        except Exception as e:
-            print(e)
+        except Exception:
             await self.ctx.send_warning("I wasn't able to ban them.", delete_after=5)
 
         done = guild_service.add_raid_phrase(self.domain)

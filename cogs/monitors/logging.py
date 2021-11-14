@@ -1,3 +1,4 @@
+import aiohttp
 import discord
 from discord.ext import commands
 from discord.utils import format_dt
@@ -82,6 +83,41 @@ class Logging(commands.Cog):
         embed.timestamp = datetime.now()
         embed.set_footer(text=member.id)
         await channel.send(embed=embed)
+
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction: discord.Reaction, member: discord.User):
+        if reaction.message.guild is None:
+            return
+        if reaction.message.guild.id != cfg.guild_id:
+            return
+        if member.bot:
+            return
+
+        db_guild = guild_service.get_guild()
+        webhook = db_guild.emoji_logging_webhook
+        if webhook is None:
+            channel = member.guild.get_channel(db_guild.channel_emoji_log)
+            if channel is None:
+                return
+
+            webhook = (await channel.create_webhook(name=f"Webhook {channel.name}")).url
+            db_guild.emoji_logging_webhook = webhook
+            db_guild.save()
+
+
+        content=f"{reaction.emoji}\n\n[Link to message]({reaction.message.jump_url}) | **{member.id}**"
+        body = {
+            "username": str(member),
+            "avatar_url": member.display_avatar,
+            "content": content
+        }
+        
+        embed = discord.Embed(description=reaction.emoji, color=discord.Color.random(), timestamp=datetime.now())
+        async with aiohttp.ClientSession() as session:
+            the_webhook: discord.Webhook = discord.Webhook.from_url(webhook, session=session)
+            # send message to webhook
+            await the_webhook.send(**body, allowed_mentions=discord.AllowedMentions(users=False, everyone=False, roles=False))
+       
 
     @commands.Cog.listener()
     async def on_message_edit(self, before: discord.Message, after: discord.Message) -> None:

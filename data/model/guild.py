@@ -34,7 +34,7 @@ class Guild(mongoengine.Document):
     channel_subnews           = mongoengine.IntField()
     channel_music             = mongoengine.IntField()
 
-    emoji_logging_webhook     = mongoengine.IntField()
+    emoji_logging_webhook     = mongoengine.StringField()
     locked_channels           = mongoengine.ListField(default=[])
     filter_excluded_channels  = mongoengine.ListField(default=[])
     filter_excluded_guilds    = mongoengine.ListField(default=[349243932447604736])

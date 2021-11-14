@@ -123,7 +123,10 @@ class RoleAssignButtons(commands.Cog):
             "Message to add reaction to"
         """
 
-        message_id = int(message_id)
+        try:
+            message_id = int(message_id)
+        except Exception:
+            raise commands.BadArgument("Message ID must be an int")
 
         channel = ctx.guild.get_channel(
             guild_service.get_guild().channel_reaction_roles)
@@ -131,11 +134,12 @@ class RoleAssignButtons(commands.Cog):
         if channel is None:
             return
 
-        reaction_mapping = dict(
-            guild_service.get_rero_mapping(str(message_id)))
-        if reaction_mapping is None:
+        current =  guild_service.get_rero_mapping(str(message_id))
+        if current is None:
             raise commands.BadArgument(
-                f"Message with ID {message_id} had no reactions set in database. Use `!setreactions` first.")
+                f"Message with ID {message_id} had no reactions set in database. Use `/setbuttons` first.")
+        
+        reaction_mapping = dict(current)
 
         message = None
         try:

@@ -101,7 +101,7 @@ class Tags(commands.Cog):
 
         for i, part in enumerate(parts):
             if i == 0:
-                await ctx.respond(part)
+                await ctx.respond(part, file=file if i == len(parts) - 1 else discord.utils.MISSING)
             else:
                 await ctx.send(part, file=file if i == len(parts) - 1 else discord.utils.MISSING)
 
@@ -297,6 +297,7 @@ class Tags(commands.Cog):
 
     @edittag.error
     @tag.error
+    @rawtag.error
     @taglist.error
     @deltag.error
     @addtag.error

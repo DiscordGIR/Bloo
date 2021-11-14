@@ -1,12 +1,14 @@
+import random
 from io import BytesIO
+
 import aiohttp
 import discord
-from discord.ext import commands
 from data.model.guild import Guild
 from data.services.guild_service import guild_service
-from utils.logger import logger
+from discord.ext import commands
 from utils.config import cfg
-import random
+from utils.logger import logger
+
 
 class Blootooth(commands.Cog):
     def __init__(self, bot):
@@ -19,8 +21,9 @@ class Blootooth(commands.Cog):
             return
         if message.guild.id != cfg.guild_id:
             return
-        
-        # with self.create_lock:
+        if message.channel.type in [discord.ChannelType.public_thread, discord.ChannelType.private_thread]:
+            return
+
         channel = message.channel
         db_guild = guild_service.get_guild()
         blootooth_mappings = db_guild.nsa_mapping

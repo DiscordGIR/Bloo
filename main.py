@@ -16,6 +16,7 @@ initial_extensions = [
         "cogs.monitors.antiraid",
         "cogs.commands.info.stats",
         "cogs.commands.info.devices",
+        "cogs.commands.info.help",
         "cogs.commands.info.userinfo",
         "cogs.commands.info.tags",
         "cogs.commands.misc.admin",

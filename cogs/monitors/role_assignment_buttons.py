@@ -69,6 +69,9 @@ class RoleAssignButtons(commands.Cog):
             message = await request_role_channel.fetch_message(message_id)
         except Exception:
             raise commands.BadArgument("Message not found.")
+        
+        if message.author != ctx.me:
+            raise commands.BadArgument("Message must be sent by me, use `/postembed` or `/postbuttonmessage`")
 
         reaction_mapping = {message.id: {}}
 
@@ -138,7 +141,7 @@ class RoleAssignButtons(commands.Cog):
         if current is None:
             raise commands.BadArgument(
                 f"Message with ID {message_id} had no reactions set in database. Use `/setbuttons` first.")
-        
+
         reaction_mapping = dict(current)
 
         message = None
@@ -146,6 +149,9 @@ class RoleAssignButtons(commands.Cog):
             message = await channel.fetch_message(message_id)
         except Exception:
             raise commands.BadArgument("Message not found.")
+
+        if message.author != ctx.me:
+            raise commands.BadArgument("Message must be sent by me, use `/postembed` or `/postbuttonmessage`")
 
         await ctx.defer()
         while True:

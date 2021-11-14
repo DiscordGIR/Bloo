@@ -201,7 +201,7 @@ class UserInfo(commands.Cog):
         embed.add_field(
             name="XP", value=results.xp if not results.is_clem else "0/0", inline=True)
         embed.add_field(
-            name="Roles", value=roles if roles else "None", inline=False)
+            name="Roles", value=roles[:1024] if roles else "None", inline=False)
         embed.add_field(
             name="Join date", value=joined, inline=True)
         embed.add_field(name="Account creation date",

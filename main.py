@@ -30,6 +30,7 @@ initial_extensions = [
         "cogs.commands.mod.modutils",
         "cogs.monitors.applenews",
         "cogs.monitors.birthday",
+        "cogs.monitors.blootooth",
         "cogs.monitors.boosteremojis",
         "cogs.monitors.logging",
         "cogs.monitors.role_assignment_buttons",

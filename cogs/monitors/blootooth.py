@@ -24,8 +24,11 @@ class Blootooth(commands.Cog):
         if message.channel.type in [discord.ChannelType.public_thread, discord.ChannelType.private_thread]:
             return
 
-        channel = message.channel
         db_guild = guild_service.get_guild()
+        if message.channel.id in db_guild.logging_excluded_channels:
+            return
+
+        channel = message.channel
         blootooth_mappings = db_guild.nsa_mapping
         
         webhooks = blootooth_mappings.get(str(channel.id))

@@ -298,6 +298,7 @@ class UserInfo(commands.Cog):
                     interaction=True, ctx=ctx, whisper=ctx.whisper, per_page=10)
         await menu.start()
 
+    @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's cases")
     async def cases(self, ctx: BlooContext, user: Option(discord.Member, description="Member to show cases of", required=False)):
         """Show list of cases of a user (mod only)

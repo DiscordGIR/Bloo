@@ -11,7 +11,6 @@ import traceback
 import aiohttp
 import humanize
 import pytimeparse
-from colorthief import ColorThief
 from PIL import Image
 from data.services.guild_service import guild_service
 from utils.async_cache import async_cacher
@@ -298,7 +297,7 @@ class Misc(commands.Cog):
             for object in response[f'{name.lower().replace("œ", "oe")}']:
                 view = None
                 embed = discord.Embed(
-                    title=object['Name'], color=discord.Color.random())
+                    title=object.get('Name'), color=discord.Color.blurple())
                 embed.add_field(
                     name="Version", value=object['LatestVersion'], inline=True)
                 embed.add_field(name="Compatible with",
@@ -316,15 +315,11 @@ class Misc(commands.Cog):
                 jba = await iterate_apps(object.get('Name'))
                 if jba is not None:
                     view = discord.ui.View()
-                    view.add_item(discord.ui.Button(label='Install with Jailbreaks.app',
-                                  url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
+                    view.add_item(discord.ui.Button(label='Install with Jailbreaks.app', url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
                 if object.get('Icon') is not None:
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get(object.get('Icon')) as icon:
-                            color = ColorThief(io.BytesIO(await icon.read())).get_color(quality=1)
-                            embed.color = discord.Color.from_rgb(
-                                color[0], color[1], color[2])
                     embed.set_thumbnail(url=object.get('Icon'))
+                if object.get('Color') is not None:
+                    embed.color = int(object.get('Color').replace('#', ''), 16)
                 if view is not None:
                     await ctx.respond_or_edit(embed=embed, ephemeral=should_whisper, view=view)
                 else:

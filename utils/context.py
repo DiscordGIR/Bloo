@@ -44,6 +44,8 @@ class BlooContext(discord.context.ApplicationContext):
                 del kwargs["delete_after"]
             return await self.edit(*args, **kwargs)
         else:
+            if kwargs.get("view") is None:
+                kwargs["view"] = discord.utils.MISSING
             return await self.respond(*args, **kwargs)
 
     async def send_success(self, description: str, title: str = ""):
@@ -58,7 +60,7 @@ class BlooContext(discord.context.ApplicationContext):
 
         """
         embed = discord.Embed(title=title, description=description,  color=discord.Color.dark_green())
-        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=discord.utils.MISSING)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=None)
     
     async def send_warning(self, description: str, title: str = ""):
         """Sends a warning message
@@ -72,7 +74,7 @@ class BlooContext(discord.context.ApplicationContext):
 
         """
         embed = discord.Embed(title=title, description=description,  color=discord.Color.orange())
-        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=discord.utils.MISSING)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=None)
     
     async def send_error(self, description):
         """Sends an error message
@@ -86,7 +88,7 @@ class BlooContext(discord.context.ApplicationContext):
 
         """
         embed = discord.Embed(title=":(\nYour command ran into a problem", description=description,  color=discord.Color.red())
-        return await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=discord.utils.MISSING)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=None)
         
     async def prompt(self, info: PromptData):
         """Prompts for a response

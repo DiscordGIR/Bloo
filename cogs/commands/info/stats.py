@@ -139,7 +139,7 @@ class Stats(commands.Cog):
         await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Present statistics on cases by each mod.", permission=slash_perms.mod_and_up())
+    @slash_command(guild_ids=[cfg.guild_id], description="Present statistics on cases by each mod.", permissions=slash_perms.mod_and_up())
     async def casestats(self, ctx: BlooContext, mod: discord.Member) -> None:
         """Present statistics on cases by each mod.
         """

@@ -130,7 +130,7 @@ class Utilities(commands.Cog):
         command = self.bot.get_application_command(command_arg.lower())
         if command:
             embed = await self.get_usage_embed(ctx, command)
-            await ctx.respond(embed=embed)
+            await ctx.respond(embed=embed, ephemeral=ctx.whisper)
         else:
             raise commands.BadArgument("Command not found.")
 

@@ -84,9 +84,6 @@ class RoleAssignButtons(commands.Cog):
                 return
             elif str(reaction.emoji) == "✅":
                 break
-            elif isinstance(reaction.emoji, discord.PartialEmoji) or (isinstance(reaction.emoji, discord.Emoji) and not reaction.emoji.available):
-                await ctx.respond_or_edit(embed=discord.Embed(description="That emoji is not available to me :(", color=discord.Color.dark_orange()), delete_after=5)
-                continue
 
             role = await self.prompt_for_role(ctx, reaction, reaction_mapping[message.id])
             if role is None:

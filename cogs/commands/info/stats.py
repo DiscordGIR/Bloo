@@ -136,10 +136,10 @@ class Stats(commands.Cog):
 
         embed.add_field(name="Total antiraid cases",
                         value=f"{total}", inline=False)
-        await ctx.respond_or_edit(embed=embed, whisper=ctx.whisper)
+        await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Present statistics on who has been banned for raids.", permission=slash_perms.mod_and_up())
+    @slash_command(guild_ids=[cfg.guild_id], description="Present statistics on cases by each mod.", permission=slash_perms.mod_and_up())
     async def casestats(self, ctx: BlooContext, mod: discord.Member) -> None:
         """Present statistics on cases by each mod.
         """

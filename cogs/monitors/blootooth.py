@@ -25,6 +25,10 @@ class Blootooth(commands.Cog):
             return
 
         db_guild = guild_service.get_guild()
+        # disable Blootooth if user didn't set the guild up
+        if db_guild.nsa_guild_id is None or self.bot.get_guild(db_guild.nsa_guild_id) is None:
+            return
+        
         if message.channel.id in db_guild.logging_excluded_channels:
             return
 

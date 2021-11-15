@@ -11,11 +11,10 @@ from utils.permissions.permissions import permissions
 import discord
 from discord.ext import commands
 
-BOT_GLOBAL = None
 async def commands_list(ctx: AutocompleteContext):
     res = []
-    for cog in BOT_GLOBAL.cogs:
-        for command in BOT_GLOBAL.cogs[cog].get_commands():
+    for cog in ctx.bot.cogs:
+        for command in ctx.bot.cogs[cog].get_commands():
             if ctx.value.lower() in command.name.lower():
                 res.append(command.name.lower())
 
@@ -25,8 +24,6 @@ async def commands_list(ctx: AutocompleteContext):
 class Utilities(commands.Cog):
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        global BOT_GLOBAL
-        BOT_GLOBAL = bot
         self.left_col_length = 17
         self.right_col_length = 80
         self.mod_only = ["ModActions", "ModUtils", "Filters", "BoosterEmojis", "ReactionRoles", "Giveaway", "Admin", "AntiRaid", "Trivia"]

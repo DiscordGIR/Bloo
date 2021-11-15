@@ -104,7 +104,7 @@ class PFPButton(discord.ui.Button):
             avatar = self.member.guild_avatar
             self.other = not self.other
         else:
-            avatar = self.member.avatar
+            avatar = self.member.avatar or self.member.default_avatar
             self.other = not self.other
 
         embed = interaction.message.embeds[0]
@@ -253,15 +253,16 @@ class Misc(commands.Cog):
         animated = ["gif", "png", "jpeg", "webp"]
         not_animated = ["png", "jpeg", "webp"]
 
+        avatar = member.avatar or member.default_avatar
         def fmt(format_):
-            return f"[{format_}]({member.avatar.replace(format=format_, size=4096)})"
+            return f"[{format_}]({avatar.replace(format=format_, size=4096)})"
 
-        if member.avatar.is_animated():
+        if member.display_avatar.is_animated():
             embed.description = f"View As\n {'  '.join([fmt(format_) for format_ in animated])}"
         else:
             embed.description = f"View As\n {'  '.join([fmt(format_) for format_ in not_animated])}"
 
-        embed.set_image(url=member.avatar.replace(size=4096))
+        embed.set_image(url=avatar.replace(size=4096))
         embed.color = discord.Color.random()
 
         view = PFPView(ctx)

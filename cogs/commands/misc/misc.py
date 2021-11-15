@@ -11,7 +11,6 @@ import traceback
 import aiohttp
 import humanize
 import pytimeparse
-from colorthief import ColorThief
 from PIL import Image
 from data.services.guild_service import guild_service
 from utils.async_cache import async_cacher
@@ -104,7 +103,7 @@ class PFPButton(discord.ui.Button):
             avatar = self.member.guild_avatar
             self.other = not self.other
         else:
-            avatar = self.member.avatar
+            avatar = self.member.avatar or self.member.default_avatar
             self.other = not self.other
 
         embed = interaction.message.embeds[0]
@@ -253,15 +252,16 @@ class Misc(commands.Cog):
         animated = ["gif", "png", "jpeg", "webp"]
         not_animated = ["png", "jpeg", "webp"]
 
+        avatar = member.avatar or member.default_avatar
         def fmt(format_):
-            return f"[{format_}]({member.avatar.replace(format=format_, size=4096)})"
+            return f"[{format_}]({avatar.replace(format=format_, size=4096)})"
 
-        if member.avatar.is_animated():
+        if member.display_avatar.is_animated():
             embed.description = f"View As\n {'  '.join([fmt(format_) for format_ in animated])}"
         else:
             embed.description = f"View As\n {'  '.join([fmt(format_) for format_ in not_animated])}"
 
-        embed.set_image(url=member.avatar.replace(size=4096))
+        embed.set_image(url=avatar.replace(size=4096))
         embed.color = discord.Color.random()
 
         view = PFPView(ctx)
@@ -297,7 +297,7 @@ class Misc(commands.Cog):
             for object in response[f'{name.lower().replace("œ", "oe")}']:
                 view = None
                 embed = discord.Embed(
-                    title=object['Name'], color=discord.Color.random())
+                    title=object.get('Name'), color=discord.Color.blurple())
                 embed.add_field(
                     name="Version", value=object['LatestVersion'], inline=True)
                 embed.add_field(name="Compatible with",
@@ -315,15 +315,11 @@ class Misc(commands.Cog):
                 jba = await iterate_apps(object.get('Name'))
                 if jba is not None:
                     view = discord.ui.View()
-                    view.add_item(discord.ui.Button(label='Install with Jailbreaks.app',
-                                  url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
+                    view.add_item(discord.ui.Button(label='Install with Jailbreaks.app', url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
                 if object.get('Icon') is not None:
-                    async with aiohttp.ClientSession() as session:
-                        async with session.get(object.get('Icon')) as icon:
-                            color = ColorThief(io.BytesIO(await icon.read())).get_color(quality=1)
-                            embed.color = discord.Color.from_rgb(
-                                color[0], color[1], color[2])
                     embed.set_thumbnail(url=object.get('Icon'))
+                if object.get('Color') is not None:
+                    embed.color = int(object.get('Color').replace('#', ''), 16)
                 if view is not None:
                     await ctx.respond_or_edit(embed=embed, ephemeral=should_whisper, view=view)
                 else:

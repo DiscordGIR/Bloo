@@ -5,7 +5,7 @@ from data.model.tag import Tag
 class Guild(mongoengine.Document):
     _id                       = mongoengine.IntField(required=True)
     case_id                   = mongoengine.IntField(min_value=1, required=True)
-    reaction_role_mapping     = mongoengine.DictField()
+    reaction_role_mapping     = mongoengine.DictField(default={})
     role_administrator        = mongoengine.IntField()
     role_birthday             = mongoengine.IntField()
     role_dev                  = mongoengine.IntField()
@@ -34,7 +34,7 @@ class Guild(mongoengine.Document):
     channel_subnews           = mongoengine.IntField()
     channel_music             = mongoengine.IntField()
 
-    emoji_logging_webhook     = mongoengine.IntField()
+    emoji_logging_webhook     = mongoengine.StringField()
     locked_channels           = mongoengine.ListField(default=[])
     filter_excluded_channels  = mongoengine.ListField(default=[])
     filter_excluded_guilds    = mongoengine.ListField(default=[349243932447604736])

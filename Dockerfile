@@ -22,5 +22,4 @@ COPY ./requirements.txt .
 COPY . .
 RUN pip install -r requirements.txt
 RUN pip install autopep8
-RUN pip install -U git+https://github.com/Pycord-Development/pycord
 RUN npm i -g nodemon

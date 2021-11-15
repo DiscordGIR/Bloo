@@ -1,3 +1,4 @@
+from typing import Counter
 from data.model.case import Case
 from data.model.cases import Cases
 from data.model.user import User
@@ -175,5 +176,35 @@ class UserService:
         cases2.save()
         
         return u, len(cases.cases)
+    
+    def fetch_raids(self):
+        values = {}
+        values["Join spam"] = Cases.objects(cases__reason__contains="Join spam detected").count()
+        values["Join spam over time"] = Cases.objects(cases__reason__contains="Join spam over time detected").count()
+        values["Raid phrase"] = Cases.objects(cases__reason__contains="Raid phrase detected").count()
+        values["Ping spam"] = Cases.objects(cases__reason__contains="Ping spam").count()
+        values["Message spam"] = Cases.objects(cases__reason__contains="Message spam").count()
+        
+        return values
+
+    def fetch_cases_by_mod(self, _id):
+        values = {}
+        cases = Cases.objects(cases__mod_id=str(_id))
+        values["total"] = 0
+        cases = list(cases.all())
+        final_cases = []
+        for case in cases:
+            for c in case.cases:
+                final_cases.append(c)
+                values["total"] += 1
+ 
+        def get_case_reason(reason):
+            string = reason.lower()
+            return ''.join(e for e in string if e.isalnum() or e == " ").strip()
+        case_reasons = [get_case_reason(case.reason) for case in final_cases if get_case_reason(case.reason) != "temporary mute expired"]
+        values["counts"] = sorted(Counter(case_reasons).items(), key=lambda item: item[1])
+        values["counts"].reverse()
+        return values
+
 
 user_service = UserService()

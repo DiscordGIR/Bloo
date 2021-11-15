@@ -201,7 +201,7 @@ class UserInfo(commands.Cog):
         embed.add_field(
             name="XP", value=results.xp if not results.is_clem else "0/0", inline=True)
         embed.add_field(
-            name="Roles", value=roles if roles else "None", inline=False)
+            name="Roles", value=roles[:1024] if roles else "None", inline=False)
         embed.add_field(
             name="Join date", value=joined, inline=True)
         embed.add_field(name="Account creation date",
@@ -298,6 +298,7 @@ class UserInfo(commands.Cog):
                     interaction=True, ctx=ctx, whisper=ctx.whisper, per_page=10)
         await menu.start()
 
+    @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's cases")
     async def cases(self, ctx: BlooContext, user: Option(discord.Member, description="Member to show cases of", required=False)):
         """Show list of cases of a user (mod only)

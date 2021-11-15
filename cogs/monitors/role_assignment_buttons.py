@@ -69,6 +69,9 @@ class RoleAssignButtons(commands.Cog):
             message = await request_role_channel.fetch_message(message_id)
         except Exception:
             raise commands.BadArgument("Message not found.")
+        
+        if message.author != ctx.me:
+            raise commands.BadArgument("Message must be sent by me, use `/postembed` or `/postbuttonmessage`")
 
         reaction_mapping = {message.id: {}}
 
@@ -81,9 +84,6 @@ class RoleAssignButtons(commands.Cog):
                 return
             elif str(reaction.emoji) == "✅":
                 break
-            elif isinstance(reaction.emoji, discord.PartialEmoji) or (isinstance(reaction.emoji, discord.Emoji) and not reaction.emoji.available):
-                await ctx.respond_or_edit(embed=discord.Embed(description="That emoji is not available to me :(", color=discord.Color.dark_orange()), delete_after=5)
-                continue
 
             role = await self.prompt_for_role(ctx, reaction, reaction_mapping[message.id])
             if role is None:
@@ -123,7 +123,10 @@ class RoleAssignButtons(commands.Cog):
             "Message to add reaction to"
         """
 
-        message_id = int(message_id)
+        try:
+            message_id = int(message_id)
+        except Exception:
+            raise commands.BadArgument("Message ID must be an int")
 
         channel = ctx.guild.get_channel(
             guild_service.get_guild().channel_reaction_roles)
@@ -131,17 +134,21 @@ class RoleAssignButtons(commands.Cog):
         if channel is None:
             return
 
-        reaction_mapping = dict(
-            guild_service.get_rero_mapping(str(message_id)))
-        if reaction_mapping is None:
+        current =  guild_service.get_rero_mapping(str(message_id))
+        if current is None:
             raise commands.BadArgument(
-                f"Message with ID {message_id} had no reactions set in database. Use `!setreactions` first.")
+                f"Message with ID {message_id} had no reactions set in database. Use `/setbuttons` first.")
+
+        reaction_mapping = dict(current)
 
         message = None
         try:
             message = await channel.fetch_message(message_id)
         except Exception:
             raise commands.BadArgument("Message not found.")
+
+        if message.author != ctx.me:
+            raise commands.BadArgument("Message must be sent by me, use `/postembed` or `/postbuttonmessage`")
 
         await ctx.defer()
         while True:

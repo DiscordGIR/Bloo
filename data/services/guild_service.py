@@ -1,3 +1,4 @@
+from discord import channel
 from data.model.filterword import FilterWord
 from data.model.guild import Guild
 from data.model.tag import Tag
@@ -183,5 +184,9 @@ class GuildService:
     def remove_locked_channels(self, channel):
         Guild.objects(_id=cfg.guild_id).update_one(pull__locked_channels=channel)
 
+    def set_nsa_mapping(self, channel_id, webhooks):
+        guild = Guild.objects(_id=cfg.guild_id).first()
+        guild.nsa_mapping[str(channel_id)] = webhooks
+        guild.save()
 
 guild_service = GuildService()

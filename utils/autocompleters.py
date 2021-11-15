@@ -87,7 +87,6 @@ async def tags_autocomplete(ctx: AutocompleteContext):
 
 
 async def liftwarn_autocomplete(ctx: AutocompleteContext):
-    print("HERE")
     cases = [case._id for case in user_service.get_cases(
         int(ctx.options["user"])).cases if case._type == "WARN" and not case.lifted]
     cases.sort(reverse=True)

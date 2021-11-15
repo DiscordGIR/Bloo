@@ -54,44 +54,18 @@ class ModActions(commands.Cog):
     @mod_and_up()
     @always_whisper()
     @user_command(guild_ids=[cfg.guild_id], name="Warn 50 points")
-    async def warn_rc(self, ctx: BlooContext, user: discord.Member) -> None:
-        # view = WarnView(ctx, user, self.handle_warn)
-        # await ctx.respond(embed=discord.Embed(description=f"How many points do you want to warn {user.mention}?", color=discord.Color.blurple()), view=view, ephemeral=True)
-        user = await mods_and_above_external_resolver(ctx, user)
-        prompt_data = PromptData(value_name="Reason", 
-                                description=f"Reason for warning {user.mention}?",
-                                convertor=str,
-                                )
-        await ctx.defer(ephemeral=True)
-        ctx.author = ctx.user
-        reason = await ctx.prompt(prompt_data)
-        if reason is None:
-            await ctx.send_warning("Cancelled")
-            return
-
-        await self.handle_warn(ctx, user, 50, reason)
-        await ctx.send_success("Done!")
+    async def warn_rc(self, ctx: BlooContext, member: discord.Member) -> None:
+        member = await mods_and_above_external_resolver(ctx, member)
+        view = WarnView(ctx, member, self.handle_warn)
+        await ctx.respond(embed=discord.Embed(description=f"Choose a warn reason for {member.mention}.", color=discord.Color.blurple()), view=view, ephemeral=True)
     
     @mod_and_up()
     @always_whisper()
     @message_command(guild_ids=[cfg.guild_id], name="Warn 50 points")
     async def warn_msg(self, ctx: BlooContext, message: discord.Message) -> None:
-        # view = WarnView(ctx, message.author, self.handle_warn)
-        # await ctx.respond(embed=discord.Embed(f"How many points do you want to warn {message.author.mention}?", color=discord.Color.blurple()), view=view, ephemeral=True)
-        user = await mods_and_above_external_resolver(ctx, message.author)
-        prompt_data = PromptData(value_name="Reason", 
-                                description=f"Reason for warning {user.mention}?",
-                                convertor=str,
-                                )
-        await ctx.defer(ephemeral=True)
-        ctx.author = ctx.user
-        reason = await ctx.prompt(prompt_data)
-        if reason is None:
-            await ctx.send_warning("Cancelled")
-            return
-
-        await self.handle_warn(ctx, user, 50, reason)
-        await ctx.send_success("Done!")
+        member = await mods_and_above_external_resolver(ctx, message.author)
+        view = WarnView(ctx, message.author, self.handle_warn)
+        await ctx.respond(embed=discord.Embed(f"Choose a warn reason for {member.mention}.", color=discord.Color.blurple()), view=view, ephemeral=True)
 
     async def handle_warn(self, ctx, user, points, reason):
         db_guild = guild_service.get_guild()
@@ -248,8 +222,7 @@ class ModActions(commands.Cog):
                 case.punishment = humanize.naturaldelta(
                     time - now, minimum_unit="seconds")
                 ctx.tasks.schedule_unmute(member.id, time)
-            except Exception as e:
-                print(e)
+            except Exception:
                 raise commands.BadArgument(
                     "An error occured, this user is probably already muted")
         else:

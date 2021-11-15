@@ -40,7 +40,7 @@ class Genius(commands.Cog):
         await ctx.defer(ephemeral=True)
         prompt = PromptData(
             value_name="description",
-            description="Please enter a description of this common issue.",
+            description="Please enter a description of this common issue (optionally attach an image).",
             convertor=str,
             raw=True)
 
@@ -52,6 +52,41 @@ class Genius(commands.Cog):
         embed, f = await self.prepare_issues_embed(title, description, response)
         await channel.send(embed=embed, file=f)
         await ctx.send_success("Common issue posted!")
+    
+    @genius_or_submod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Submit a new common issue", permissions=slash_perms.genius_or_submod_and_up())
+    async def postembed(self, ctx: BlooContext, *, title: str):
+        """Post an embed in the current channel (Geniuses only)
+
+        Example usage
+        ------------
+        /postembed This is a title (you will be prompted for a description)
+
+        Parameters
+        ----------
+        title : str
+            "Title for the embed"
+        
+        """
+
+        # get #common-issues channel
+        channel = ctx.channel
+
+        # prompt the user for common issue body
+        await ctx.defer(ephemeral=True)
+        prompt = PromptData(
+            value_name="description",
+            description="Please enter a description of this embed (optionally attach an iamge)",
+            convertor=str,
+            raw=True)
+
+        description, response = await ctx.prompt(prompt)
+        if description is None:
+            await ctx.send_warning("Cancelled new common issue.")
+            return
+
+        embed, f = await self.prepare_issues_embed(title, description, response)
+        await channel.send(embed=embed, file=f)
 
     async def prepare_issues_embed(self, title, description, message):
         embed = discord.Embed(title=title)
@@ -74,6 +109,7 @@ class Genius(commands.Cog):
         embed.timestamp = datetime.datetime.now()
         return embed, f
 
+    @postembed.error
     @commonissue.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):

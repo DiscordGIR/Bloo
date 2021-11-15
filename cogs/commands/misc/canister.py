@@ -165,7 +165,7 @@ class Canister(commands.Cog):
             should_whisper = whisper
         await canister(self.bot, ctx, True, should_whisper, query)
 
-    
+    @tweak.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original

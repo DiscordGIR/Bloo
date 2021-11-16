@@ -45,12 +45,13 @@ async def setup():
     guild.channel_subnews        = 123  # put in the channel IDs for your server here
     guild.channel_music          = 123  # put in the channel IDs for your server here
     
+    guild.emoji_logging_webhook = "https://...." # create a webhook in the channel where you want react logging and put the link here
+    
     guild.logging_excluded_channels = []  # put in a channel if you want (ignored in logging)
     guild.filter_excluded_channels  = []  # put in a channel if you want (ignored in filter)
     guild.filter_excluded_guilds    = []  # put guild ID to whitelist in invite filter if you want
     
-    guild.nsa_guild_id = 123 # you can leave this as is if you don't want Blootooth
-                       # (message mirroring system)
+    guild.nsa_guild_id = 123 # you can leave this as is if you don't want Blootooth (message mirroring system)
     guild.save()
 
     print("DONE")

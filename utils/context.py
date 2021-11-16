@@ -109,8 +109,8 @@ class BlooContext(discord.context.ApplicationContext):
         await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=None)
         try:
             response = await self.bot.wait_for('message', check=wait_check, timeout=info.timeout)
-        except TimeoutError:
-            return
+        except asyncio.TimeoutError:
+            await self.send_warning("Timed out.")
         else:
             await response.delete()
             if response.content.lower() == "cancel":

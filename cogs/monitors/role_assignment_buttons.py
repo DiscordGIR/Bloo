@@ -38,7 +38,7 @@ class RoleAssignButtons(commands.Cog):
             raise commands.BadArgument("Role assignment channel not found!")
 
         embed = discord.Embed(
-            description="Click the buttons to opt-in to notifications of your choice. ", color=discord.Color.blurple())
+            description="Click the buttons to opt-in to or opt-out of notifications of your choice. ", color=discord.Color.blurple())
         await channel.send(embed=embed)
         await ctx.send_success(f"Posted in {channel.mention}!")
 

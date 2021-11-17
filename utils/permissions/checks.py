@@ -18,8 +18,17 @@ def always_whisper():
 def whisper():
     """If the user is not a moderator and the invoked channel is not #bot-commands, send the response to the command ephemerally"""
     async def predicate(ctx: BlooContext):
-        bot_chan = guild_service.get_guild()
-        if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id != bot_chan:
+        if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id != guild_service.get_guild().channel_botspam:
+            ctx.whisper = True
+        else:
+            ctx.whisper = False
+        return True
+    return commands.check(predicate)
+
+def whisper_in_general():
+    """If the user is not a moderator and the invoked channel is #general, send the response to the command ephemerally"""
+    async def predicate(ctx: BlooContext):
+        if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == guild_service.get_guild().channel_general:
             ctx.whisper = True
         else:
             ctx.whisper = False

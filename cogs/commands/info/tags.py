@@ -108,7 +108,7 @@ class Tags(commands.Cog):
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Add a new tag", permissions=slash_perms.genius_or_submod_and_up())
     async def addtag(self, ctx: BlooContext, name: str) -> None:
-        """Add a tag. Optionally attach an iamge. (Genius only)
+        """Add a tag. Optionally attach an image. (Genius only)
 
         Example usage
         -------------
@@ -137,8 +137,13 @@ class Tags(commands.Cog):
             description="Please enter the content of this tag, and optionally attach an image.",
             convertor=str,
             raw=True)
-        description, response = await ctx.prompt(prompt)
+        res = await ctx.prompt(prompt)
 
+        if res is None:
+            await ctx.send_warning("Cancelled.")
+            return
+            
+        description, response = res
         # prepare tag data for database
         tag = Tag()
         tag.name = name.lower()

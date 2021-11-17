@@ -18,7 +18,7 @@ from utils.autocompleters import jb_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import Guild
-from utils.permissions.checks import PermissionsFailure, whisper
+from utils.permissions.checks import PermissionsFailure, whisper, whisper_in_general
 from utils.permissions.permissions import permissions
 
 
@@ -142,7 +142,7 @@ class Misc(commands.Cog):
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Send yourself a reminder after a given time gap")
-    async def remindme(self, ctx: BlooContext, dur: str, *, reminder: str):
+    async def remindme(self, ctx: BlooContext, reminder: Option(str, description="What do you want to be reminded?"), duration: Option(str, description="When do we remind you? (i.e 1m, 1h, 1d)")):
         """Sends you a reminder after a given time gap
         
         Example usage
@@ -158,7 +158,7 @@ class Misc(commands.Cog):
             
         """
         now = datetime.datetime.now()
-        delta = pytimeparse.parse(dur)
+        delta = pytimeparse.parse(duration)
         if delta is None:
             raise commands.BadArgument(
                 "Please give me a valid time to remind you! (i.e 1h, 30m)")
@@ -169,11 +169,11 @@ class Misc(commands.Cog):
         reminder = discord.utils.escape_markdown(reminder)
 
         ctx.tasks.schedule_reminder(ctx.author.id, reminder, time)
-        natural_time = humanize.naturaldelta(
-            delta, minimum_unit='seconds')
+        # natural_time = humanize.naturaldelta(
+        #     delta, minimum_unit='seconds')
         embed = discord.Embed(title="Reminder set", color=discord.Color.random(
-        ), description=f"We'll remind you in {natural_time}")
-        await ctx.respond(embed=embed, ephemeral=ctx.whisper)
+        ), description=f"We'll remind you {discord.utils.format_dt(time, style='R')}")
+        await ctx.respond(embed=embed, ephemeral=ctx.whisper, delete_after=5)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Post large version of a given emoji")
     async def jumbo(self, ctx: BlooContext, emoji: str):
@@ -270,7 +270,7 @@ class Misc(commands.Cog):
 
         view.message = await ctx.respond(embed=embed, ephemeral=ctx.whisper, view=view)
 
-    @whisper()
+    @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info about a jailbreak.")
     async def jailbreak(self, ctx: BlooContext, name: Option(str, description="Name of the jailbreak", autocomplete=jb_autocomplete, required=True), whisper: Option(bool, description="Whisper? (No by default)", required=False)) -> None:
         """Fetches info of jailbreak
@@ -287,11 +287,6 @@ class Misc(commands.Cog):
             "Should we whisper?"
         
         """
-        should_whisper = False
-        if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == Guild.channel_general:
-            should_whisper = True
-        else:
-            should_whisper = whisper
         response = await get_jailbreaks()
         try:
             for object in response[f'{name.lower().replace("œ", "oe")}']:
@@ -321,9 +316,9 @@ class Misc(commands.Cog):
                 if object.get('Color') is not None:
                     embed.color = int(object.get('Color').replace('#', ''), 16)
                 if view is not None:
-                    await ctx.respond_or_edit(embed=embed, ephemeral=should_whisper, view=view)
+                    await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper, view=view)
                 else:
-                    await ctx.respond_or_edit(embed=embed, ephemeral=should_whisper)
+                    await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
         except:
             await ctx.send_error("Sorry, I couldn't find any jailbreaks with that name.")
 

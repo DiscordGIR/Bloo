@@ -38,7 +38,7 @@ async def get_devices():
 async def device_autocomplete(ctx: AutocompleteContext):
     devices = await get_devices()
     devices.sort()
-    return [device for device in devices if device.lower().startswith(ctx.value.lower())][:25]
+    return [device for device in devices if device.lower().startswith(ctx.value.lower()) and device.lower().split()[0] in ['iphone', 'ipod', 'ipad', 'homepod', 'apple']][:25]
 
 
 @async_cacher()
@@ -76,7 +76,7 @@ async def date_autocompleter(ctx: AutocompleteContext) -> list:
     if month is None:
         return []
 
-    return [i for i in range(1, month["max_days"]+1) if str(ctx.value) in str(i)][:25]
+    return [i for i in range(1, month["max_days"]+1) if str(i).startswith(str(ctx.value))][:25]
 
 
 async def tags_autocomplete(ctx: AutocompleteContext):

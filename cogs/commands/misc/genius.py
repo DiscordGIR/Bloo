@@ -84,7 +84,7 @@ class Genius(commands.Cog):
 
         res = await ctx.prompt(prompt)
         if res is None:
-            await ctx.send_warning("Cancelled new common issue.")
+            await ctx.send_warning("Cancelled new embed.")
             return
 
         description, response = res

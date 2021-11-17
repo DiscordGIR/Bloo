@@ -169,7 +169,7 @@ class Parcility(commands.Cog):
             whisper = True
 
         pattern = re.compile(
-            r".*?(?<!\[)+\[\[((?!\s+)([\w+\ \&\+\-]){2,})\]\](?!\])+.*")
+            r".*?(?<!\[)+\[\[((?!\s+)([\w+\ \&\+\-\<\>\#\:\;\%]){2,})\]\](?!\])+.*")
         if not pattern.match(message.content):
             return
 

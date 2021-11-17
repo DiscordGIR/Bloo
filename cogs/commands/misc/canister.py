@@ -10,6 +10,7 @@ import urllib
 import aiohttp
 from datetime import datetime
 from colorthief import ColorThief
+from data.services.guild_service import guild_service
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import Guild
@@ -159,7 +160,7 @@ class Canister(commands.Cog):
         
         """
         should_whisper = False
-        if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == Guild.channel_general:
+        if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == guild_service.get_guild().channel_general:
             should_whisper = True
         else:
             should_whisper = whisper

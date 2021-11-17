@@ -21,6 +21,15 @@ from yarl import URL
 package_url = 'https://api.parcility.co/db/package/'
 search_url = 'https://api.parcility.co/db/search?q='
 
+default_repos = [
+    "apt.bingner.com",
+    "apt.procurs.us",
+    "apt.saurik.com",
+    "apt.oldcurs.us",
+    "repo.chimera.sh",
+    "diatr.us/apt",
+]
+
 
 async def package_request(package):
     async with aiohttp.ClientSession() as client:
@@ -75,15 +84,19 @@ async def fetch_repos():
 
 
 async def format_tweak_page(entries, all_pages, current_page, ctx):
-    # if entry is None:
-    #     return discord.Embed(description="A ✨ Parcility 💖 error ocurred with this entry, please skip to the next one.", color=discord.Color.red())
     entry = entries[0]
     await package_request(entry)
     
-    if not entry.get('repo').get('isDefault'):
-        ctx.repo = entry.get('repo').get('url')
-    else:
-        ctx.repo = None
+    # if not entry.get('repo').get('isDefault'):
+    #     ctx.repo = entry.get('repo').get('url')
+    # else:
+    #     ctx.repo = None
+
+    ctx.repo = entry.get('repo').get('url')
+    for repo in default_repos:
+        if repo in entry.get('repo').get('url'):
+            ctx.repo = None
+            break
     
     embed = discord.Embed(title=entry.get('Name'), color=discord.Color.blue())
     embed.description = discord.utils.escape_markdown(
@@ -120,10 +133,16 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
 
 async def format_repo_page(entries, all_pages, current_page, ctx):
     repo_data = entries[0]
-    if not repo_data.get('isDefault'):
-        ctx.repo = repo_data.get('url')
-    else:
-        ctx.repo = None
+    # if not repo_data.get('isDefault'):
+    #     ctx.repo = repo_data.get('url')
+    # else:
+    #     ctx.repo = None
+
+    ctx.repo = repo_data.get('url')
+    for repo in default_repos:
+        if repo in repo_data.get('url'):
+            ctx.repo = None
+            break
 
     embed = discord.Embed(title=repo_data.get(
         'Label'), color=discord.Color.blue())

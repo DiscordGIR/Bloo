@@ -35,7 +35,7 @@ class Admin(commands.Cog):
                 "Please attach an image to use as the profile picture.")
 
         await self.bot.user.edit(avatar=await response.attachments[0].read())
-        await ctx.send_success("Done!")
+        await ctx.send_success("Done!", delete_after=5)
 
     @setpfp.error
     async def info_error(self,  ctx: BlooContext, error):

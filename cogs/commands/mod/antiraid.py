@@ -37,7 +37,7 @@ class AntiRaid(commands.Cog):
         if not done:
             raise commands.BadArgument("That phrase is already in the list.")
         else:
-            await ctx.send_success(description=f"Added `{phrase}` to the raid phrase list!")
+            await ctx.send_success(description=f"Added `{phrase}` to the raid phrase list!", delete_after=5)
 
     # @admin_and_up()
     # @slash_command(guild_ids=[cfg.guild_id], description="Add a list of (newline-separated) phrases to the raid filter.", permissions=slash_perms.mod_and_up())
@@ -117,7 +117,7 @@ class AntiRaid(commands.Cog):
 
         if len(words) > 0:
             guild_service.remove_raid_phrase(words[0].word)
-            await ctx.send_success("Deleted!")
+            await ctx.send_success("Deleted!", delete_after=5)
         else:
             raise commands.BadArgument("That word is not a raid phrase.")
 

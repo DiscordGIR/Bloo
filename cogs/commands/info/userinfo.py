@@ -329,10 +329,7 @@ class UserInfo(commands.Cog):
         # fetch user's cases from our database
         results = user_service.get_cases(user.id)
         if len(results.cases) == 0:
-            if isinstance(user, int):
-                return await ctx.send_error(f'User with ID {user.id} has no cases.')
-            else:
-                return await ctx.send_error(f'{user.mention} has no cases.')
+            return await ctx.send_warning(f'{user.mention} has no cases.', delete_after=5)
 
         # filter out unmute cases because they are irrelevant
         cases = [case for case in results.cases if case._type != "UNMUTE"]

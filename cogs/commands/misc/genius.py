@@ -44,14 +44,16 @@ class Genius(commands.Cog):
             convertor=str,
             raw=True)
 
-        description, response = await ctx.prompt(prompt)
-        if description is None:
+        res = await ctx.prompt(prompt)
+        if res is None:
             await ctx.send_warning("Cancelled new common issue.")
             return
+        
+        description, response = res
 
         embed, f = await self.prepare_issues_embed(title, description, response)
         await channel.send(embed=embed, file=f)
-        await ctx.send_success("Common issue posted!")
+        await ctx.send_success("Common issue posted!", delete_after=5)
     
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Submit a new common issue", permissions=slash_perms.genius_or_submod_and_up())
@@ -80,10 +82,12 @@ class Genius(commands.Cog):
             convertor=str,
             raw=True)
 
-        description, response = await ctx.prompt(prompt)
-        if description is None:
+        res = await ctx.prompt(prompt)
+        if res is None:
             await ctx.send_warning("Cancelled new common issue.")
             return
+
+        description, response = res
 
         embed, f = await self.prepare_issues_embed(title, description, response)
         await channel.send(embed=embed, file=f)

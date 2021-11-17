@@ -10,7 +10,7 @@ from utils.autocompleters import filterwords_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.menu import Menu
-from utils.permissions.checks import (PermissionsFailure, admin_and_up,
+from utils.permissions.checks import (PermissionsFailure, admin_and_up, always_whisper,
                                       mod_and_up)
 from utils.permissions.permissions import permissions
 from utils.permissions.slash_perms import slash_perms
@@ -56,6 +56,7 @@ class Filters(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    @always_whisper()
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Add a phrase to the raid filter.", permissions=slash_perms.mod_and_up())
     async def offlineping(self, ctx: BlooContext, val: Option(bool, required=False) = None):
@@ -167,7 +168,7 @@ class Filters(commands.Cog):
 
             await ctx.send_success("Marked as a piracy word!" if words[0].piracy else "Removed as a piracy word!")
         else:
-            await ctx.send_warning("You must filter that word before it can be marked as piracy.")
+            await ctx.send_warning("You must filter that word before it can be marked as piracy.", delete_after=5)
 
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Remove word from filter", permissions=slash_perms.admin_and_up())
@@ -194,7 +195,7 @@ class Filters(commands.Cog):
             guild_service.remove_filtered_word(words[0].word)
             await ctx.send_success("Deleted!")
         else:
-            await ctx.send_warning("That word is not filtered.")            
+            await ctx.send_warning("That word is not filtered.", delete_after=5)            
 
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Whitelist a guild from invite filter", permissions=slash_perms.admin_and_up())
@@ -220,7 +221,7 @@ class Filters(commands.Cog):
         if guild_service.add_whitelisted_guild(id):
             await ctx.send_success("Whitelisted.")
         else:
-            await ctx.send_warning("That server is already whitelisted.")
+            await ctx.send_warning("That server is already whitelisted.", delete_after=5)
             
 
     @admin_and_up()
@@ -247,7 +248,7 @@ class Filters(commands.Cog):
         if guild_service.remove_whitelisted_guild(id):
             await ctx.send_success("Blacklisted.")
         else:
-            await ctx.send_warning("That server is already blacklisted.")
+            await ctx.send_warning("That server is already blacklisted.", delete_after=5)
 
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Ignore channel in filter", permissions=slash_perms.admin_and_up())
@@ -268,7 +269,7 @@ class Filters(commands.Cog):
         if guild_service.add_ignored_channel(channel.id):
             await ctx.send_success(f"The filter will no longer run in {channel.mention}.")
         else:
-            await ctx.send_warning("That channel is already ignored.")
+            await ctx.send_warning("That channel is already ignored.", delete_after=5)
 
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Unignore channel in filter", permissions=slash_perms.admin_and_up())
@@ -289,7 +290,7 @@ class Filters(commands.Cog):
         if guild_service.remove_ignored_channel(channel.id):
             await ctx.send_success(f"Resumed filtering in {channel.mention}.")
         else:
-            await ctx.send_warning("That channel is not already ignored.")
+            await ctx.send_warning("That channel is not already ignored.", delete_after=5)
 
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Disabling enhanced filter checks on a word", permissions=slash_perms.admin_and_up())
@@ -319,7 +320,7 @@ class Filters(commands.Cog):
             else:
                 raise commands.BadArgument("Unexpected error occured trying to mark as false positive!")
         else:
-            await ctx.send_warning("That word is not filtered.")  
+            await ctx.send_warning("That word is not filtered.", delete_after=5)  
             
     @falsepositive.error
     @piracy.error

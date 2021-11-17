@@ -76,7 +76,7 @@ class Giveaway(commands.Cog):
             sponsor=sponsor.id)
         giveaway.save()
 
-        await ctx.send_success(f"Giveaway created!")
+        await ctx.send_success(f"Giveaway created!", delete_after=5)
 
         ctx.tasks.schedule_end_giveaway(
             channel_id=channel.id, message_id=message.id, date=end_time, winners=winners)
@@ -123,7 +123,7 @@ class Giveaway(commands.Cog):
         channel = ctx.guild.get_channel(g.channel)
 
         await channel.send(f"**Reroll**\nThe new winner of the giveaway of **{g.name}** is {the_winner.mention}! Congratulations!")
-        await ctx.send_success("Rerolled!")
+        await ctx.send_success("Rerolled!", delete_after=5)
 
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="End a giveaway early.", permissions=slash_perms.admin_and_up())
@@ -150,7 +150,7 @@ class Giveaway(commands.Cog):
         ctx.tasks.tasks.remove_job(str(int(message_id) + 2), 'default')
         await end_giveaway(giveaway.channel, message_id, giveaway.winners)
 
-        await ctx.send_success("Giveaway ended!")
+        await ctx.send_success("Giveaway ended!", delete_after=5)
 
     async def do_giveaway_update(self, giveaway: GiveawayDB, guild: discord.Guild):
         if giveaway is None:

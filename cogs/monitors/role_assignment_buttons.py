@@ -38,7 +38,7 @@ class RoleAssignButtons(commands.Cog):
             raise commands.BadArgument("Role assignment channel not found!")
 
         embed = discord.Embed(
-            description="Click the buttons to opt-in to notifications of your choice. ", color=discord.Color.blurple())
+            description="Click the buttons to opt-in to or opt-out of notifications of your choice. ", color=discord.Color.blurple())
         await channel.send(embed=embed)
         await ctx.send_success(f"Posted in {channel.mention}!")
 
@@ -80,14 +80,14 @@ class RoleAssignButtons(commands.Cog):
             reaction = await self.prompt_for_reaction(ctx, reaction_mapping[message.id])
 
             if reaction is None:
-                await ctx.send_warning("Timed out waiting for reaction, cancelling.")
+                await ctx.send_warning("Timed out waiting for reaction, cancelling.", delete_after=5)
                 return
             elif str(reaction.emoji) == "✅":
                 break
 
             role = await self.prompt_for_role(ctx, reaction, reaction_mapping[message.id])
             if role is None:
-                await ctx.send_warning("Cancelled setting reactions.")
+                await ctx.send_warning("Cancelled setting reactions.", delete_after=5)
                 return
 
             reaction_mapping[message.id][str(reaction.emoji)] = role.id
@@ -155,21 +155,18 @@ class RoleAssignButtons(commands.Cog):
             reaction = await self.prompt_for_reaction(ctx, reaction_mapping)
 
             if reaction is None:
-                await ctx.send_warning("Timed out waiting for reaction, cancelling.")
+                await ctx.send_warning("Timed out waiting for reaction, cancelling.", delete_after=5)
                 return
             elif str(reaction.emoji) in reaction_mapping:
                 raise commands.BadArgument(
                     f"Reaction {str(reaction)} is already in use on that message.")
             elif str(reaction.emoji) == "✅":
-                await ctx.send_warning("Cancelled adding new reaction.")
+                await ctx.send_warning("Cancelled adding new reaction.", delete_after=5)
                 return
-            elif isinstance(reaction.emoji, discord.PartialEmoji) or (isinstance(reaction.emoji, discord.Emoji) and not reaction.emoji.available):
-                await ctx.send_warning("That emoji is not available to me :(",)
-                continue
 
             role = await self.prompt_for_role(ctx, reaction, reaction_mapping)
             if role is None:
-                await ctx.send_warning("Cancelled setting reactions.")
+                await ctx.send_warning("Cancelled setting reactions.", delete_after=5)
                 return
             elif role.id in reaction_mapping.values():
                 raise commands.BadArgument(

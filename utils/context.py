@@ -40,7 +40,7 @@ class BlooContext(discord.context.ApplicationContext):
         if self.interaction.response.is_done():
             if kwargs.get("ephemeral") is not None:
                 del kwargs["ephemeral"]
-            if kwargs.get("delete_after") is not None:
+            if "delete_after" in kwargs:
                 del kwargs["delete_after"]
             return await self.edit(*args, **kwargs)
         else:
@@ -48,7 +48,7 @@ class BlooContext(discord.context.ApplicationContext):
                 kwargs["view"] = discord.utils.MISSING
             return await self.respond(*args, **kwargs)
 
-    async def send_success(self, description: str, title: str = ""):
+    async def send_success(self, description: str, title: str = "", delete_after=None):
         """Sends a success message
         
         Parameters
@@ -60,9 +60,9 @@ class BlooContext(discord.context.ApplicationContext):
 
         """
         embed = discord.Embed(title=title, description=description,  color=discord.Color.dark_green())
-        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=None)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=None, delete_after=delete_after)
     
-    async def send_warning(self, description: str, title: str = ""):
+    async def send_warning(self, description: str, title: str = "", delete_after=None):
         """Sends a warning message
         
         Parameters
@@ -74,7 +74,7 @@ class BlooContext(discord.context.ApplicationContext):
 
         """
         embed = discord.Embed(title=title, description=description,  color=discord.Color.orange())
-        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=None)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=None, delete_after=delete_after)
     
     async def send_error(self, description):
         """Sends an error message
@@ -109,8 +109,8 @@ class BlooContext(discord.context.ApplicationContext):
         await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=None)
         try:
             response = await self.bot.wait_for('message', check=wait_check, timeout=info.timeout)
-        except TimeoutError:
-            return
+        except asyncio.TimeoutError:
+            await self.send_warning("Timed out.", delete_after=5)
         else:
             await response.delete()
             if response.content.lower() == "cancel":

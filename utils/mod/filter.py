@@ -31,9 +31,11 @@ def find_triggered_filters(input, member: discord.Member) -> List[FilterWord]:
         if permissions.has(member.guild, member, word.bypass):
             continue
 
+        filter_word_without_spaces = "".join(word.word.lower().split())
         if (word.word.lower() in input_lowercase) or \
             (not word.false_positive and word.word.lower() in folded_without_spaces) or \
-                (not word.false_positive and word.word.lower() in folded_without_spaces_and_punctuation):
+                (not word.false_positive and word.word.lower() in folded_without_spaces_and_punctuation or \
+                    (not word.false_positive and filter_word_without_spaces in folded_without_spaces_and_punctuation)):
 
             # remove all whitespace, punctuation in message and run filter again
             if word.false_positive and word.word.lower() not in input_lowercase.split():

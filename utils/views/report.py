@@ -3,21 +3,22 @@ from discord import ui
 from discord.ext.commands import Context
 import pytimeparse
 from data.services.guild_service import guild_service
-from utils.context import PromptData
+from utils.context import BlooOldContext, PromptData
 from utils.mod.global_modactions import ban, mute, unmute
 from utils.permissions.permissions import permissions
+from utils.views.modactions import WarnView, WarnViewReport
 
 class ReportActions(ui.View):
-    def __init__(self, author: discord.Member):
-        super().__init__()
-        self.author = author
+    def __init__(self, target_member: discord.Member):
+        super().__init__(timeout=None)
+        self.target_member = target_member
 
     async def start(self, ctx: Context):
         self.ctx = ctx
-        await self.wait()
+        # await self.wait()
         
     def check(self, interaction: discord.Interaction):
-        if not permissions.has(self.author.guild, interaction.user, 5):
+        if not permissions.has(self.target_member.guild, interaction.user, 5):
             return False
         return True
 
@@ -26,12 +27,23 @@ class ReportActions(ui.View):
         if not self.check(interaction):
             return
         await self.ctx.message.delete()
-        
+
+    @ui.button(emoji="⚠️", label="Warn", style=discord.ButtonStyle.primary)
+    async def warn(self, button: ui.Button, interaction: discord.Interaction):
+        if not self.check(interaction):
+            return
+
+        view = WarnViewReport(self.target_member, interaction.user, self.ctx.message)
+        await (await self.ctx.bot.get_application_context(interaction)).defer()
+        msg = await self.ctx.channel.send(embed=discord.Embed(description=f"{interaction.user.mention}, choose a warn reason for {self.target_member.mention}.", color=discord.Color.blurple()), view=view)
+        new_ctx = await self.ctx.bot.get_context(msg, cls=BlooOldContext)
+        await view.start(new_ctx)
+
     @ui.button(emoji="🆔", label="Post ID", style=discord.ButtonStyle.primary)
     async def id(self, button: ui.Button, interaction: discord.Interaction):
         if not self.check(interaction):
             return
-        await self.ctx.channel.send(self.author.id)
+        await self.ctx.channel.send(self.target_member.id)
 
     @ui.button(emoji="🧹", label="Clean up", style=discord.ButtonStyle.primary)
     async def purge(self, button: ui.Button, interaction: discord.Interaction):
@@ -42,7 +54,7 @@ class ReportActions(ui.View):
 class RaidPhraseReportActions(ui.View):
     def __init__(self, author: discord.Member, domain: str):
         super().__init__()
-        self.author = author
+        self.target_member = author
         self.domain = domain
 
     async def start(self, ctx: Context):
@@ -50,7 +62,7 @@ class RaidPhraseReportActions(ui.View):
         await self.wait()
         
     def check(self, interaction: discord.Interaction):
-        if not permissions.has(self.author.guild, interaction.user, 5):
+        if not permissions.has(self.target_member.guild, interaction.user, 5):
             return False
         return True
 
@@ -59,7 +71,7 @@ class RaidPhraseReportActions(ui.View):
         if not self.check(interaction):
             return
         try:
-            await unmute(self.ctx, self.author, reason="Reviewed by a moderator.")
+            await unmute(self.ctx, self.target_member, reason="Reviewed by a moderator.")
         except Exception:
             await self.ctx.send_warning("I wasn't able to unmute them.", delete_after=5)
         finally:
@@ -70,8 +82,8 @@ class RaidPhraseReportActions(ui.View):
         if not self.check(interaction):
             return
         try:
-            await ban(self.ctx, self.author, reason="Raid phrase detected")
-            self.ctx.bot.ban_cache.ban(self.author.id)
+            await ban(self.ctx, self.target_member, reason="Raid phrase detected")
+            self.ctx.bot.ban_cache.ban(self.target_member.id)
         except Exception:
             await self.ctx.send_warning("I wasn't able to ban them.", delete_after=5)
 
@@ -86,14 +98,14 @@ class RaidPhraseReportActions(ui.View):
 class SpamReportActions(ui.View):
     def __init__(self, author: discord.Member):
         super().__init__()
-        self.author = author
+        self.target_member = author
 
     async def start(self, ctx: Context):
         self.ctx = ctx
         await self.wait()
         
     def check(self, interaction: discord.Interaction):
-        if not permissions.has(self.author.guild, interaction.user, 5):
+        if not permissions.has(self.target_member.guild, interaction.user, 5):
             return False
         return True
 
@@ -102,7 +114,7 @@ class SpamReportActions(ui.View):
         if not self.check(interaction):
             return
         try:
-            await unmute(self.ctx, self.author, reason="Reviewed by a moderator.")
+            await unmute(self.ctx, self.target_member, reason="Reviewed by a moderator.")
         except:
             await self.ctx.send_warning("I wasn't able to unmute them.", delete_after=5)
         finally:
@@ -113,7 +125,7 @@ class SpamReportActions(ui.View):
         if not self.check(interaction):
             return
         try:
-            await ban(self.ctx, self.author, reason="Spam detected")
+            await ban(self.ctx, self.target_member, reason="Spam detected")
         except Exception:
             await self.ctx.send_warning("I wasn't able to ban them.")
         finally:
@@ -131,5 +143,5 @@ class SpamReportActions(ui.View):
         await interaction.response.defer()
         self.ctx.author = interaction.user
         duration = await self.ctx.prompt(prompt_data)
-        await mute(self.ctx, self.author, duration, reason="A moderator has reviewed your spam report.")
+        await mute(self.ctx, self.target_member, duration, reason="A moderator has reviewed your spam report.")
         await self.ctx.message.delete()

@@ -40,11 +40,13 @@ class SubNews(commands.Cog):
             description="Please enter a description of this common issue (and attach an image if you want).",
             convertor=str,
             raw=True)
-        description, response = await ctx.prompt(prompt)
-        if description is None:
+
+        res = await ctx.prompt(prompt)
+        if res is None:
             await ctx.send_warning("Cancelled subnews post.")
             return
 
+        description, response = res
         body = f"{subnews.mention} New Subreddit news post!\n\n{description}"
 
         if len(response.attachments) > 0:
@@ -59,7 +61,7 @@ class SubNews(commands.Cog):
             f = None
 
         await channel.send(content=body, file=f)
-        await ctx.send_success("Posted subreddit news post!")
+        await ctx.send_success("Posted subreddit news post!", delete_after=5)
 
     @subnews.error
     async def info_error(self,  ctx: BlooContext, error):

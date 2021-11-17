@@ -56,7 +56,7 @@ class ModActions(commands.Cog):
     @user_command(guild_ids=[cfg.guild_id], name="Warn 50 points")
     async def warn_rc(self, ctx: BlooContext, member: discord.Member) -> None:
         member = await mods_and_above_external_resolver(ctx, member)
-        view = WarnView(ctx, member, self.handle_warn)
+        view = WarnView(ctx, member)
         await ctx.respond(embed=discord.Embed(description=f"Choose a warn reason for {member.mention}.", color=discord.Color.blurple()), view=view, ephemeral=True)
     
     @mod_and_up()
@@ -64,43 +64,8 @@ class ModActions(commands.Cog):
     @message_command(guild_ids=[cfg.guild_id], name="Warn 50 points")
     async def warn_msg(self, ctx: BlooContext, message: discord.Message) -> None:
         member = await mods_and_above_external_resolver(ctx, message.author)
-        view = WarnView(ctx, message.author, self.handle_warn)
+        view = WarnView(ctx, message.author)
         await ctx.respond(embed=discord.Embed(f"Choose a warn reason for {member.mention}.", color=discord.Color.blurple()), view=view, ephemeral=True)
-
-    async def handle_warn(self, ctx, user, points, reason):
-        db_guild = guild_service.get_guild()
-
-        reason = escape_markdown(reason)
-
-        # prepare the case object for database
-        case = Case(
-            _id=db_guild.case_id,
-            _type="WARN",
-            mod_id=ctx.author.id,
-            mod_tag=str(ctx.author),
-            reason=reason,
-            punishment=str(points)
-        )
-
-        # increment case ID in database for next available case ID
-        guild_service.inc_caseid()
-        # add new case to DB
-        user_service.add_case(user.id, case)
-        # add warnpoints to the user in DB
-        user_service.inc_points(user.id, points)
-
-        # fetch latest document about user from DB
-        db_user = user_service.get_user(user.id)
-        cur_points = db_user.warn_points
-
-        # prepare log embed, send to #public-mod-logs, user, channel where invoked
-        log = prepare_warn_log(ctx.author, user, case)
-        log.add_field(name="Current points", value=cur_points, inline=True)
-
-        # also send response in channel where command was called
-        dmed = await notify_user_warn(ctx, user, db_user, db_guild, cur_points, log)
-        await ctx.respond(embed=log, delete_after=10)
-        await submit_public_log(ctx, db_guild, user, log, dmed)
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Kick a user", permissions=slash_perms.mod_and_up())
@@ -395,7 +360,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Purge channel messages", permissions=slash_perms.mod_and_up())
-    async def purge(self, ctx: BlooContext, limit: Option(int, description="Number of messages to remove") = 0) -> None:
+    async def purge(self, ctx: BlooContext, limit: Option(int, description="Number of messages to remove", min_value=1, max_value=100)) -> None:
         """Purges messages from current channel (mod only)
 
         Example usage

@@ -1,4 +1,3 @@
-import random
 from io import BytesIO
 
 import aiohttp
@@ -35,15 +34,15 @@ class Blootooth(commands.Cog):
         channel = message.channel
         blootooth_mappings = db_guild.nsa_mapping
         
-        webhooks = blootooth_mappings.get(str(channel.id))
-        if channel.id not in self.pending_channels and webhooks is None:
+        webhook_url = blootooth_mappings.get(str(channel.id))
+        if channel.id not in self.pending_channels and webhook_url is None:
             self.pending_channels.add(channel.id)
-            webhooks = await self.handle_new_channel(channel, db_guild)
+            webhook_url = await self.handle_new_channel(channel, db_guild)
             self.pending_channels.remove(channel.id)
 
         # choose one of the three webhooks randomly
         async with aiohttp.ClientSession() as session:
-            the_webhook: discord.Webhook = discord.Webhook.from_url(random.choice(webhooks), session=session)
+            the_webhook: discord.Webhook = discord.Webhook.from_url(webhook_url, session=session)
             # send message to webhook
             message_body = await self.prepare_message_body(message)
             await the_webhook.send(**message_body, allowed_mentions=discord.AllowedMentions(users=False, everyone=False, roles=False))
@@ -59,13 +58,11 @@ class Blootooth(commands.Cog):
         if category is None:
             category = await guild.create_category(name=channel.category.name)
         blootooth_channel = await category.create_text_channel(name=channel.name)
-        webhooks = []
-        for i in range(1):
-            webhooks.append((await blootooth_channel.create_webhook(name=f"Webhook {blootooth_channel.name} {i}")).url)
-        guild_service.set_nsa_mapping(channel.id, webhooks)
-        
-        logger.info(f"Added new webhooks for channel {channel.name} ({channel.id}:" + "\n" + '\n'.join(webhooks))
-        return webhooks
+        webhook = (await blootooth_channel.create_webhook(name=f"Webhook {blootooth_channel.name}")).url
+        guild_service.set_nsa_mapping(channel.id, webhook)
+
+        logger.info(f"Added new webhook for channel {channel.name} ({channel.id}: {webhook}")
+        return webhook
 
     async def prepare_message_body(self, message: discord.Message):
         member = message.author

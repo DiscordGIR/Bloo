@@ -1,10 +1,10 @@
 import discord
 from discord import ui
-from typing import Callable
+from typing import Callable, List, Optional
 from utils.context import BlooContext
 
 class MenuButtons(ui.View):
-    def __init__(self, ctx: BlooContext, pages: list, page_formatter: Callable[[any, list, int, BlooContext], None], channel: discord.TextChannel, interaction: bool, whisper: bool):
+    def __init__(self, ctx: BlooContext, pages: list, page_formatter: Callable[[any, list, int, BlooContext], None], channel: discord.TextChannel, interaction: bool, whisper: bool, no_skip: bool = False, extra_buttons: Optional[List[discord.ui.Button]] = []):
         # Tell buttons to disable after 60 seconds
         super().__init__(timeout=60)
         # Declare variables that we need to use globally throughout the menu
@@ -19,6 +19,16 @@ class MenuButtons(ui.View):
         self.msg = None
         self.embed = None
         self.sent = False
+        self.no_skip = no_skip
+        self.extra_buttons = extra_buttons
+
+        if self.no_skip:
+            self.remove_item(self.first)
+            self.remove_item(self.last)
+        
+        if self.extra_buttons:
+            for button in self.extra_buttons:
+                self.add_item(button)
         
     async def launch(self, embed):
         """Starts a menu
@@ -48,12 +58,26 @@ class MenuButtons(ui.View):
             self.next.disabled = False
             componentEnabled = True
         
+        if self.extra_buttons:
+            self.clear_items()
+            for button in self.extra_buttons:
+                self.add_item(button)
+            
+            if componentEnabled:
+                if not self.no_skip:
+                    self.add_item(self.first)
+                self.add_item(self.previous)
+                self.add_item(self.pause)
+                self.add_item(self.next)
+                if not self.no_skip:
+                    self.Add_item(self.last)
+        
         msg_send_method = self.channel.send
         if self.is_interaction:
             msg_send_method = self.ctx.respond_or_edit
         elif self.msg is not None:
             msg_send_method = self.msg.edit
-        
+
         if componentEnabled:
             if self.is_interaction:
                 if not self.sent:
@@ -65,12 +89,12 @@ class MenuButtons(ui.View):
                 self.msg = await msg_send_method(embed=embed, view=self)
         elif self.is_interaction:
             if not self.sent:
-                await msg_send_method(embed=embed, ephemeral=self.should_whisper)
+                await msg_send_method(embed=embed, view=self if self.extra_buttons else discord.utils.MISSING, ephemeral=self.should_whisper)
             else:
-                await msg_send_method(embed=embed)
+                await msg_send_method(embed=embed, view=self if self.extra_buttons else discord.utils.MISSING)
             self.sent = True
         else:
-            self.msg = await msg_send_method(embed=embed)
+            self.msg = await msg_send_method(embed=embed, view=self if self.extra_buttons else discord.utils.MISSING)
     
     # Declare first button
     @ui.button(emoji='⏮️', style=discord.ButtonStyle.blurple, row=1, disabled=True)

@@ -251,7 +251,7 @@ class Tags(commands.Cog):
             raise commands.BadArgument("That tag does not exist.")
 
         guild_service.remove_tag(name)
-        await ctx.send_warning(f"Deleted tag {tag.name}.")
+        await ctx.send_warning(f"Deleted tag `{tag.name}`.", delete_after=5)
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="List all tags")

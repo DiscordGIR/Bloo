@@ -45,14 +45,13 @@ async def user_resolver(ctx: BlooContext, argument):
 async def check_invokee(ctx, user):
     if isinstance(user, discord.Member):
         if user.id == ctx.author.id:
-            await ctx.send_error("You can't call that on yourself.")
+            raise PermissionsFailure("You can't call that on yourself.")
         
         if user.id == ctx.bot.user.id:
-            await ctx.send_error("You can't call that on yourself.")
+            raise PermissionsFailure("You can't call that on me :(")
         
         if user:
-                if isinstance(user, discord.Member):
-                    if user.top_role >= ctx.author.top_role:
-                        raise PermissionsFailure(
-                            message=f"{user.mention}'s top role is the same or higher than yours!")
+            if user.top_role >= ctx.author.top_role:
+                raise PermissionsFailure(
+                    message=f"{user.mention}'s top role is the same or higher than yours!")
 

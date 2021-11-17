@@ -21,6 +21,15 @@ from yarl import URL
 package_url = 'https://api.parcility.co/db/package/'
 search_url = 'https://api.parcility.co/db/search?q='
 
+default_repos = [
+    "apt.bingner.com",
+    "apt.procurs.us",
+    "apt.saurik.com",
+    "apt.oldcurs.us",
+    "repo.chimera.sh",
+    "diatr.us/apt",
+]
+
 
 async def package_request(package):
     async with aiohttp.ClientSession() as client:
@@ -75,15 +84,19 @@ async def fetch_repos():
 
 
 async def format_tweak_page(entries, all_pages, current_page, ctx):
-    # if entry is None:
-    #     return discord.Embed(description="A ✨ Parcility 💖 error ocurred with this entry, please skip to the next one.", color=discord.Color.red())
     entry = entries[0]
     await package_request(entry)
     
-    if not entry.get('repo').get('isDefault'):
-        ctx.repo = entry.get('repo').get('url')
-    else:
-        ctx.repo = None
+    # if not entry.get('repo').get('isDefault'):
+    #     ctx.repo = entry.get('repo').get('url')
+    # else:
+    #     ctx.repo = None
+
+    ctx.repo = entry.get('repo').get('url')
+    for repo in default_repos:
+        if repo in entry.get('repo').get('url'):
+            ctx.repo = None
+            break
     
     embed = discord.Embed(title=entry.get('Name'), color=discord.Color.blue())
     embed.description = discord.utils.escape_markdown(
@@ -120,10 +133,16 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
 
 async def format_repo_page(entries, all_pages, current_page, ctx):
     repo_data = entries[0]
-    if not repo_data.get('isDefault'):
-        ctx.repo = repo_data.get('url')
-    else:
-        ctx.repo = None
+    # if not repo_data.get('isDefault'):
+    #     ctx.repo = repo_data.get('url')
+    # else:
+    #     ctx.repo = None
+
+    ctx.repo = repo_data.get('url')
+    for repo in default_repos:
+        if repo in repo_data.get('url'):
+            ctx.repo = None
+            break
 
     embed = discord.Embed(title=repo_data.get(
         'Label'), color=discord.Color.blue())
@@ -169,7 +188,7 @@ class Parcility(commands.Cog):
             whisper = True
 
         pattern = re.compile(
-            r".*?(?<!\[)+\[\[((?!\s+)([\w+\ \&\+\-]){2,})\]\](?!\])+.*")
+            r".*?(?<!\[)+\[\[((?!\s+)([\w+\ \&\+\-\<\>\#\:\;\%]){2,})\]\](?!\])+.*")
         if not pattern.match(message.content):
             return
 
@@ -194,6 +213,24 @@ class Parcility(commands.Cog):
 
         menu = TweakMenu(pages=response, channel=ctx.channel,
                     format_page=format_tweak_page, interaction=False, ctx=ctx, whisper=whisper, no_skip=True)
+        await menu.start()
+        
+    @slash_command(guild_ids=[cfg.guild_id], description="Search for a package")
+    async def package(self,  ctx: BlooContext, *, search_term: Option(str, description="Name of the package to search for")):
+        whisper = False
+        if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == guild_service.get_guild().channel_general:
+            whisper = True
+
+        async with ctx.typing():
+            response = await search_request(search_term)
+
+        if response is None:
+            raise commands.BadArgument("An error occurred while searching for that tweak.")
+        elif len(response) == 0:
+            raise commands.BadArgument("Sorry, I couldn't find any tweaks with that name.")
+
+        menu = TweakMenu(pages=response, channel=ctx.channel,
+                    format_page=format_tweak_page, interaction=True, ctx=ctx, whisper=whisper, no_skip=True)
         await menu.start()
 
     @slash_command(guild_ids=[cfg.guild_id], description="Search for a repo")
@@ -234,6 +271,7 @@ class Parcility(commands.Cog):
                 else:
                     return None
 
+    @package.error
     @repo.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):

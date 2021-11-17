@@ -1,5 +1,7 @@
+from io import BytesIO
 import discord
 from discord.commands import slash_command
+from discord.commands.commands import Option
 from discord.ext import commands
 
 import datetime
@@ -78,7 +80,7 @@ class Genius(commands.Cog):
         await ctx.defer(ephemeral=True)
         prompt = PromptData(
             value_name="description",
-            description="Please enter a description of this embed (optionally attach an iamge)",
+            description="Please enter a description of this embed (optionally attach an image)",
             convertor=str,
             raw=True)
 
@@ -91,6 +93,33 @@ class Genius(commands.Cog):
 
         embed, f = await self.prepare_issues_embed(title, description, response)
         await channel.send(embed=embed, file=f)
+
+    @genius_or_submod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Submit a new common issue", permissions=slash_perms.genius_or_submod_and_up())
+    async def rawembed(self, ctx: BlooContext, *, channel: Option(discord.TextChannel, description="Channel the embed is in"), message_id: Option(str, description="ID of the message with the embed")):
+        try:
+            message_id = int(message_id)
+        except:
+            raise commands.BadArgument("Invalid message ID!")
+        
+        try:
+            message: discord.Message = await channel.fetch_message(message_id)
+        except Exception:
+            raise commands.BadArgument("Could not find a message with that ID!")
+        
+        if message.author != ctx.me:
+            raise commands.BadArgument("I didn't post that embed!")
+        
+        if len(message.embeds) == 0:
+            raise commands.BadArgument("Message does not have an embed!")
+
+        if message.embeds[0].image:
+            if len(message.embeds[0].description) + len(message.embeds[0].image.url) > 2000:
+                await ctx.respond(f"{message.embeds[0].description[:1990-len(message.embeds[0].image.url)]}...\n\n{message.embeds[0].image.url}")
+            else:
+                await ctx.respond(f"{message.embeds[0].description}\n\n{message.embeds[0].image.url}")
+        else:
+            await ctx.respond(message.embeds[0].description[:1997] + "..." if len(message.embeds[0].description) > 2000 else "")
 
     async def prepare_issues_embed(self, title, description, message):
         embed = discord.Embed(title=title)

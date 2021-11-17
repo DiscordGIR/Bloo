@@ -66,7 +66,7 @@ class ModActions(commands.Cog):
     async def warn_msg(self, ctx: BlooContext, message: discord.Message) -> None:
         member = await mods_and_above_external_resolver(ctx, message.author)
         view = WarnView(ctx, message.author)
-        await ctx.respond(embed=discord.Embed(f"Choose a warn reason for {member.mention}.", color=discord.Color.blurple()), view=view, ephemeral=True)
+        await ctx.respond(embed=discord.Embed(description=f"Choose a warn reason for {member.mention}.", color=discord.Color.blurple()), view=view, ephemeral=True)
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Kick a user", permissions=slash_perms.mod_and_up())

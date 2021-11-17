@@ -28,6 +28,7 @@ default_repos = [
     "apt.oldcurs.us",
     "repo.chimera.sh",
     "diatr.us/apt",
+    "repo.theodyssey.dev",
 ]
 
 

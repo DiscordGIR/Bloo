@@ -12,8 +12,8 @@ from discord.commands.context import AutocompleteContext
 from discord.ext import commands
 from utils.async_cache import async_cacher
 from utils.config import cfg
-from utils.context import BlooContext
-from utils.menu import Menu
+from utils.context import BlooContext, BlooOldContext
+from utils.menu import Menu, TweakMenu
 from utils.permissions.checks import PermissionsFailure
 from utils.permissions.permissions import permissions
 from yarl import URL
@@ -79,6 +79,12 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
     #     return discord.Embed(description="A ✨ Parcility 💖 error ocurred with this entry, please skip to the next one.", color=discord.Color.red())
     entry = entries[0]
     await package_request(entry)
+    
+    if not entry.get('repo').get('isDefault'):
+        ctx.repo = entry.get('repo').get('url')
+    else:
+        ctx.repo = None
+    
     embed = discord.Embed(title=entry.get('Name'), color=discord.Color.blue())
     embed.description = discord.utils.escape_markdown(
         entry.get('Description')) or "No description"
@@ -90,9 +96,9 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
         "Tag") and "cydia::commercial" in entry.get("Tag") and "Paid") or "Free")
     embed.add_field(
         name="Repo", value=f"[{entry.get('repo').get('label')}]({entry.get('repo').get('url')})" or "No repo", inline=True)
-    if entry.get('repo').get('isDefault') is False:
-        embed.add_field(
-            name="Add Repo", value=f"[Click Here](https://sharerepo.stkc.win/?repo={entry.get('repo').get('url')})" or "No repo", inline=True)
+    # if entry.get('repo').get('isDefault') is False:
+    #     embed.add_field(
+    #         name="Add Repo", value=f"[Click Here](https://sharerepo.stkc.win/?repo={entry.get('repo').get('url')})" or "No repo", inline=True)
     try:
         if entry.get('Depiction'):
             embed.add_field(
@@ -114,6 +120,11 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
 
 async def format_repo_page(entries, all_pages, current_page, ctx):
     repo_data = entries[0]
+    if not repo_data.get('isDefault'):
+        ctx.repo = repo_data.get('url')
+    else:
+        ctx.repo = None
+
     embed = discord.Embed(title=repo_data.get(
         'Label'), color=discord.Color.blue())
     embed.description = repo_data.get('Description')
@@ -122,9 +133,9 @@ async def format_repo_page(entries, all_pages, current_page, ctx):
     embed.add_field(name="Sections", value=repo_data.get(
         'section_count'), inline=True)
     embed.add_field(name="URL", value=repo_data.get('url'), inline=False)
-    if repo_data.get('isDefault') is False:
-        embed.add_field(
-            name="Add Repo", value=f'[Click Here](https://sharerepo.stkc.win/?repo={repo_data.get("url")})', inline=True)
+    # if repo_data.get('isDefault') is False:
+    #     embed.add_field(
+    #         name="Add Repo", value=f'[Click Here](https://sharerepo.stkc.win/?repo={repo_data.get("url")})', inline=True)
     embed.add_field(
         name="More Info", value=f'[View on Parcility](https://parcility.co/{repo_data.get("id")})', inline=False)
     embed.set_thumbnail(url=repo_data.get('Icon'))
@@ -170,7 +181,7 @@ class Parcility(commands.Cog):
         if not search_term:
             return
 
-        ctx = await self.bot.get_context(message)
+        ctx = await self.bot.get_context(message, cls=BlooOldContext)
         async with ctx.typing():
             response = await search_request(search_term)
 
@@ -181,8 +192,8 @@ class Parcility(commands.Cog):
             await ctx.send_error("Sorry, I couldn't find any tweaks with that name.")
             return
 
-        menu = Menu(pages=response, channel=ctx.channel,
-                    format_page=format_tweak_page, interaction=False, ctx=ctx, whisper=whisper)
+        menu = TweakMenu(pages=response, channel=ctx.channel,
+                    format_page=format_tweak_page, interaction=False, ctx=ctx, whisper=whisper, no_skip=True)
         await menu.start()
 
     @slash_command(guild_ids=[cfg.guild_id], description="Search for a repo")
@@ -205,7 +216,7 @@ class Parcility(commands.Cog):
             raise commands.BadArgument(
                 "Sorry, I couldn't find a repo by that name.")
 
-        menu = Menu(data, ctx.channel, format_repo_page,
+        menu = TweakMenu(data, ctx.channel, format_repo_page,
                     interaction=True, ctx=ctx, whisper=whisper)
         await menu.start()
 

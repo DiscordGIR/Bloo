@@ -5,7 +5,7 @@ from utils.context import BlooContext
 from utils.views.menu import MenuButtons
 
 class Menu():
-    def __init__(self, pages: list, channel: discord.TextChannel, format_page: Callable[[any, list, int, BlooContext], None], interaction: bool, ctx: BlooContext, whisper: bool, per_page=1, no_skip: bool = False, extra_buttons: List[discord.ui.Button] = []):
+    def __init__(self, pages: list, channel: discord.TextChannel, format_page: Callable[[any, list, int, BlooContext], None], interaction: bool, ctx: BlooContext, whisper: bool=False, per_page=1, no_skip: bool = False, extra_buttons: List[discord.ui.Button] = []):
         # Declare variables that we need to use globally throughout the menu
         self.pages = pages
         self.channel = channel

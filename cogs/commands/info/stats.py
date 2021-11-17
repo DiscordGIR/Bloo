@@ -1,3 +1,4 @@
+from collections import defaultdict
 import os
 import platform
 import traceback
@@ -140,9 +141,12 @@ class Stats(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Present statistics on cases by each mod.", permissions=slash_perms.mod_and_up())
-    async def casestats(self, ctx: BlooContext, mod: discord.Member) -> None:
+    async def casestats(self, ctx: BlooContext, mod: Option(discord.Member, required=False) = None) -> None:
         """Present statistics on cases by each mod.
         """
+        
+        if mod is None:
+            mod = ctx.author
 
         embed = discord.Embed(color=discord.Color.blurple())
         embed.set_author(name=f"{mod}'s case statistics",

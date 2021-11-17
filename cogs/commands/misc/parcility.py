@@ -14,7 +14,7 @@ from utils.async_cache import async_cacher
 from utils.config import cfg
 from utils.context import BlooContext, BlooOldContext
 from utils.menu import Menu, TweakMenu
-from utils.permissions.checks import PermissionsFailure
+from utils.permissions.checks import PermissionsFailure, whisper_in_general
 from utils.permissions.permissions import permissions
 from yarl import URL
 
@@ -174,19 +174,22 @@ class Parcility(commands.Cog):
         self.repo_url = 'https://api.parcility.co/db/repo/'
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message(self, message: discord.Message):
         if message.guild is None:
             return
-        # if not message.guild.id == self.bot.settings.guild_id:
-        #     return
 
-        author = message.guild.get_member(message.author.id)
+        if not message.guild.id == cfg.guild_id:
+            return
+
+        author = message.author
         if author is None:
             return
 
-        whisper = False
+        if author.bot:
+            return
+
         if not permissions.has(message.guild, author, 5) and message.channel.id == guild_service.get_guild().channel_general:
-            whisper = True
+            return
 
         pattern = re.compile(
             r".*?(?<!\[)+\[\[((?!\s+)([\w+\ \&\+\-\<\>\#\:\;\%]){2,})\]\](?!\])+.*")
@@ -213,15 +216,12 @@ class Parcility(commands.Cog):
             return
 
         menu = TweakMenu(pages=response, channel=ctx.channel,
-                    format_page=format_tweak_page, interaction=False, ctx=ctx, whisper=whisper, no_skip=True)
+                    format_page=format_tweak_page, interaction=False, ctx=ctx, no_skip=True)
         await menu.start()
-        
+
+    @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Search for a package")
     async def package(self,  ctx: BlooContext, *, search_term: Option(str, description="Name of the package to search for")):
-        whisper = False
-        if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == guild_service.get_guild().channel_general:
-            whisper = True
-
         async with ctx.typing():
             response = await search_request(search_term)
 
@@ -231,17 +231,14 @@ class Parcility(commands.Cog):
             raise commands.BadArgument("Sorry, I couldn't find any tweaks with that name.")
 
         menu = TweakMenu(pages=response, channel=ctx.channel,
-                    format_page=format_tweak_page, interaction=True, ctx=ctx, whisper=whisper, no_skip=True)
+                    format_page=format_tweak_page, interaction=True, ctx=ctx, whisper=ctx.whisper, no_skip=True)
         await menu.start()
 
+    @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Search for a repo")
     async def repo(self,  ctx: BlooContext, *, repo: Option(str, description="Name of the repo to search for", autocomplete=repo_autocomplete)):
         async with ctx.typing():
             data = await self.repo_request(repo)
-
-        whisper = False
-        if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == guild_service.get_guild().channel_general:
-            whisper = True
 
         if data is None:
             raise commands.BadArgument(
@@ -255,7 +252,7 @@ class Parcility(commands.Cog):
                 "Sorry, I couldn't find a repo by that name.")
 
         menu = TweakMenu(data, ctx.channel, format_repo_page,
-                    interaction=True, ctx=ctx, whisper=whisper)
+                    interaction=True, ctx=ctx, whisper=ctx.whisper)
         await menu.start()
 
     async def repo_request(self, repo):

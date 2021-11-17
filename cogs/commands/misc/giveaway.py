@@ -62,7 +62,7 @@ class Giveaway(commands.Cog):
         embed = discord.Embed(title="New giveaway!")
         embed.description = f"**{prize}** is being given away by {sponsor.mention} to **{winners}** lucky {'winner' if winners == 1 else 'winers'}!"
         embed.add_field(name="Time remaining",
-                        value=f"Expires in {format_dt(end_time, style='R')}")
+                        value=f"Expires {format_dt(end_time, style='R')}")
         embed.timestamp = end_time
         embed.color = discord.Color.random()
         embed.set_footer(text="Ends")

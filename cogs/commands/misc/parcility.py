@@ -195,6 +195,24 @@ class Parcility(commands.Cog):
         menu = TweakMenu(pages=response, channel=ctx.channel,
                     format_page=format_tweak_page, interaction=False, ctx=ctx, whisper=whisper, no_skip=True)
         await menu.start()
+        
+    @slash_command(guild_ids=[cfg.guild_id], description="Search for a package")
+    async def package(self,  ctx: BlooContext, *, search_term: Option(str, description="Name of the package to search for")):
+        whisper = False
+        if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == guild_service.get_guild().channel_general:
+            whisper = True
+
+        async with ctx.typing():
+            response = await search_request(search_term)
+
+        if response is None:
+            raise commands.BadArgument("An error occurred while searching for that tweak.")
+        elif len(response) == 0:
+            raise commands.BadArgument("Sorry, I couldn't find any tweaks with that name.")
+
+        menu = TweakMenu(pages=response, channel=ctx.channel,
+                    format_page=format_tweak_page, interaction=True, ctx=ctx, whisper=whisper, no_skip=True)
+        await menu.start()
 
     @slash_command(guild_ids=[cfg.guild_id], description="Search for a repo")
     async def repo(self,  ctx: BlooContext, *, repo: Option(str, description="Name of the repo to search for", autocomplete=repo_autocomplete)):
@@ -234,6 +252,7 @@ class Parcility(commands.Cog):
                 else:
                     return None
 
+    @package.error
     @repo.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):

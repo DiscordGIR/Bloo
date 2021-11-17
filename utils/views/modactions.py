@@ -137,7 +137,7 @@ class WarnViewReport(ui.View):
         if not self.check(interaction):
             return
 
-        points = await self.prompt_for_points("frule 1", interaction)
+        points = await self.prompt_for_points("rule 1", interaction)
         if points is None:
             await self.cleanup()
             return
@@ -150,7 +150,7 @@ class WarnViewReport(ui.View):
         if not self.check(interaction):
             return
 
-        points = await self.prompt_for_points("frule 5", interaction)
+        points = await self.prompt_for_points("rule 5", interaction)
         if points is None:
             await self.cleanup()
             return

@@ -1,5 +1,6 @@
 import discord
 from discord.commands import Option, slash_command
+from discord.commands.context import AutocompleteContext
 from discord.ext import commands
 from discord.utils import format_dt
 
@@ -16,6 +17,9 @@ from utils.permissions.checks import PermissionsFailure, admin_and_up
 from utils.permissions.slash_perms import slash_perms
 from utils.tasks import end_giveaway
 
+def time_suggestions(_: AutocompleteContext):
+    return ["1m", "15m", "30m", "1h", "6h", "12h", "1d", "1w"]
+
 
 class Giveaway(commands.Cog):
     def __init__(self, bot):
@@ -24,7 +28,7 @@ class Giveaway(commands.Cog):
 
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Start a giveaway.", permissions=slash_perms.admin_and_up())
-    async def giveawaystart(self, ctx: BlooContext, prize: Option(str, description="Name of the giveaway"), sponsor: Option(discord.Member, description="Who sponsored the giveaway"), time: Option(str, description="How long should the giveaway last?"), winners: Option(int, description="How many winners?"), channel: Option(discord.TextChannel, description="Where to post the giveaway")):
+    async def giveawaystart(self, ctx: BlooContext, prize: Option(str, description="Name of the giveaway"), sponsor: Option(discord.Member, description="Who sponsored the giveaway"), time: Option(str, description="How long should the giveaway last?", autocomplete=time_suggestions), winners: Option(int, description="How many winners?"), channel: Option(discord.TextChannel, description="Where to post the giveaway")):
         """Starts a giveaway
         
         Example usage

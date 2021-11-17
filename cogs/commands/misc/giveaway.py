@@ -28,7 +28,7 @@ class Giveaway(commands.Cog):
 
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Start a giveaway.", permissions=slash_perms.admin_and_up())
-    async def giveawaystart(self, ctx: BlooContext, prize: Option(str, description="Name of the giveaway"), sponsor: Option(discord.Member, description="Who sponsored the giveaway"), time: Option(str, description="How long should the giveaway last?", autocomplete=time_suggestions), winners: Option(int, description="How many winners?"), channel: Option(discord.TextChannel, description="Where to post the giveaway")):
+    async def giveawaystart(self, ctx: BlooContext, prize: Option(str, description="Name of the giveaway"), sponsor: Option(discord.Member, description="Who sponsored the giveaway"), time: Option(str, description="How long should the giveaway last?", autocomplete=time_suggestions), winners: Option(int, description="How many winners?", min_value=1), channel: Option(discord.TextChannel, description="Where to post the giveaway")):
         """Starts a giveaway
         
         Example usage

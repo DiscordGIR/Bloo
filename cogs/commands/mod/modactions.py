@@ -360,7 +360,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Purge channel messages", permissions=slash_perms.mod_and_up())
-    async def purge(self, ctx: BlooContext, limit: Option(int, description="Number of messages to remove") = 0) -> None:
+    async def purge(self, ctx: BlooContext, limit: Option(int, description="Number of messages to remove", min_value=1, max_value=100)) -> None:
         """Purges messages from current channel (mod only)
 
         Example usage

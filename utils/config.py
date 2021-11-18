@@ -16,8 +16,10 @@ class Config:
             self.setup_error("OWNER_ID")
             
         self.aaron_id = os.environ.get("AARON_ID")
-        if self.aaron_id is not None:
-            self.aaron_id = int(self.aaron_id)
+        if self.aaron_id is None:
+            self.setup_error("AARON_ID")
+
+        self.aaron_id = int(self.aaron_id)
         
         self.aaron_role = os.environ.get("AARON_ROLE")
         if self.aaron_role is not None:

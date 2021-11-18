@@ -47,12 +47,12 @@ BLOO_TOKEN="your token here"
 
 MAIN_GUILD_ID=12345
 OWNER_ID=12345
+AARON_ID=123 # ID of whoever owns the server
 
 DB_HOST="host.docker.internal"
 DB_PORT=27017
 
-# these are optional, for /sabbath commmand
-AARON_ID=123
+# this is optional, for /sabbath commmand
 AARON_ROLE=123
 ```
 

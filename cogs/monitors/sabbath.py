@@ -15,7 +15,7 @@ class Sabbath(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.spam_cooldown = commands.CooldownMapping.from_cooldown(
-            1, 300.0, commands.BucketType.guild)
+            1, 300.0, commands.BucketType.member)
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):

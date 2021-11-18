@@ -33,4 +33,4 @@ class ReactionRoleButton(discord.ui.Button):
             await interaction.response.send_message(f"{self.emoji} You have been given the role {role.mention}", ephemeral=True)
         else:
             await user.remove_roles(role)
-            await interaction.response.send_message(f"{self.emoji} You have been removed the role {role.mention}", ephemeral=True)
+            await interaction.response.send_message(f"{self.emoji} You have removed the {role.mention} role", ephemeral=True)

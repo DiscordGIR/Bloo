@@ -37,6 +37,7 @@ initial_extensions = [
         "cogs.monitors.boosteremojis",
         "cogs.monitors.logging",
         "cogs.monitors.role_assignment_buttons",
+        "cogs.monitors.sabbath",
         "cogs.monitors.xp",
 ]
 

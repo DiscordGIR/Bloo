@@ -50,6 +50,10 @@ OWNER_ID=12345
 
 DB_HOST="host.docker.internal"
 DB_PORT=27017
+
+# these are optional, for /sabbath commmand
+AARON_ID=123
+AARON_ROLE=123
 ```
 
 ## Contributors

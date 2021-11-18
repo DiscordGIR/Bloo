@@ -14,6 +14,14 @@ class Config:
 
         if self.owner_id is None:
             self.setup_error("OWNER_ID")
+            
+        self.aaron_id = os.environ.get("AARON_ID")
+        if self.aaron_id is not None:
+            self.aaron_id = int(self.aaron_id)
+        
+        self.aaron_role = os.environ.get("AARON_ROLE")
+        if self.aaron_role is not None:
+            self.aaron_role = int(self.aaron_role)
 
         logger.info(f"Bloo will be running in: {self.guild_id}")
         logger.info(f"OWNED BY: {self.owner_id}")

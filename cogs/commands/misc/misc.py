@@ -272,7 +272,7 @@ class Misc(commands.Cog):
 
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info about a jailbreak.")
-    async def jailbreak(self, ctx: BlooContext, name: Option(str, description="Name of the jailbreak", autocomplete=jb_autocomplete, required=True), whisper: Option(bool, description="Whisper? (No by default)", required=False)) -> None:
+    async def jailbreak(self, ctx: BlooContext, name: Option(str, description="Name of the jailbreak", autocomplete=jb_autocomplete, required=True)) -> None:
         """Fetches info of jailbreak
         
         Example usage

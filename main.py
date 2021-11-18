@@ -40,6 +40,7 @@ initial_extensions = [
         "cogs.monitors.logging",
         "cogs.monitors.role_assignment_buttons",
         "cogs.monitors.sabbath",
+        "cogs.monitors.songs",
         "cogs.monitors.xp",
 ]
 

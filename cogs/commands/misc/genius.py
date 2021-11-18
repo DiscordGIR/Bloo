@@ -115,11 +115,11 @@ class Genius(commands.Cog):
 
         if message.embeds[0].image:
             if len(message.embeds[0].description) + len(message.embeds[0].image.url) > 2000:
-                await ctx.respond(f"{message.embeds[0].description[:1990-len(message.embeds[0].image.url)]}...\n\n{message.embeds[0].image.url}")
+                await ctx.respond(f"{message.embeds[0].description[:1990-len(message.embeds[0].image.url)]}...\n\n{message.embeds[0].image.url}",  allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
             else:
-                await ctx.respond(f"{message.embeds[0].description}\n\n{message.embeds[0].image.url}")
+                await ctx.respond(f"{message.embeds[0].description}\n\n{message.embeds[0].image.url}",  allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
         else:
-            await ctx.respond(message.embeds[0].description[:1997] + "..." if len(message.embeds[0].description) > 2000 else "")
+            await ctx.respond(message.embeds[0].description[:1997] + "..." if len(message.embeds[0].description) > 2000 else "", allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
 
     async def prepare_issues_embed(self, title, description, message):
         embed = discord.Embed(title=title)
@@ -142,6 +142,7 @@ class Genius(commands.Cog):
         embed.timestamp = datetime.datetime.now()
         return embed, f
 
+    @rawembed.error
     @postembed.error
     @commonissue.error
     async def info_error(self,  ctx: BlooContext, error):

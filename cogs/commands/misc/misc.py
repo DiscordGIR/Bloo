@@ -290,7 +290,7 @@ class Misc(commands.Cog):
         response = await get_jailbreaks()
         try:
             for object in response[f'{name.lower().replace("œ", "oe")}']:
-                view = None
+                view = discord.ui.View()
                 embed = discord.Embed(
                     title=object.get('Name'), color=discord.Color.blurple())
                 embed.add_field(
@@ -299,26 +299,20 @@ class Misc(commands.Cog):
                                 value=object['Versions'], inline=True)
                 embed.add_field(
                     name="Type", value=object['Type'], inline=False)
-                embed.add_field(
-                    name="Website", value=object['Website'], inline=False)
+                view.add_item(discord.ui.Button(label='Website', url=object['Website'], style=discord.ButtonStyle.url))
                 if object.get('Guide') is not None:
-                    embed.add_field(
-                        name="Guide", value=object['Guide'], inline=False)
+                    view.add_item(discord.ui.Button(label='Guide', url=object['Guide'], style=discord.ButtonStyle.url))
                 if object.get('Notes') is not None:
                     embed.add_field(
                         name="Notes", value=object['Notes'], inline=False)
                 jba = await iterate_apps(object.get('Name'))
                 if jba is not None:
-                    view = discord.ui.View()
                     view.add_item(discord.ui.Button(label='Install with Jailbreaks.app', url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
                 if object.get('Icon') is not None:
                     embed.set_thumbnail(url=object.get('Icon'))
                 if object.get('Color') is not None:
                     embed.color = int(object.get('Color').replace('#', ''), 16)
-                if view is not None:
-                    await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper, view=view)
-                else:
-                    await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
+                await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper, view=view)
         except:
             await ctx.send_error("Sorry, I couldn't find any jailbreaks with that name.")
 

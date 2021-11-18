@@ -101,9 +101,9 @@ class Tags(commands.Cog):
 
         for i, part in enumerate(parts):
             if i == 0:
-                await ctx.respond(part, file=file if i == len(parts) - 1 else discord.utils.MISSING)
+                await ctx.respond(part, file=file if i == len(parts) - 1 else discord.utils.MISSING, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
             else:
-                await ctx.send(part, file=file if i == len(parts) - 1 else discord.utils.MISSING)
+                await ctx.send(part, file=file if i == len(parts) - 1 else discord.utils.MISSING, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Add a new tag", permissions=slash_perms.genius_or_submod_and_up())

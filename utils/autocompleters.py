@@ -85,6 +85,12 @@ async def tags_autocomplete(ctx: AutocompleteContext):
     tags = tags[:25]
     return [tag for tag in tags if tag.lower().startswith(ctx.value.lower())]
 
+async def memes_autocomplete(ctx: AutocompleteContext):
+    memes = [meme.name.lower() for meme in guild_service.get_guild().memes]
+    memes.sort()
+    memes = memes[:25]
+    return [meme for meme in memes if meme.lower().startswith(ctx.value.lower())]
+
 
 async def liftwarn_autocomplete(ctx: AutocompleteContext):
     cases = [case._id for case in user_service.get_cases(

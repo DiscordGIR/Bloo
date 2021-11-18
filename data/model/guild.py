@@ -44,6 +44,7 @@ class Guild(mongoengine.Document):
     nsa_guild_id              = mongoengine.IntField()
     nsa_mapping               = mongoengine.DictField(default={})
     tags                      = mongoengine.EmbeddedDocumentListField(Tag, default=[])
+    memes                     = mongoengine.EmbeddedDocumentListField(Tag, default=[])
     ban_today_spam_accounts   = mongoengine.BooleanField(default=False)
     
     meta = {

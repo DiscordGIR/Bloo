@@ -102,6 +102,7 @@ async def on_ready():
 
 
 if __name__ == '__main__':
+    bot.remove_command("help")
     for extension in initial_extensions:
         bot.load_extension(extension)
 

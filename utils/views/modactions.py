@@ -103,7 +103,9 @@ class WarnViewReport(ui.View):
             await self.cleanup()
             return
 
+        self.ctx.member = self.ctx.author = self.mod
         await warn(self.ctx, self.target_member, points, "piracy")
+        self.ctx.member = self.ctx.author = self.ctx.me
         await self.post_cleanup()
 
     @ui.button(label="slurs", style=discord.ButtonStyle.primary)
@@ -116,7 +118,9 @@ class WarnViewReport(ui.View):
             await self.cleanup()
             return
 
+        self.ctx.member = self.ctx.author = self.mod
         await warn(self.ctx, self.target_member, points, "slurs")
+        self.ctx.member = self.ctx.author = self.ctx.me
         await self.post_cleanup()
 
     @ui.button(label="filter bypass", style=discord.ButtonStyle.primary)
@@ -129,7 +133,9 @@ class WarnViewReport(ui.View):
             await self.cleanup()
             return
 
+        self.ctx.member = self.ctx.author = self.mod
         await warn(self.ctx, self.target_member, points, "filter bypass")
+        self.ctx.member = self.ctx.author = self.ctx.me
         await self.post_cleanup()
 
     @ui.button(label="rule 1", style=discord.ButtonStyle.primary)
@@ -142,7 +148,9 @@ class WarnViewReport(ui.View):
             await self.cleanup()
             return
 
+        self.ctx.member = self.ctx.author = self.mod
         await warn(self.ctx, self.target_member, points, "rule 1")
+        self.ctx.member = self.ctx.author = self.ctx.me
         await self.post_cleanup()
 
     @ui.button(label="rule 5", style=discord.ButtonStyle.primary)
@@ -173,7 +181,9 @@ class WarnViewReport(ui.View):
             await self.cleanup()
             return
 
+        self.ctx.member = self.ctx.author = self.mod
         await warn(self.ctx, self.target_member, points, reason)
+        self.ctx.member = self.ctx.author = self.ctx.me
         await self.post_cleanup()
 
     @ui.button(emoji="❌", label="Cancel", style=discord.ButtonStyle.primary)

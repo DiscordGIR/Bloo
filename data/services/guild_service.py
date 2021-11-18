@@ -33,6 +33,23 @@ class GuildService:
         tag.use_count += 1
         self.edit_tag(tag)
         return tag
+
+    def add_meme(self, meme: Tag) -> None:
+        Guild.objects(_id=cfg.guild_id).update_one(push__memes=meme)
+
+    def remove_meme(self, meme: str):
+        return Guild.objects(_id=cfg.guild_id).update_one(pull__memes__name=Tag(name=meme).name)
+
+    def edit_meme(self, meme):
+        return Guild.objects(_id=cfg.guild_id, memes__name=meme.name).update_one(set__memes__S=meme)
+
+    def get_meme(self, name: str):
+        meme = Guild.objects.get(_id=cfg.guild_id).memes.filter(name=name).first()
+        if meme is None:
+            return
+        meme.use_count += 1
+        self.edit_meme(meme)
+        return meme
     
     def inc_caseid(self) -> None:
         """Increments Guild.case_id, which keeps track of the next available ID to

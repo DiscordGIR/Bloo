@@ -23,6 +23,7 @@ initial_extensions = [
         "cogs.commands.misc.genius",
         "cogs.commands.misc.giveaway",
         # "cogs.commands.misc.canister",
+        "cogs.commands.misc.memes",
         "cogs.commands.misc.misc",
         "cogs.commands.misc.parcility",
         "cogs.commands.misc.subnews",

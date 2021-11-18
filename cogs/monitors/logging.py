@@ -407,5 +407,10 @@ class Logging(commands.Cog):
             await private.send(embed=embed)
 
 
+    @commands.Cog.listener()
+    async def on_command_error(self, ctx, error):
+        if isinstance(error, commands.CommandNotFound):
+            return
+
 def setup(bot):
     bot.add_cog(Logging(bot))

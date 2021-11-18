@@ -223,7 +223,7 @@ class ModUtils(commands.Cog):
         ctx.whisper = True
         await ctx.send_success("Done!")
         logging_channel = ctx.guild.get_channel(guild_service.get_guild().channel_private)
-        embed = discord.Embed(color=discord.Color.gold(), title="Someone abused me :(", description=f"{ctx.author.mention} said {message}" )
+        embed = discord.Embed(color=discord.Color.gold(), title="Someone abused me :(", description=f"In {ctx.channel.mention} {ctx.author.mention} said:\n\n{message}" )
         await logging_channel.send(embed=embed)
 
     async def prepare_rundown_embed(self, ctx: BlooContext, user):

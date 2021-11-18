@@ -72,7 +72,7 @@ class Bot(commands.Bot):
         if options is None or not options:
             return await super().process_application_commands(interaction)
 
-        message_content = " ".join([option.get("value") for option in options])
+        message_content = " ".join([str(option.get("value") or "") for option in options])
 
         triggered_words = find_triggered_filters(
             message_content, interaction.user)

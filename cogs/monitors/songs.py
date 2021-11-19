@@ -34,8 +34,9 @@ platforms = {
 class Songs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.spotify_pattern = re.compile(r"[\bhttps://open.\b]*spotify[\b.com\b]*[/:]*track[/:]*[A-Za-z0-9?=]+")
-        self.am_pattern = re.compile(r"[\bhttps://music.\b]*apple[\b.com\b]*[/:][[a-zA-Z][a-zA-Z]]?[:/][a-zA-Z]+[/:][a-zA-Z\d-]+[[/:][\d]*]*")
+        # self.spotify_pattern = re.compile(r"[\bhttps://open.\b]spotify[\b.com\b]*[/:]*track[/:]*[A-Za-z0-9]+")
+        # self.am_pattern = re.compile(r"[\bhttps://music.\b]apple[\b.com\b]*[/:][[a-zA-Z][a-zA-Z]]?[:/]album[/:][a-zA-Z\d%\(\)-]+[/:][\d]{1,10}")
+        self.pattern = re.compile(r"(https://open.spotify.com/track/[A-Za-z0-9]+|https://music.apple.com/[[a-zA-Z][a-zA-Z]]?/album/[a-zA-Z\d%\(\)-]+/[\d]{1,10})")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -48,15 +49,9 @@ class Songs(commands.Cog):
         if message.author.bot:
             return
 
-        spotify_match = self.spotify_pattern.match(message.content)
-        if spotify_match:
-            link = spotify_match.group(0)
-            await self.generate_view(message, link)
-            return
-        
-        am_match = self.am_pattern.match(message.content)
-        if am_match:
-            link = am_match.group(0)
+        match = self.pattern.search(message.content)
+        if match:
+            link = match.group(0)
             await self.generate_view(message, link)
             return
         
@@ -69,8 +64,9 @@ class Songs(commands.Cog):
                 res = await resp.text()
                 res = json.loads(res)
 
-        unique_id = res.get('entityUniqueId')
+        unique_id = res.get('linksByPlatform').get('spotify').get('entityUniqueId')
         title = res.get('entitiesByUniqueId').get(unique_id)
+
         if title is not None:
             title = f"I like listening to {title.get('artistName')} too!\nHere's \"{title.get('title')}\"..."
             title = discord.utils.escape_markdown(title)
@@ -80,7 +76,7 @@ class Songs(commands.Cog):
             title, message.author)
 
         if triggered_words:
-            title = ":fr:"
+            title = "<:fr:712506651520925698>"
 
         view = discord.ui.View()
         for platform, body in platforms.items():

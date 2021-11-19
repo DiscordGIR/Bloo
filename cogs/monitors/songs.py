@@ -6,6 +6,7 @@ import re
 import pprint
 
 from utils.config import cfg
+from utils.mod.filter import find_triggered_filters
 
 platforms = {
     "spotify": {
@@ -68,13 +69,26 @@ class Songs(commands.Cog):
                 res = await resp.text()
                 res = json.loads(res)
 
+        unique_id = res.get('entityUniqueId')
+        title = res.get('entitiesByUniqueId').get(unique_id)
+        if title is not None:
+            title = f"I like listening to {title.get('artistName')} too!\nHere's \"{title.get('title')}\"..."
+            title = discord.utils.escape_markdown(title)
+            title = discord.utils.escape_mentions(title)
+
+        triggered_words = find_triggered_filters(
+            title, message.author)
+
+        if triggered_words:
+            title = ":fr:"
+
         view = discord.ui.View()
         for platform, body in platforms.items():
             platform_links = res.get('linksByPlatform').get(platform)
             if platform_links is not None:
                 view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label=body["name"], emoji=body["emote"], url=platform_links.get('url')))
 
-        await message.reply("Sick tunes bro!", view=view, mention_author=False)
+        await message.reply(title, view=view, mention_author=False)
 
 def setup(bot):
     bot.add_cog(Songs(bot))

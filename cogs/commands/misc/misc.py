@@ -39,6 +39,17 @@ async def get_jailbreaks_jba():
                 res_apps = json.loads(data)
     return res_apps
 
+@async_cacher()
+async def get_signed_status():
+    """Gets Jailbreaks.app's signed status"""
+    signed = []
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://assets.stkc.win/status.php") as resp:
+            if resp.status == 200:
+                data = await resp.text()
+                signed = json.loads(data)
+    return signed
+
 
 @async_cacher()
 async def get_jailbreaks():
@@ -283,13 +294,10 @@ class Misc(commands.Cog):
         ----------
         name : str
             "Name of jailbreak"
-        whisper : bool, optional
-            "Should we whisper?"
-        
         """
         response = await get_jailbreaks()
         try:
-            for object in response[f'{name.lower().replace("œ", "oe")}']:
+            for object in response[f'{name.lower().replace("œ", "oe").replace("ï", "i")}']:
                 view = discord.ui.View()
                 embed = discord.Embed(
                     title=object.get('Name'), color=discord.Color.blurple())
@@ -306,8 +314,11 @@ class Misc(commands.Cog):
                     embed.add_field(
                         name="Notes", value=object['Notes'], inline=False)
                 jba = await iterate_apps(object.get('Name'))
-                if jba is not None:
+                signed = await get_signed_status()
+                if jba is not None and signed.get('status') == 'Signed':
                     view.add_item(discord.ui.Button(label='Install with Jailbreaks.app', url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
+                elif jba is not None and signed.get('status') == 'Revoked':
+                    view.add_item(discord.ui.Button(label='Install with Jailbreaks.app', url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url, disabled=True))
                 if object.get('Icon') is not None:
                     embed.set_thumbnail(url=object.get('Icon'))
                 if object.get('Color') is not None:

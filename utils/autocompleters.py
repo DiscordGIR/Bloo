@@ -6,11 +6,11 @@ from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 from discord.commands.context import AutocompleteContext
 
-from utils.async_cache import async_cacher
+from aiocache import cached
 from utils.mod.give_birthday_role import MONTH_MAPPING
 
 
-@async_cacher()
+@cached(ttl=3600)
 async def get_devices():
     res_devices = []
     async with aiohttp.ClientSession() as session:
@@ -41,7 +41,7 @@ async def device_autocomplete(ctx: AutocompleteContext):
     return [device for device in devices if device.lower().startswith(ctx.value.lower()) and device.lower().split()[0] in ['iphone', 'ipod', 'ipad', 'homepod', 'apple']][:25]
 
 
-@async_cacher()
+@cached(ttl=3600)
 async def get_jailbreaks():
     res_apps = []
     async with aiohttp.ClientSession() as session:

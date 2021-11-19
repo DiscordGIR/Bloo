@@ -1,3 +1,4 @@
+from aiocache import cached
 import discord
 from discord.commands import Option, slash_command
 from discord.commands.commands import message_command, user_command
@@ -9,20 +10,17 @@ import io
 import json
 import traceback
 import aiohttp
-import humanize
 import pytimeparse
 from PIL import Image
 from data.services.guild_service import guild_service
-from utils.async_cache import async_cacher
 from utils.autocompleters import jb_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.database import Guild
 from utils.permissions.checks import PermissionsFailure, whisper, whisper_in_general
 from utils.permissions.permissions import permissions
 
 
-@async_cacher()
+@cached(ttl=3600)
 async def get_jailbreaks_jba():
     """Gets all apps on Jailbreaks.app
     
@@ -39,7 +37,7 @@ async def get_jailbreaks_jba():
                 res_apps = json.loads(data)
     return res_apps
 
-@async_cacher()
+@cached(ttl=1800)
 async def get_signed_status():
     """Gets Jailbreaks.app's signed status"""
     signed = []
@@ -51,7 +49,7 @@ async def get_signed_status():
     return signed
 
 
-@async_cacher()
+@cached(ttl=3600)
 async def get_jailbreaks():
     """Gets all jailbreaks on stkc's API
     

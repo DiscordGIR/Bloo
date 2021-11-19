@@ -3,7 +3,6 @@ import aiohttp
 import discord
 from discord.ext import commands
 import re
-import pprint
 
 from utils.config import cfg
 from utils.mod.filter import find_triggered_filters

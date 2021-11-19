@@ -63,7 +63,8 @@ class Songs(commands.Cog):
                 res = await resp.text()
                 res = json.loads(res)
 
-        unique_id = res.get('linksByPlatform').get('spotify').get('entityUniqueId')
+        spotify_data = res.get('linksByPlatform').get('spotify')
+        unique_id = spotify_data.get('entityUniqueId') if spotify_data is not None else res.get('entityUniqueId')
         title = res.get('entitiesByUniqueId').get(unique_id)
 
         if title is not None:
@@ -83,7 +84,7 @@ class Songs(commands.Cog):
             if platform_links is not None:
                 view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label=body["name"], emoji=body["emote"], url=platform_links.get('url')))
 
-        await message.reply(title, view=view, mention_author=False)
+        await message.reply(content=title, view=view, mention_author=False)
 
 def setup(bot):
     bot.add_cog(Songs(bot))

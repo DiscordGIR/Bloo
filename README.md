@@ -67,7 +67,7 @@ AARON_ROLE=123
     <td align="center"><a href="https://github.com/donato-fiore"><img src="https://avatars.githubusercontent.com/u/50346119?v=4" width="100px;" alt=""/><br /><sub><b>donato-fiore</b></sub></a></td>
   </tr>
   <tr>
-    <td align="center"><a href="https://m1sta.xyz/@"><img src="https://avatars.githubusercontent.com/u/37033149?v=4" width="100px;" alt=""/><br /><sub><b>m1stadev</b></sub></a></td>
+    <td align="center"><a href="https://m1sta.xyz/"><img src="https://avatars.githubusercontent.com/u/37033149?v=4" width="100px;" alt=""/><br /><sub><b>m1stadev</b></sub></a></td>
     <td align="center"><a href="https://saadat.dev/"><img src="https://avatars.githubusercontent.com/u/41216857?v=4" width="100px;" alt=""/><br /><sub><b>mass1ve-err0r</b></sub></a></td>
     <td align="center"><a href="https://saadat.dev/"><img src="https://avatars.githubusercontent.com/u/27446425?v=4" width="100px;" alt=""/><br /><sub><b>sqlstatement</b></sub></a></td>
     <td align="center"><a href="https://saadat.dev/"><img src="https://avatars.githubusercontent.com/u/92439990?v=4" width="100px;" alt=""/><br /><sub><b>extradummythicc</b></sub></a></td>

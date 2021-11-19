@@ -37,7 +37,7 @@ class SubNews(commands.Cog):
         await ctx.defer(ephemeral=True)
         prompt = PromptData(
             value_name="description",
-            description="Please enter a description of this common issue (and attach an image if you want).",
+            description="Please enter a description of this post (and attach an image if you want).",
             convertor=str,
             raw=True)
 

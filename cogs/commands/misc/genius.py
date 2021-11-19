@@ -58,7 +58,7 @@ class Genius(commands.Cog):
         await ctx.send_success("Common issue posted!", delete_after=5)
     
     @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Submit a new common issue", permissions=slash_perms.genius_or_submod_and_up())
+    @slash_command(guild_ids=[cfg.guild_id], description="Post an embed", permissions=slash_perms.genius_or_submod_and_up())
     async def postembed(self, ctx: BlooContext, *, title: str):
         """Post an embed in the current channel (Geniuses only)
 
@@ -95,7 +95,7 @@ class Genius(commands.Cog):
         await channel.send(embed=embed, file=f)
 
     @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Submit a new common issue", permissions=slash_perms.genius_or_submod_and_up())
+    @slash_command(guild_ids=[cfg.guild_id], description="Post raw body of an embed", permissions=slash_perms.genius_or_submod_and_up())
     async def rawembed(self, ctx: BlooContext, *, channel: Option(discord.TextChannel, description="Channel the embed is in"), message_id: Option(str, description="ID of the message with the embed")):
         try:
             message_id = int(message_id)

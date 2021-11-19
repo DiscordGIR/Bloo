@@ -1,7 +1,9 @@
-import urllib
+import json
+import aiohttp
 import discord
 from discord.ext import commands
 import re
+import pprint
 
 from utils.config import cfg
 
@@ -20,11 +22,11 @@ platforms = {
     },
     "tidal": {
         "name": "Tidal",
-        "emote": "<:tidal:911032360840093716>"
+        "emote": "<:tidal:911047304868417586>"
     },
     "amazonMusic": {
         "name": "Amazon Music",
-        "emote": "<:amazonMusic:911032624313667625>"
+        "emote": "<:amazonMusic:911047410409689088>"
     },
 }
 
@@ -48,21 +50,31 @@ class Songs(commands.Cog):
         spotify_match = self.spotify_pattern.match(message.content)
         if spotify_match:
             link = spotify_match.group(0)
-            await message.reply("Sick tunes bro!", view=self.generate_view(link), mention_author=False)
+            await self.generate_view(message, link)
             return
         
         am_match = self.am_pattern.match(message.content)
         if am_match:
             link = am_match.group(0)
-            await message.reply("Sick tunes bro!", view=self.generate_view(link), mention_author=False)
+            await self.generate_view(message, link)
             return
         
-    def generate_view(self, link: str):
-        view = discord.ui.View()
+    async def generate_view(self, message: discord.Message, link: str):
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f'https://api.song.link/v1-alpha.1/links?url={link}') as resp:
+                if resp.status != 200:
+                    return None
+                
+                res = await resp.text()
+                res = json.loads(res)
 
+        view = discord.ui.View()
         for platform, body in platforms.items():
-            view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label=body["name"], emoji=body["emote"], url=f"https://song.link/redirect?url={link}&to={platform}"))
-        return view
+            platform_links = res.get('linksByPlatform').get(platform)
+            if platform_links is not None:
+                view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label=body["name"], emoji=body["emote"], url=platform_links.get('url')))
+
+        await message.reply("Sick tunes bro!", view=view, mention_author=False)
 
 def setup(bot):
     bot.add_cog(Songs(bot))

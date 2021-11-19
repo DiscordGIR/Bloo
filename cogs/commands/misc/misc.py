@@ -44,7 +44,7 @@ async def get_signed_status():
     """Gets Jailbreaks.app's signed status"""
     signed = []
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://assets.stkc.win/status.php") as resp:
+        async with session.get("https://jailbreaks.app/status.php") as resp:
             if resp.status == 200:
                 data = await resp.text()
                 signed = json.loads(data)

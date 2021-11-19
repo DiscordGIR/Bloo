@@ -73,3 +73,8 @@ AARON_ROLE=123
     <td align="center"><a href="https://saadat.dev/"><img src="https://avatars.githubusercontent.com/u/92439990?v=4" width="100px;" alt=""/><br /><sub><b>extradummythicc</b></sub></a></td>
   </tr>
   </table>
+
+### Special thanks
+Special thanks to the following people for ideas, testing, or help:
+- [Jack LaFond](https://www.jack.link/) --- creator of [tunes.ninja](https://tunes.ninja/), the bot that the Songs cog is inspired by
+- Cameren from r/jb, who has given a lot of ideas and helped with testing on many occasions

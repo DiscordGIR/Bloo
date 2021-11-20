@@ -70,7 +70,7 @@ class TweakMenuButtons(MenuButtons):
         if self.ctx.repo:
             self.extra_buttons = [
                 discord.ui.Button(label='Add Repo to Sileo', emoji="<:sileo:679466569407004684>", url=f'https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={self.ctx.repo}', style=discord.ButtonStyle.url),
-                discord.ui.Button(label='Add Repo to Zebra', emoji="🦓", url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={self.ctx.repo}', style=discord.ButtonStyle.url)
+                discord.ui.Button(label='Add Repo to Zebra', emoji="<:zebra:911433583032422420>", url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={self.ctx.repo}', style=discord.ButtonStyle.url)
             ]
         else:
             self.extra_buttons = [

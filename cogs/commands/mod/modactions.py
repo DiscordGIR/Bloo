@@ -451,7 +451,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Edit case reason", permissions=slash_perms.mod_and_up())
-    async def editreason(self, ctx: BlooContext, user: Option(discord.Member), case_id: Option(int), new_reason: Option(str)) -> None:
+    async def editreason(self, ctx: BlooContext, user: Option(discord.Member), case_id: Option(int, autocomplete=liftwarn_autocomplete), new_reason: Option(str)) -> None:
         """Edits a case's reason and the embed in #public-mod-logs. (mod only)
 
         Example usage

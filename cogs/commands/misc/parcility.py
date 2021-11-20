@@ -10,10 +10,10 @@ from data.services.guild_service import guild_service
 from discord.commands.commands import Option, slash_command
 from discord.commands.context import AutocompleteContext
 from discord.ext import commands
-from utils.async_cache import async_cacher
+from aiocache import cached
 from utils.config import cfg
 from utils.context import BlooContext, BlooOldContext
-from utils.menu import Menu, TweakMenu
+from utils.menu import TweakMenu
 from utils.permissions.checks import PermissionsFailure, whisper_in_general
 from utils.permissions.permissions import permissions
 from yarl import URL
@@ -32,6 +32,7 @@ default_repos = [
 ]
 
 
+@cached(ttl=300)
 async def package_request(package):
     async with aiohttp.ClientSession() as client:
         async with client.get(URL(f'{package_url}{package.get("Package")}', encoded=True)) as resp:
@@ -68,7 +69,7 @@ async def repo_autocomplete(ctx: AutocompleteContext):
     return [repo for repo in repos if ctx.value.lower() in repo.lower()][:25]
 
 
-@async_cacher()
+@cached(ttl=3600)
 async def fetch_repos():
     async with aiohttp.ClientSession() as client:
         async with client.get('https://api.parcility.co/db/repos/') as resp:
@@ -255,6 +256,7 @@ class Parcility(commands.Cog):
                     interaction=True, ctx=ctx, whisper=ctx.whisper)
         await menu.start()
 
+    @cached(ttl=1800)
     async def repo_request(self, repo):
         async with aiohttp.ClientSession() as client:
             async with client.get(f'{self.repo_url}{repo}') as resp:

@@ -1,4 +1,5 @@
 import json
+from operator import imod
 import aiohttp
 import discord
 from discord.ext import commands
@@ -6,6 +7,7 @@ import re
 
 from utils.config import cfg
 from utils.mod.filter import find_triggered_filters
+from data.services.guild_service import guild_service
 
 platforms = {
     "spotify": {
@@ -46,6 +48,8 @@ class Songs(commands.Cog):
         if message.guild.id != cfg.guild_id:
             return
         if message.author.bot:
+            return
+        if message.channel.id != guild_service.get_guild().channel_general:
             return
 
         match = self.pattern.search(message.content)

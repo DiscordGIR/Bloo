@@ -37,7 +37,7 @@ class Songs(commands.Cog):
         self.bot = bot
         # self.spotify_pattern = re.compile(r"[\bhttps://open.\b]spotify[\b.com\b]*[/:]*track[/:]*[A-Za-z0-9]+")
         # self.am_pattern = re.compile(r"[\bhttps://music.\b]apple[\b.com\b]*[/:][[a-zA-Z][a-zA-Z]]?[:/]album[/:][a-zA-Z\d%\(\)-]+[/:][\d]{1,10}")
-        self.pattern = re.compile(r"(https://open.spotify.com/track/[A-Za-z0-9]+|https://music.apple.com/[[a-zA-Z][a-zA-Z]]?/album/[a-zA-Z\d%\(\)-]+/[\d]{1,10})")
+        self.pattern = re.compile(r"(https://open.spotify.com/track/[A-Za-z0-9]+|https://music.apple.com/[[a-zA-Z][a-zA-Z]]?/album/[a-zA-Z\d%\(\)-]+/[\d]{1,10}\?i=[\d]{1,15})")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):

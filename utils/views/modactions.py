@@ -68,7 +68,7 @@ class WarnView(ui.View):
                                         timeout=30
                                         )
         await interaction.response.defer()
-        self.ctx.author = interaction.user
+
         reason = await self.ctx.prompt(prompt_data)
         return reason
 
@@ -87,6 +87,7 @@ class ModViewReport(ui.View):
 
     async def start(self, ctx: BlooContext):
         self.ctx = ctx
+        self.ctx.member = self.ctx.author = self.mod
         await self.wait()
 
     async def on_timeout(self) -> None:
@@ -99,18 +100,7 @@ class ModViewReport(ui.View):
 
     @ui.button(label="piracy", style=discord.ButtonStyle.primary)
     async def piracy(self, button: ui.Button, interaction: discord.Interaction):
-        if not self.check(interaction):
-            return
-
-        points = await self.prompt_for_points("piracy", interaction)
-        if points is None:
-            await self.cleanup()
-            return
-
-        self.ctx.member = self.ctx.author = self.mod
-        await warn(self.ctx, self.target_member, points, "piracy")
-        self.ctx.member = self.ctx.author = self.ctx.me
-        await self.post_cleanup()
+        await self.handle_interaction(interaction, "piracy")
 
     @ui.button(label="slurs", style=discord.ButtonStyle.primary)
     async def slurs(self, button: ui.Button, interaction: discord.Interaction):
@@ -152,9 +142,7 @@ class ModViewReport(ui.View):
                 await self.cleanup()
                 return
 
-            self.ctx.member = self.ctx.author = self.mod
             await warn(self.ctx, self.target_member, points, reason)
-            self.ctx.member = self.ctx.author = self.ctx.me
         else:
             await ban(self.ctx, self.target_member, reason)
             await self.ctx.message.delete()
@@ -171,6 +159,8 @@ class ModViewReport(ui.View):
         if not self.check(interaction):
             return
 
+        # self.ctx.member = self.ctx.author = self.mod
+
         if self.mod_action == ModViewReport.ModAction.WARN:
             points = await self.prompt_for_points(reason, interaction)
             if points is None:
@@ -182,7 +172,9 @@ class ModViewReport(ui.View):
             # ban
             await ban(self.ctx, self.target_member, reason)
             await self.ctx.message.delete()
+
         await self.post_cleanup()
+        # self.ctx.member = self.ctx.author = self.ctx.me
 
     async def prompt_for_points(self, reason: str, interaction: discord.Interaction):
         view = PointsView(self.mod)
@@ -198,6 +190,7 @@ class ModViewReport(ui.View):
 
     async def prompt_for_reason(self, interaction: discord.Interaction):
         action = "warn" if self.mod_action == ModViewReport.ModAction.WARN else "ban"
+        # self.ctx.author = interaction.user
         prompt_data = PromptData(value_name="Reason", 
                                         description=f"Reason for {action}?",
                                         convertor=str,
@@ -205,7 +198,7 @@ class ModViewReport(ui.View):
                                         )
         if not interaction.response.is_done():
             await interaction.response.defer()
-        self.ctx.author = interaction.user
+
         reason = await self.ctx.prompt(prompt_data)
         return reason
 

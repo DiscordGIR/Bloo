@@ -26,6 +26,7 @@ async def report(bot: discord.Client, message: discord.Message, word: str, invit
     channel = message.guild.get_channel(db_guild.channel_reports)
 
     ping_string = prepare_ping_string(db_guild, message)
+    # ping_string = ""
     view = ReportActions(message.author)
 
     if invite:

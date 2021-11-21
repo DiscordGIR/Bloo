@@ -69,8 +69,9 @@ async def report_raid_phrase(bot: discord.Client, message: discord.Message, doma
 
 
 async def report_spam(bot, msg, user, title):
-    channel = msg.guild.get_channel(guild_service.get_guild().channel_reports)
-    ping_string = prepare_ping_string(msg)
+    db_guild = guild_service.get_guild()
+    channel = msg.guild.get_channel(db_guild.channel_reports)
+    ping_string = prepare_ping_string(db_guild, msg)
 
     view = SpamReportActions(user)
     embed = prepare_embed(msg, title=title)

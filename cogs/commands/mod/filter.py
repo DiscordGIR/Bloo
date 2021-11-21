@@ -58,7 +58,7 @@ class Filters(commands.Cog):
 
     @always_whisper()
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Add a phrase to the raid filter.", permissions=slash_perms.mod_and_up())
+    @slash_command(guild_ids=[cfg.guild_id], description="Toggles bot pinging for reports when offline.", permissions=slash_perms.mod_and_up())
     async def offlineping(self, ctx: BlooContext, val: Option(bool, required=False) = None):
         """Toggles bot pinging for reports when offline
 

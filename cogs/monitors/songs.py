@@ -1,12 +1,13 @@
 import json
+from operator import imod
 import aiohttp
 import discord
 from discord.ext import commands
 import re
-import pprint
 
 from utils.config import cfg
 from utils.mod.filter import find_triggered_filters
+from data.services.guild_service import guild_service
 
 platforms = {
     "spotify": {
@@ -34,8 +35,9 @@ platforms = {
 class Songs(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.spotify_pattern = re.compile(r"[\bhttps://open.\b]*spotify[\b.com\b]*[/:]*track[/:]*[A-Za-z0-9?=]+")
-        self.am_pattern = re.compile(r"[\bhttps://music.\b]*apple[\b.com\b]*[/:][[a-zA-Z][a-zA-Z]]?[:/][a-zA-Z]+[/:][a-zA-Z\d-]+[[/:][\d]*]*")
+        # self.spotify_pattern = re.compile(r"[\bhttps://open.\b]spotify[\b.com\b]*[/:]*track[/:]*[A-Za-z0-9]+")
+        # self.am_pattern = re.compile(r"[\bhttps://music.\b]apple[\b.com\b]*[/:][[a-zA-Z][a-zA-Z]]?[:/]album[/:][a-zA-Z\d%\(\)-]+[/:][\d]{1,10}")
+        self.pattern = re.compile(r"(https://open.spotify.com/track/[A-Za-z0-9]+|https://music.apple.com/[[a-zA-Z][a-zA-Z]]?/album/[a-zA-Z\d%\(\)-]+/[\d]{1,10}\?i=[\d]{1,15})")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -47,16 +49,12 @@ class Songs(commands.Cog):
             return
         if message.author.bot:
             return
-
-        spotify_match = self.spotify_pattern.match(message.content)
-        if spotify_match:
-            link = spotify_match.group(0)
-            await self.generate_view(message, link)
+        if message.channel.id != guild_service.get_guild().channel_general:
             return
-        
-        am_match = self.am_pattern.match(message.content)
-        if am_match:
-            link = am_match.group(0)
+
+        match = self.pattern.search(message.content)
+        if match:
+            link = match.group(0)
             await self.generate_view(message, link)
             return
         
@@ -69,8 +67,10 @@ class Songs(commands.Cog):
                 res = await resp.text()
                 res = json.loads(res)
 
-        unique_id = res.get('entityUniqueId')
+        spotify_data = res.get('linksByPlatform').get('spotify')
+        unique_id = spotify_data.get('entityUniqueId') if spotify_data is not None else res.get('entityUniqueId')
         title = res.get('entitiesByUniqueId').get(unique_id)
+
         if title is not None:
             title = f"I like listening to {title.get('artistName')} too!\nHere's \"{title.get('title')}\"..."
             title = discord.utils.escape_markdown(title)
@@ -80,7 +80,7 @@ class Songs(commands.Cog):
             title, message.author)
 
         if triggered_words:
-            title = ":fr:"
+            title = "<:fr:712506651520925698>"
 
         view = discord.ui.View()
         for platform, body in platforms.items():
@@ -88,7 +88,7 @@ class Songs(commands.Cog):
             if platform_links is not None:
                 view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label=body["name"], emoji=body["emote"], url=platform_links.get('url')))
 
-        await message.reply(title, view=view, mention_author=False)
+        await message.reply(content=title, view=view, mention_author=False)
 
 def setup(bot):
     bot.add_cog(Songs(bot))

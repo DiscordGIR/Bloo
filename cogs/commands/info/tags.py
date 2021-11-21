@@ -36,7 +36,7 @@ class Tags(commands.Cog):
         self.tag_cooldown = CooldownMapping.from_cooldown(1, 5, MessageTextBucket.custom)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Display a tag")
-    async def tag(self, ctx: BlooContext, name: Option(str, description="Tag name", autocomplete=tags_autocomplete)):
+    async def tag(self, ctx: BlooContext, name: Option(str, description="Tag name", autocomplete=tags_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
         """Displays a tag.
         
         Example usage
@@ -68,7 +68,12 @@ class Tags(commands.Cog):
             file = discord.File(BytesIO(
                 file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
 
-        await ctx.respond(embed=await self.prepare_tag_embed(tag), file=file)
+        if user_to_mention is not None:
+            title = f"Hey {user_to_mention.mention}, have a look at this!"
+        else:
+            title = None
+
+        await ctx.respond(content=title, embed=await self.prepare_tag_embed(tag), file=file)
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Display a tag", permissions=slash_perms.genius_or_submod_and_up())

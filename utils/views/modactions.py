@@ -1,9 +1,8 @@
-from typing import final
 import discord
 from discord import ui
 from utils.context import BlooContext, PromptData
-from utils.mod.global_modactions import warn
-
+from utils.mod.global_modactions import ban, warn
+from enum import Enum
 
 class WarnView(ui.View):
     def __init__(self, ctx: BlooContext, member: discord.Member):
@@ -74,12 +73,17 @@ class WarnView(ui.View):
         return reason
 
 
-class WarnViewReport(ui.View):
-    def __init__(self, member: discord.Member, mod: discord.Member, report_msg: discord.Message):
+class ModViewReport(ui.View):
+    class ModAction(Enum):
+        WARN = 1
+        BAN = 2
+    
+    def __init__(self, member: discord.Member, mod: discord.Member, report_msg: discord.Message, mod_action: ModAction):
         super().__init__(timeout=60)
         self.target_member = member
         self.mod = mod
         self.report_msg = report_msg
+        self.mod_action = mod_action
 
     async def start(self, ctx: BlooContext):
         self.ctx = ctx
@@ -110,61 +114,27 @@ class WarnViewReport(ui.View):
 
     @ui.button(label="slurs", style=discord.ButtonStyle.primary)
     async def slurs(self, button: ui.Button, interaction: discord.Interaction):
-        if not self.check(interaction):
-            return
-
-        points = await self.prompt_for_points("slurs", interaction)
-        if points is None:
-            await self.cleanup()
-            return
-
-        self.ctx.member = self.ctx.author = self.mod
-        await warn(self.ctx, self.target_member, points, "slurs")
-        self.ctx.member = self.ctx.author = self.ctx.me
-        await self.post_cleanup()
+        await self.handle_interaction(interaction, "slurs")
 
     @ui.button(label="filter bypass", style=discord.ButtonStyle.primary)
     async def filter_bypass(self, button: ui.Button, interaction: discord.Interaction):
-        if not self.check(interaction):
-            return
-
-        points = await self.prompt_for_points("filter bypass", interaction)
-        if points is None:
-            await self.cleanup()
-            return
-
-        self.ctx.member = self.ctx.author = self.mod
-        await warn(self.ctx, self.target_member, points, "filter bypass")
-        self.ctx.member = self.ctx.author = self.ctx.me
-        await self.post_cleanup()
+        await self.handle_interaction(interaction, "filter bypass")
 
     @ui.button(label="rule 1", style=discord.ButtonStyle.primary)
     async def rule_one(self, button: ui.Button, interaction: discord.Interaction):
-        if not self.check(interaction):
-            return
-
-        points = await self.prompt_for_points("rule 1", interaction)
-        if points is None:
-            await self.cleanup()
-            return
-
-        self.ctx.member = self.ctx.author = self.mod
-        await warn(self.ctx, self.target_member, points, "rule 1")
-        self.ctx.member = self.ctx.author = self.ctx.me
-        await self.post_cleanup()
+        await self.handle_interaction(interaction, "rule 1")
 
     @ui.button(label="rule 5", style=discord.ButtonStyle.primary)
     async def rule_five(self, button: ui.Button, interaction: discord.Interaction):
-        if not self.check(interaction):
-            return
+        await self.handle_interaction(interaction, "rule 5")
 
-        points = await self.prompt_for_points("rule 5", interaction)
-        if points is None:
-            await self.cleanup()
-            return
+    @ui.button(label="ads", style=discord.ButtonStyle.primary)
+    async def ads(self, button: ui.Button, interaction: discord.Interaction):
+        await self.handle_interaction(interaction, "ads")
 
-        await warn(self.ctx, self.target_member, points, "rule 5")
-        await self.post_cleanup()
+    @ui.button(label="troll", style=discord.ButtonStyle.primary)
+    async def troll(self, button: ui.Button, interaction: discord.Interaction):
+        await self.handle_interaction(interaction, "troll")
 
     @ui.button(label="Other...", style=discord.ButtonStyle.primary)
     async def other(self, button: ui.Button, interaction: discord.Interaction):
@@ -176,14 +146,18 @@ class WarnViewReport(ui.View):
             await self.cleanup()
             return
 
-        points = await self.prompt_for_points(reason, interaction)
-        if points is None:
-            await self.cleanup()
-            return
+        if self.mod_action == ModViewReport.ModAction.WARN:
+            points = await self.prompt_for_points(reason, interaction)
+            if points is None:
+                await self.cleanup()
+                return
 
-        self.ctx.member = self.ctx.author = self.mod
-        await warn(self.ctx, self.target_member, points, reason)
-        self.ctx.member = self.ctx.author = self.ctx.me
+            self.ctx.member = self.ctx.author = self.mod
+            await warn(self.ctx, self.target_member, points, reason)
+            self.ctx.member = self.ctx.author = self.ctx.me
+        else:
+            await ban(self.ctx, self.target_member, reason)
+            await self.ctx.message.delete()
         await self.post_cleanup()
 
     @ui.button(emoji="❌", label="Cancel", style=discord.ButtonStyle.primary)
@@ -192,6 +166,23 @@ class WarnViewReport(ui.View):
             return
 
         await self.cleanup()
+
+    async def handle_interaction(self, interaction: discord.Interaction, reason: str):
+        if not self.check(interaction):
+            return
+
+        if self.mod_action == ModViewReport.ModAction.WARN:
+            points = await self.prompt_for_points(reason, interaction)
+            if points is None:
+                await self.cleanup()
+                return
+
+            await warn(self.ctx, self.target_member, points, reason)
+        else:
+            # ban
+            await ban(self.ctx, self.target_member, reason)
+            await self.ctx.message.delete()
+        await self.post_cleanup()
 
     async def prompt_for_points(self, reason: str, interaction: discord.Interaction):
         view = PointsView(self.mod)
@@ -206,8 +197,9 @@ class WarnViewReport(ui.View):
         return view.value
 
     async def prompt_for_reason(self, interaction: discord.Interaction):
+        action = "warn" if self.mod_action == ModViewReport.ModAction.WARN else "ban"
         prompt_data = PromptData(value_name="Reason", 
-                                        description="Reason for warn?",
+                                        description=f"Reason for {action}?",
                                         convertor=str,
                                         timeout=30
                                         )

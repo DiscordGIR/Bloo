@@ -9,7 +9,6 @@ from utils.context import BlooContext, PromptData
 from utils.permissions.checks import PermissionsFailure, submod_or_admin_and_up
 from utils.permissions.slash_perms import slash_perms
 
-
 class SubNews(commands.Cog):
     def __init__(self, bot):
         self.bot = bot

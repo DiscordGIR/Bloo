@@ -60,7 +60,7 @@ class Giveaway(commands.Cog):
 
         # prepare giveaway embed and post it in giveaway channel
         embed = discord.Embed(title="New giveaway!")
-        embed.description = f"**{prize}** is being given away by {sponsor.mention} to **{winners}** lucky {'winner' if winners == 1 else 'winers'}!"
+        embed.description = f"**{prize}** is being given away by {sponsor.mention} to **{winners}** lucky {'winner' if winners == 1 else 'winners'}!"
         embed.add_field(name="Time remaining",
                         value=f"Expires {format_dt(end_time, style='R')}")
         embed.timestamp = end_time

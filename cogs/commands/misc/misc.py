@@ -9,7 +9,6 @@ import io
 import json
 import traceback
 import aiohttp
-import humanize
 import pytimeparse
 from PIL import Image
 from data.services.guild_service import guild_service
@@ -17,7 +16,6 @@ from utils.async_cache import async_cacher
 from utils.autocompleters import jb_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.database import Guild
 from utils.permissions.checks import PermissionsFailure, whisper, whisper_in_general
 from utils.permissions.permissions import permissions
 

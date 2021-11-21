@@ -1,16 +1,15 @@
-from collections import defaultdict
+import discord
+from discord.ext import commands
+from discord.utils import format_dt
+from discord.commands import Option, slash_command
+
 import os
 import platform
 import traceback
+import psutil
 from datetime import datetime
 from math import floor
-
-import discord
-import psutil
-from discord.commands import Option, slash_command
 from data.services.user_service import user_service
-from discord.ext import commands
-from discord.utils import format_dt
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.checks import PermissionsFailure, mod_and_up, whisper

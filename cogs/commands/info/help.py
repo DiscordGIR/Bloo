@@ -1,15 +1,14 @@
-import traceback
-
+import discord
+from discord.ext import commands
 from discord.commands.commands import Option, SlashCommand, slash_command
 from discord.commands.context import AutocompleteContext
-from data.services.guild_service import guild_service
 
+import traceback
+from data.services.guild_service import guild_service
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.checks import PermissionsFailure, whisper
 from utils.permissions.permissions import permissions
-import discord
-from discord.ext import commands
 
 async def commands_list(ctx: AutocompleteContext):
     res = []

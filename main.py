@@ -1,9 +1,8 @@
-import os
-
 import discord
 from discord.ext import commands
 from data.services import guild_service
 
+import os
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import db
@@ -12,6 +11,10 @@ from utils.mod.filter import find_triggered_filters
 from utils.mod.modactions_helpers import BanCache
 from utils.permissions.permissions import permissions
 from utils.tasks import Tasks
+
+# Remove warning from songs cog
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 initial_extensions = [
         "cogs.monitors.filter",
@@ -89,7 +92,7 @@ bot = Bot(intents=intents, allowed_mentions=mentions)
 @bot.event
 async def on_ready():
     bot.ban_cache = BanCache(bot)
-    logger.info("""
+    logger.neutral("""
             88          88                          
             88          88                          
             88          88                          
@@ -99,7 +102,9 @@ async def on_ready():
             88b,   ,a8" 88 "8a,   ,a8" "8a,   ,a8"  
             8Y"Ybbd8"'  88  `"YbbdP"'   `"YbbdP"'   
                 """)
-    logger.info(f'\n\nLogged in as: {bot.user.name} - {bot.user.id}\nVersion: {discord.__version__}\n')
+    logger.info(f'Logged in as: {bot.user.name} (ID: {bot.user.id})')
+    logger.info(f'Version: {discord.__version__}')
+    logger.info(f'Made with ❤️  by SlimShadyIAm#9999 and the Bloo development team. Enjoy!')
 
 
 if __name__ == '__main__':

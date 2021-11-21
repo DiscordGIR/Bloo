@@ -6,7 +6,7 @@ from data.services.guild_service import guild_service
 from utils.context import BlooOldContext, PromptData
 from utils.mod.global_modactions import ban, mute, unmute
 from utils.permissions.permissions import permissions
-from utils.views.modactions import WarnView, WarnViewReport
+from utils.views.modactions import ModViewReport
 
 class ReportActions(ui.View):
     def __init__(self, target_member: discord.Member):
@@ -33,9 +33,20 @@ class ReportActions(ui.View):
         if not self.check(interaction):
             return
 
-        view = WarnViewReport(self.target_member, interaction.user, self.ctx.message)
+        view = ModViewReport(self.target_member, interaction.user, self.ctx.message, mod_action=ModViewReport.ModAction.WARN)
         await (await self.ctx.bot.get_application_context(interaction)).defer()
         msg = await self.ctx.channel.send(embed=discord.Embed(description=f"{interaction.user.mention}, choose a warn reason for {self.target_member.mention}.", color=discord.Color.blurple()), view=view)
+        new_ctx = await self.ctx.bot.get_context(msg, cls=BlooOldContext)
+        await view.start(new_ctx)
+
+    @ui.button(emoji="❌", label="Ban", style=discord.ButtonStyle.primary)
+    async def ban(self, button: ui.Button, interaction: discord.Interaction):
+        if not self.check(interaction):
+            return
+
+        view = ModViewReport(self.target_member, interaction.user, self.ctx.message, mod_action=ModViewReport.ModAction.BAN)
+        await (await self.ctx.bot.get_application_context(interaction)).defer()
+        msg = await self.ctx.channel.send(embed=discord.Embed(description=f"{interaction.user.mention}, choose a ban reason for {self.target_member.mention}.", color=discord.Color.blurple()), view=view)
         new_ctx = await self.ctx.bot.get_context(msg, cls=BlooOldContext)
         await view.start(new_ctx)
 

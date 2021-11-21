@@ -213,6 +213,19 @@ class ModUtils(commands.Cog):
             await user.add_roles(birthday_role)
             await user.send(f"According to my calculations, today is your birthday! We've hiven you the {birthday_role} role for 24 hours.")
 
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Sayyyy", permissions=slash_perms.mod_and_up())
+    async def say(self, ctx: BlooContext, message: str, channel: Option(discord.TextChannel, required=False, description="Where to post the message") = None):
+        if channel is None:
+            channel = ctx.channel
+
+        await channel.send(message)
+        ctx.whisper = True
+        await ctx.send_success("Done!")
+        logging_channel = ctx.guild.get_channel(guild_service.get_guild().channel_private)
+        embed = discord.Embed(color=discord.Color.gold(), title="Someone abused me :(", description=f"In {ctx.channel.mention} {ctx.author.mention} said:\n\n{message}" )
+        await logging_channel.send(embed=embed)
+
     async def prepare_rundown_embed(self, ctx: BlooContext, user):
         user_info = user_service.get_user(user.id)
         rd = user_service.rundown(user.id)
@@ -264,6 +277,7 @@ class ModUtils(commands.Cog):
 
         return embed
 
+    @say.error
     @rundown.error
     @transferprofile.error
     @clem.error

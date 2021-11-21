@@ -45,8 +45,10 @@ class Blootooth(commands.Cog):
             the_webhook: discord.Webhook = discord.Webhook.from_url(webhook_url, session=session)
             # send message to webhook
             message_body = await self.prepare_message_body(message)
-            await the_webhook.send(**message_body, allowed_mentions=discord.AllowedMentions(users=False, everyone=False, roles=False))
-    
+            try:
+                await the_webhook.send(**message_body, allowed_mentions=discord.AllowedMentions(users=False, everyone=False, roles=False))
+            except Exception:
+                pass
     async def handle_new_channel(self, channel: discord.TextChannel, db_guild: Guild):
         # we have not seen this channel yet; let's create a channel in the Blootooth server
         # and create 3 new webhooks.
@@ -70,10 +72,11 @@ class Blootooth(commands.Cog):
             "username": str(member),
             "avatar_url": member.display_avatar,
             "embeds": message.embeds or discord.utils.MISSING,
-            "files": [discord.File(BytesIO(await file.read()), filename=file.filename) for file in message.attachments]
+            "files": [discord.File(BytesIO(await file.read()), filename=file.filename) for file in message.attachments if file.size < 8_000_000 ]
         }
         
-        footer=f"\n\n[Link to message]({message.jump_url}) | **{member.id}**"
+        attachments_too_big = "".join([file.url for file in message.attachments if file.size >= 8_000_000 ])
+        footer=f"{attachments_too_big}\n\n[Link to message]({message.jump_url}) | **{member.id}**"
         content = message.content
         for mention in message.raw_role_mentions:
             content = content.replace(f"<@&{mention}>", f"`@{message.guild.get_role(mention)}`")

@@ -34,7 +34,7 @@ class Utilities(commands.Cog):
 
         if not commandname:
             await ctx.respond('📬', ephemeral=True)
-            header = "Get a detailed description for a specific command with `!help <command name>`\n"
+            header = "Get a detailed description for a specific command with `/help <command name>`\n"
             string = ""
             for cog_name in self.bot.cogs:
                 cog = self.bot.cogs[cog_name]

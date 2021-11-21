@@ -2,11 +2,13 @@ import os
 
 import discord
 from discord.ext import commands
+from data.services import guild_service
 
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import db
 from utils.logger import logger
+from utils.mod.filter import find_triggered_filters
 from utils.mod.modactions_helpers import BanCache
 from utils.permissions.permissions import permissions
 from utils.tasks import Tasks
@@ -37,6 +39,8 @@ initial_extensions = [
         "cogs.monitors.boosteremojis",
         "cogs.monitors.logging",
         "cogs.monitors.role_assignment_buttons",
+        "cogs.monitors.sabbath",
+        "cogs.monitors.songs",
         "cogs.monitors.xp",
 ]
 
@@ -57,6 +61,28 @@ class Bot(commands.Bot):
 
     async def get_application_context(self, interaction: discord.Interaction, *, cls=BlooContext) -> BlooContext:
         return await super().get_application_context(interaction, cls=cls)
+    
+    async def process_application_commands(self, interaction: discord.Interaction) -> None:
+        if interaction.guild_id != cfg.guild_id:
+            return
+
+        if permissions.has(interaction.user.guild, interaction.user, 6):
+            return await super().process_application_commands(interaction)
+        
+        options = interaction.data.get("options")
+        if options is None or not options:
+            return await super().process_application_commands(interaction)
+
+        message_content = " ".join([str(option.get("value") or "") for option in options])
+
+        triggered_words = find_triggered_filters(
+            message_content, interaction.user)
+        
+        if triggered_words:
+            await interaction.response.send_message("Your interaction contained a filtered word. Aborting!", ephemeral=True)
+            return
+
+        return await super().process_application_commands(interaction)
 
 bot = Bot(intents=intents, allowed_mentions=mentions)
 
@@ -77,6 +103,7 @@ async def on_ready():
 
 
 if __name__ == '__main__':
+    bot.remove_command("help")
     for extension in initial_extensions:
         bot.load_extension(extension)
 

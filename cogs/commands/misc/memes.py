@@ -13,7 +13,7 @@ from utils.autocompleters import memes_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
 from utils.permissions.checks import (PermissionsFailure,
-                                      genius_or_submod_and_up, whisper)
+                                      mod_and_up, whisper)
 from utils.permissions.slash_perms import slash_perms
 from utils.permissions.permissions import permissions
 from utils.menu import Menu
@@ -70,8 +70,8 @@ class Memes(commands.Cog):
 
         await ctx.respond(embed=await self.prepare_meme_embed(meme), file=file)
 
-    @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Add a new meme", permissions=slash_perms.genius_or_submod_and_up())
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Add a new meme", permissions=slash_perms.mod_and_up())
     async def addmeme(self, ctx: BlooContext, name: str) -> None:
         """Add a meme. Optionally attach an image. (Genius only)
 
@@ -138,8 +138,8 @@ class Memes(commands.Cog):
 
         await ctx.respond(f"Added new meme!", file=_file or discord.utils.MISSING, embed=await self.prepare_meme_embed(meme))
 
-    @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Edit an existing meme", permissions=slash_perms.genius_or_submod_and_up())
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Edit an existing meme", permissions=slash_perms.mod_and_up())
     async def editmeme(self, ctx: BlooContext, name: Option(str, autocomplete=memes_autocomplete)) -> None:
         """Edit a meme's body, optionally attach an image.
         
@@ -198,8 +198,8 @@ class Memes(commands.Cog):
         
         await ctx.respond(f"Meme edited!", file=_file or discord.utils.MISSING, embed=await self.prepare_meme_embed(meme))
 
-    @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Delete a meme", permissions=slash_perms.genius_or_submod_and_up())
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Delete a meme", permissions=slash_perms.mod_and_up())
     async def delmeme(self, ctx: BlooContext, name: Option(str, description="Name of meme to delete", autocomplete=memes_autocomplete)):
         """Delete meme (geniuses only)
 

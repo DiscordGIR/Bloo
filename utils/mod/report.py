@@ -25,8 +25,7 @@ async def report(bot: discord.Client, message: discord.Message, word: str, invit
     db_guild = guild_service.get_guild()
     channel = message.guild.get_channel(db_guild.channel_reports)
 
-    # ping_string = prepare_ping_string(db_guild, message)
-    ping_string = ""
+    ping_string = prepare_ping_string(db_guild, message)
     view = ReportActions(message.author)
 
     if invite:
@@ -58,9 +57,7 @@ async def report_raid_phrase(bot: discord.Client, message: discord.Message, doma
     db_guild = guild_service.get_guild()
     channel = message.guild.get_channel(db_guild.channel_reports)
 
-    # TODO revert everywhere
-    # ping_string = prepare_ping_string(db_guild, message)
-    ping_string = ""
+    ping_string = prepare_ping_string(db_guild, message)
     view = RaidPhraseReportActions(message.author, domain)
 
     embed = prepare_embed(
@@ -72,9 +69,9 @@ async def report_raid_phrase(bot: discord.Client, message: discord.Message, doma
 
 
 async def report_spam(bot, msg, user, title):
-    channel = msg.guild.get_channel(guild_service.get_guild().channel_reports)
-    # ping_string = await self.prepare_ping_string(msg)
-    ping_string = ""
+    db_guild = guild_service.get_guild()
+    channel = msg.guild.get_channel(db_guild.channel_reports)
+    ping_string = prepare_ping_string(db_guild, msg)
 
     view = SpamReportActions(user)
     embed = prepare_embed(msg, title=title)

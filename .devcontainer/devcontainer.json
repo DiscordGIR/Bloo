@@ -14,7 +14,7 @@
 	"settings": {},
 	
 	// Add the IDs of extensions you want installed when the container is created.
-	"extensions": ["ms-python.vscode-pylance", "ms-python.python", "oderwat.indent-rainbow", "eetami.whitespace-formatter", "kevinrose.vsc-python-indent", "njpwerner.autodocstring"],
+	"extensions": ["ms-python.vscode-pylance", "ms-python.python", "oderwat.indent-rainbow", "eetami.whitespace-formatter", "kevinrose.vsc-python-indent", "njpwerner.autodocstring", "github.copilot"],
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],

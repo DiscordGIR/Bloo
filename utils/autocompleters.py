@@ -6,11 +6,11 @@ from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 from discord.commands.context import AutocompleteContext
 
-from utils.async_cache import async_cacher
+from aiocache import cached
 from utils.mod.give_birthday_role import MONTH_MAPPING
 
 
-@async_cacher()
+@cached(ttl=3600)
 async def get_devices():
     res_devices = []
     async with aiohttp.ClientSession() as session:
@@ -41,7 +41,7 @@ async def device_autocomplete(ctx: AutocompleteContext):
     return [device for device in devices if device.lower().startswith(ctx.value.lower()) and device.lower().split()[0] in ['iphone', 'ipod', 'ipad', 'homepod', 'apple']][:25]
 
 
-@async_cacher()
+@cached(ttl=3600)
 async def get_jailbreaks():
     res_apps = []
     async with aiohttp.ClientSession() as session:
@@ -82,28 +82,24 @@ async def date_autocompleter(ctx: AutocompleteContext) -> list:
 async def tags_autocomplete(ctx: AutocompleteContext):
     tags = [tag.name.lower() for tag in guild_service.get_guild().tags]
     tags.sort()
-    tags = tags[:25]
-    return [tag for tag in tags if tag.lower().startswith(ctx.value.lower())]
+    return [tag for tag in tags if tag.lower().startswith(ctx.value.lower())][:25]
 
 async def memes_autocomplete(ctx: AutocompleteContext):
     memes = [meme.name.lower() for meme in guild_service.get_guild().memes]
     memes.sort()
-    memes = memes[:25]
-    return [meme for meme in memes if meme.lower().startswith(ctx.value.lower())]
+    return [meme for meme in memes if meme.lower().startswith(ctx.value.lower())][:25]
 
 
 async def liftwarn_autocomplete(ctx: AutocompleteContext):
     cases = [case._id for case in user_service.get_cases(
         int(ctx.options["user"])).cases if case._type == "WARN" and not case.lifted]
     cases.sort(reverse=True)
-    cases = cases[:25]
 
-    return [case for case in cases if str(case).startswith(str(ctx.value))]
+    return [case for case in cases if str(case).startswith(str(ctx.value))][:25]
 
 
 async def filterwords_autocomplete(ctx: AutocompleteContext):
     words = [word.word for word in guild_service.get_guild().filter_words]
     words.sort()
-    words = words[:25]
 
-    return [word for word in words if str(word).startswith(str(ctx.value))]
+    return [word for word in words if str(word).startswith(str(ctx.value))][:25]

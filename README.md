@@ -47,9 +47,13 @@ BLOO_TOKEN="your token here"
 
 MAIN_GUILD_ID=12345
 OWNER_ID=12345
+AARON_ID=123 # ID of whoever owns the server
 
 DB_HOST="host.docker.internal"
 DB_PORT=27017
+
+# this is optional, for /sabbath commmand
+AARON_ROLE=123
 ```
 
 ## Contributors
@@ -63,9 +67,14 @@ DB_PORT=27017
     <td align="center"><a href="https://github.com/donato-fiore"><img src="https://avatars.githubusercontent.com/u/50346119?v=4" width="100px;" alt=""/><br /><sub><b>donato-fiore</b></sub></a></td>
   </tr>
   <tr>
-    <td align="center"><a href="https://m1sta.xyz/@"><img src="https://avatars.githubusercontent.com/u/37033149?v=4" width="100px;" alt=""/><br /><sub><b>m1stadev</b></sub></a></td>
+    <td align="center"><a href="https://m1sta.xyz/"><img src="https://avatars.githubusercontent.com/u/37033149?v=4" width="100px;" alt=""/><br /><sub><b>m1stadev</b></sub></a></td>
     <td align="center"><a href="https://saadat.dev/"><img src="https://avatars.githubusercontent.com/u/41216857?v=4" width="100px;" alt=""/><br /><sub><b>mass1ve-err0r</b></sub></a></td>
     <td align="center"><a href="https://saadat.dev/"><img src="https://avatars.githubusercontent.com/u/27446425?v=4" width="100px;" alt=""/><br /><sub><b>sqlstatement</b></sub></a></td>
     <td align="center"><a href="https://saadat.dev/"><img src="https://avatars.githubusercontent.com/u/92439990?v=4" width="100px;" alt=""/><br /><sub><b>extradummythicc</b></sub></a></td>
   </tr>
   </table>
+
+### Special thanks
+Special thanks to the following people for ideas, testing, or help:
+- [Jack LaFond](https://www.jack.link/) --- creator of [tunes.ninja](https://tunes.ninja/), the bot that the Songs cog is inspired by
+- Cameren from r/jb, who has given a lot of ideas and helped with testing on many occasions

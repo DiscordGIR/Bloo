@@ -11,10 +11,10 @@ import aiohttp
 from datetime import datetime
 from yarl import URL
 from data.services.guild_service import guild_service
-from utils.async_cache import async_cacher
+from aiocache import cached
 from utils.config import cfg
 from utils.context import BlooContext, BlooOldContext
-from utils.menu import Menu, TweakMenu
+from utils.menu import TweakMenu
 from utils.permissions.checks import PermissionsFailure, whisper_in_general
 from utils.permissions.permissions import permissions
 
@@ -31,6 +31,7 @@ default_repos = [
     "repo.theodyssey.dev",
 ]
 
+@cached(ttl=300)
 async def package_request(package):
     async with aiohttp.ClientSession() as client:
         async with client.get(URL(f'{package_url}{package.get("Package")}', encoded=True)) as resp:
@@ -61,13 +62,12 @@ async def search_request(search):
 
 async def repo_autocomplete(ctx: AutocompleteContext):
     repos = await fetch_repos()
-    repos = [repo["id"]
-             for repo in repos if repo.get("id") and repo.get("id") is not None]
+    repos = [repo["id"] for repo in repos if repo.get("id") and repo.get("id") is not None]
     repos.sort()
     return [repo for repo in repos if ctx.value.lower() in repo.lower()][:25]
 
 
-@async_cacher()
+@cached(ttl=3600)
 async def fetch_repos():
     async with aiohttp.ClientSession() as client:
         async with client.get('https://api.parcility.co/db/repos/') as resp:
@@ -254,6 +254,7 @@ class Parcility(commands.Cog):
                     interaction=True, ctx=ctx, whisper=ctx.whisper)
         await menu.start()
 
+    @cached(ttl=1800)
     async def repo_request(self, repo):
         async with aiohttp.ClientSession() as client:
             async with client.get(f'{self.repo_url}{repo}') as resp:

@@ -51,7 +51,7 @@ class TweakMenu(Menu):
         if self.ctx.repo:
             self.extra_buttons = [
                 discord.ui.Button(label='Add Repo to Sileo', emoji="<:sileo:679466569407004684>", url=f'https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={self.ctx.repo}', style=discord.ButtonStyle.url),
-                discord.ui.Button(label='Add Repo to Zebra', emoji="🦓", url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={self.ctx.repo}', style=discord.ButtonStyle.url)
+                discord.ui.Button(label='Add Repo to Zebra', emoji="<:zebra:911433583032422420>", url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={self.ctx.repo}', style=discord.ButtonStyle.url)
             ]
         else:
             self.extra_buttons = [
@@ -70,7 +70,7 @@ class TweakMenuButtons(MenuButtons):
         if self.ctx.repo:
             self.extra_buttons = [
                 discord.ui.Button(label='Add Repo to Sileo', emoji="<:sileo:679466569407004684>", url=f'https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={self.ctx.repo}', style=discord.ButtonStyle.url),
-                discord.ui.Button(label='Add Repo to Zebra', emoji="🦓", url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={self.ctx.repo}', style=discord.ButtonStyle.url)
+                discord.ui.Button(label='Add Repo to Zebra', emoji="<:zebra:911433583032422420>", url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={self.ctx.repo}', style=discord.ButtonStyle.url)
             ]
         else:
             self.extra_buttons = [
@@ -79,3 +79,28 @@ class TweakMenuButtons(MenuButtons):
             ]
         
         await super().launch(embed)
+
+    async def on_timeout(self):
+        # Check if we even have any components enabled (if we don't, we don't need to do anything!)
+        componentEnabled = False
+        if 0 <= (self.array_current_page - 1) < len(self.pages):
+            componentEnabled = True
+        if len(self.pages) > self.current_page:
+            componentEnabled = True
+        if componentEnabled is False:
+            return
+
+        # Recursively disable all buttons
+        for child in self.children:
+            if child not in self.extra_buttons:
+                child.disabled = True
+        
+        # If we aren't in an interaction, just edit the current message
+        if self.is_interaction is False:
+            await self.msg.edit(embed=self.embed, view=self)
+        # Otherwise, handle with context
+        else:
+            if self.should_whisper is True:
+                await self.ctx.respond_or_edit(embed=self.embed, view=self, ephemeral=True)
+            else:
+                await self.ctx.respond_or_edit(embed=self.embed, view=self)

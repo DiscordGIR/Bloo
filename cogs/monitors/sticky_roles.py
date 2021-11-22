@@ -22,7 +22,7 @@ class StickyRoles(commands.Cog):
             return
 
         possible_roles = user_service.get_user(member.id).sticky_roles
-        roles = [member.guild.get_role(role) for role in possible_roles if member.guild.get_role(role) is not None]
+        roles = [member.guild.get_role(role) for role in possible_roles if member.guild.get_role(role) is not None and member.guild.get_role(role) < member.guild.me.top_role]
         await member.add_roles(*roles, reason="Sticky roles")
 
 

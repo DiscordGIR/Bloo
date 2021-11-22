@@ -1,4 +1,7 @@
-class Logger:
+import logging
+import sys
+
+class Formatter(logging.Formatter):
     def __init__(self):
         self.style_list = {
             'bright': '\x1b[1m',
@@ -25,20 +28,45 @@ class Logger:
             'bgCyan': '\x1b[46m',
             'bgWhite': '\x1b[47m'
         }
-        self.good = f"{self.style_list.get('dim')}[{self.style_list.get('reset')}{self.style_list.get('green')}*{self.style_list.get('reset')}{self.style_list.get('dim')}]{self.style_list.get('reset')}"
-        self.bad = f"{self.style_list.get('dim')}[{self.style_list.get('reset')}{self.style_list.get('red')}!{self.style_list.get('reset')}{self.style_list.get('dim')}]{self.style_list.get('reset')}"
-        self.maybe = f"{self.style_list.get('dim')}[{self.style_list.get('reset')}{self.style_list.get('yellow')}?{self.style_list.get('reset')}{self.style_list.get('dim')}]{self.style_list.get('reset')}"
-        
-    def info(self, msg: str):
-        print(self.good + ' ' + msg)
-        
-    def error(self, msg: str):
-        print(self.bad + ' ' + msg)
-        
-    def warn(self, msg: str):
-        print(self.maybe + ' ' + msg)
-        
-    def neutral(self, msg: str):
-        print(msg)
+        self.err_fmt = f"{self.style_list.get('dim')}[{self.style_list.get('reset')}{self.style_list.get('red')}!{self.style_list.get('reset')}{self.style_list.get('dim')}]{self.style_list.get('reset')} %(message)s"
+        self.dbg_fmt = f"{self.style_list.get('dim')}[{self.style_list.get('reset')}{self.style_list.get('yellow')}#{self.style_list.get('reset')}{self.style_list.get('dim')}]{self.style_list.get('reset')} (m:'%(module)s', l:%(lineno)s) %(message)s"
+        self.warn_fmt = f"{self.style_list.get('dim')}[{self.style_list.get('reset')}{self.style_list.get('yellow')}?{self.style_list.get('reset')}{self.style_list.get('dim')}]{self.style_list.get('reset')} (m:'%(module)s', l:%(lineno)s) %(message)s"
+        self.info_fmt = f"{self.style_list.get('dim')}[{self.style_list.get('reset')}{self.style_list.get('green')}*{self.style_list.get('reset')}{self.style_list.get('dim')}]{self.style_list.get('reset')} %(message)s"
+        super().__init__(fmt=f"{self.style_list.get('dim')}[{self.style_list.get('reset')}{self.style_list.get('green')}*{self.style_list.get('reset')}{self.style_list.get('dim')}]{self.style_list.get('reset')} %(message)s", datefmt=None, style='%')
 
-logger = Logger()
+    def format(self, record):
+        format_orig = self._style._fmt
+
+        if record.levelno == logging.DEBUG:
+            self._style._fmt = self.dbg_fmt
+            
+        elif record.levelno == logging.INFO:
+            self._style._fmt = self.info_fmt
+
+        elif record.levelno == logging.WARNING:
+            self._style._fmt = self.warn_fmt
+            
+        elif record.levelno == logging.ERROR:
+            self._style._fmt = self.err_fmt
+
+        result = logging.Formatter.format(self, record)
+
+        self._style._fmt = format_orig
+
+        return result
+
+class Logger:
+    def __init__(self):
+        self.HNDLR = logging.StreamHandler(sys.stdout)
+        self.HNDLR.formatter = Formatter()
+        discord_logger = logging.getLogger('discord')
+        discord_logger.setLevel(logging.INFO)
+        discord_logger.addHandler(self.HNDLR)
+        ap_logger = logging.getLogger('apscheduler')
+        ap_logger.setLevel(logging.INFO)
+        ap_logger.addHandler(self.HNDLR)
+        self.logger = logging.Logger(__name__)
+        self.logger.setLevel(logging.INFO)
+        self.logger.addHandler(self.HNDLR)
+        
+logger = Logger().logger

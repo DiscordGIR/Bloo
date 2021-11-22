@@ -104,7 +104,7 @@ async def on_ready():
                 """)
     logger.info(f'Logged in as: {bot.user.name} (ID: {bot.user.id})')
     logger.info(f'Version: {discord.__version__}')
-    logger.info(f'Made with ❤️  by SlimShadyIAm#9999 and the Bloo development team. Enjoy!')
+    logger.info(f'Made with ❤️ by SlimShadyIAm#9999 and the Bloo development team. Enjoy!')
 
 
 if __name__ == '__main__':

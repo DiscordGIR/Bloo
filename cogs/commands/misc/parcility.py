@@ -1,22 +1,22 @@
+import discord
+from discord.commands.commands import Option, slash_command
+from discord.commands.context import AutocompleteContext
+from discord.ext import commands
+
 import json
 import re
 import traceback
 import urllib
-from datetime import datetime
-
 import aiohttp
-import discord
+from datetime import datetime
+from yarl import URL
 from data.services.guild_service import guild_service
-from discord.commands.commands import Option, slash_command
-from discord.commands.context import AutocompleteContext
-from discord.ext import commands
 from aiocache import cached
 from utils.config import cfg
 from utils.context import BlooContext, BlooOldContext
 from utils.menu import TweakMenu
 from utils.permissions.checks import PermissionsFailure, whisper_in_general
 from utils.permissions.permissions import permissions
-from yarl import URL
 
 package_url = 'https://api.parcility.co/db/package/'
 search_url = 'https://api.parcility.co/db/search?q='
@@ -30,7 +30,6 @@ default_repos = [
     "diatr.us/apt",
     "repo.theodyssey.dev",
 ]
-
 
 @cached(ttl=300)
 async def package_request(package):
@@ -63,8 +62,7 @@ async def search_request(search):
 
 async def repo_autocomplete(ctx: AutocompleteContext):
     repos = await fetch_repos()
-    repos = [repo["id"]
-             for repo in repos if repo.get("id") and repo.get("id") is not None]
+    repos = [repo["id"] for repo in repos if repo.get("id") and repo.get("id") is not None]
     repos.sort()
     return [repo for repo in repos if ctx.value.lower() in repo.lower()][:25]
 

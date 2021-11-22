@@ -1,10 +1,10 @@
-import os, sys
-
 import discord
 from discord.ext import commands
 
-from utils.logger import logger
 from dotenv import load_dotenv
+import os
+import sys
+from utils.logger import logger
 
 intents = discord.Intents.default()
 intents.members = True
@@ -12,13 +12,12 @@ intents.messages = True
 intents.presences = True
 mentions = discord.AllowedMentions(everyone=False, users=True, roles=False)
 
-
 bot = commands.Bot(intents=intents, allowed_mentions=mentions)
 load_dotenv()
 
 @bot.event
 async def on_ready():
-    logger.info("""
+    logger.neutral("""
             88          88                          
             88          88                          
             88          88                          

@@ -1,14 +1,13 @@
+import discord
+from discord.commands import (Option, message_command, slash_command, user_command)
+from discord.ext import commands
+from discord.utils import format_dt
+
 import traceback
 from datetime import datetime
 from math import floor
 from typing import Union
-
-import discord
 from data.services.user_service import user_service
-from discord.commands import (Option, message_command, slash_command,
-                              user_command)
-from discord.ext import commands
-from discord.utils import format_dt
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.menu import Menu

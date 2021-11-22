@@ -4,7 +4,6 @@ aiohttp==3.7.4.post0
 async-timeout==3.0.1
 attrs==21.2.0
 chardet==4.0.0
-coloredlogs==15.0.1
 e==1.4.5
 expiringdict==1.2.1
 fold-to-ascii==1.0.2.post1
@@ -29,3 +28,5 @@ tzdata==2021.5
 tzlocal==4.1
 watchdog==2.1.6
 bs4==0.0.1
+ujson==4.2.0
+msgpack==1.0.2

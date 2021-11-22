@@ -1,4 +1,3 @@
-from io import BytesIO
 import discord
 from discord.commands import slash_command
 from discord.commands.commands import Option

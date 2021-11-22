@@ -78,11 +78,7 @@ class Xp(commands.Cog):
         if isinstance(obj, discord.Message):
             member = obj.author
 
-        roles_to_add = []
-        for role in roles_to_add:
-            role = member.guild.get_role(role)
-            roles_to_add.append(role)
-
+        roles_to_add = [member.guild.get_role(role) for role in roles_to_add if member.guild.get_role(role) is not None]
         await member.add_roles(*roles_to_add, reason="XP roles")
 
     def get_level(self, current_xp):

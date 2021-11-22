@@ -206,5 +206,8 @@ class UserService:
         values["counts"].reverse()
         return values
 
+    def set_sticky_roles(self, _id: int, roles) -> None:
+        self.get_user(_id)
+        User.objects(_id=_id).update_one(set__sticky_roles=roles)
 
 user_service = UserService()

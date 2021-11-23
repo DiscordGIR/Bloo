@@ -1,4 +1,5 @@
 import logging
+import GLOBALS
 import sys
 
 class Formatter(logging.Formatter):
@@ -32,7 +33,7 @@ class Formatter(logging.Formatter):
         self.dbg_fmt = f"{self.style_list.get('dim')}[{self.style_list.get('reset')}{self.style_list.get('yellow')}#{self.style_list.get('reset')}{self.style_list.get('dim')}]{self.style_list.get('reset')} (m:'%(module)s', l:%(lineno)s) %(message)s"
         self.warn_fmt = f"{self.style_list.get('dim')}[{self.style_list.get('reset')}{self.style_list.get('yellow')}?{self.style_list.get('reset')}{self.style_list.get('dim')}]{self.style_list.get('reset')} (m:'%(module)s', l:%(lineno)s) %(message)s"
         self.info_fmt = f"{self.style_list.get('dim')}[{self.style_list.get('reset')}{self.style_list.get('green')}*{self.style_list.get('reset')}{self.style_list.get('dim')}]{self.style_list.get('reset')} %(message)s"
-        super().__init__(fmt=f"{self.style_list.get('dim')}[{self.style_list.get('reset')}{self.style_list.get('green')}*{self.style_list.get('reset')}{self.style_list.get('dim')}]{self.style_list.get('reset')} %(message)s", datefmt=None, style='%')
+        super().__init__(fmt=self.info_fmt, datefmt=None, style='%')
 
     def format(self, record):
         format_orig = self._style._fmt
@@ -59,12 +60,14 @@ class Logger:
     def __init__(self):
         self.HNDLR = logging.StreamHandler(sys.stdout)
         self.HNDLR.formatter = Formatter()
-        discord_logger = logging.getLogger('discord')
-        discord_logger.setLevel(logging.INFO)
-        discord_logger.addHandler(self.HNDLR)
-        ap_logger = logging.getLogger('apscheduler')
-        ap_logger.setLevel(logging.INFO)
-        ap_logger.addHandler(self.HNDLR)
+        if not GLOBALS.args.disable_discord_logs:
+            discord_logger = logging.getLogger('discord')
+            discord_logger.setLevel(logging.INFO)
+            discord_logger.addHandler(self.HNDLR)
+        if not GLOBALS.args.disable_scheduler_logs:
+            ap_logger = logging.getLogger('apscheduler')
+            ap_logger.setLevel(logging.INFO)
+            ap_logger.addHandler(self.HNDLR)
         self.logger = logging.Logger(__name__)
         self.logger.setLevel(logging.INFO)
         self.logger.addHandler(self.HNDLR)

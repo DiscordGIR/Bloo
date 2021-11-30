@@ -87,7 +87,7 @@ class ModViewReport(ui.View):
 
     async def start(self, ctx: BlooContext):
         self.ctx = ctx
-        self.ctx.member = self.ctx.author = self.mod
+        self.ctx.author = self.ctx.message.author = self.mod
         await self.wait()
 
     async def on_timeout(self) -> None:

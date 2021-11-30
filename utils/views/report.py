@@ -81,6 +81,8 @@ class RaidPhraseReportActions(ui.View):
     async def dismiss(self, button: ui.Button, interaction: discord.Interaction):
         if not self.check(interaction):
             return
+
+        self.ctx.author = self.ctx.message.author = interaction.user
         try:
             await unmute(self.ctx, self.target_member, reason="Reviewed by a moderator.")
         except Exception:
@@ -92,6 +94,8 @@ class RaidPhraseReportActions(ui.View):
     async def ban(self, button: ui.Button, interaction: discord.Interaction):
         if not self.check(interaction):
             return
+
+        self.ctx.author = self.ctx.message.author = interaction.user
         try:
             await ban(self.ctx, self.target_member, reason="Raid phrase detected")
             self.ctx.bot.ban_cache.ban(self.target_member.id)
@@ -124,6 +128,8 @@ class SpamReportActions(ui.View):
     async def dismiss(self, button: ui.Button, interaction: discord.Interaction):
         if not self.check(interaction):
             return
+
+        self.ctx.author = self.ctx.message.author = interaction.user
         try:
             await unmute(self.ctx, self.target_member, reason="Reviewed by a moderator.")
         except:
@@ -135,6 +141,8 @@ class SpamReportActions(ui.View):
     async def ban(self, button: ui.Button, interaction: discord.Interaction):
         if not self.check(interaction):
             return
+
+        self.ctx.author = self.ctx.message.author = interaction.user
         try:
             await ban(self.ctx, self.target_member, reason="Spam detected")
         except Exception:

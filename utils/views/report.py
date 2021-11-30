@@ -62,6 +62,20 @@ class ReportActions(ui.View):
             return
         await self.ctx.channel.purge(limit=100)
 
+    @ui.button(emoji="💁‍♀️", label="Claim report", style=discord.ButtonStyle.primary)
+    async def claim(self, button: ui.Button, interaction: discord.Interaction):
+        if not self.check(interaction):
+            return
+
+        embed = discord.Embed(color=discord.Color.blurple())
+        embed.description = f"{interaction.user.mention} is looking into {self.target_member.mention}'s report!"
+        await self.ctx.send(embed=embed)
+
+        report_embed = self.ctx.message.embeds[0]
+        report_embed.color = discord.Color.orange()
+        report_embed.title = f"{report_embed.title} (claimed)"
+        await self.ctx.message.edit(embed=report_embed)
+
 class RaidPhraseReportActions(ui.View):
     def __init__(self, author: discord.Member, domain: str):
         super().__init__()

@@ -37,6 +37,23 @@ async def get_jailbreaks_jba():
                 res_apps = json.loads(data)
     return res_apps
 
+@cached(ttl=3600)
+async def get_ios_cfw():
+    """Gets all apps on ios.cfw.guide
+    
+    Returns
+    -------
+    dict
+        "ios, jailbreaks, devices"
+    """
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://ios.cfw.guide/main.json") as resp:
+            if resp.status == 200:
+                data = await resp.json()
+
+    return data
+
 @cached(ttl=1800)
 async def get_signed_status():
     """Gets Jailbreaks.app's signed status"""
@@ -293,37 +310,103 @@ class Misc(commands.Cog):
         name : str
             "Name of jailbreak"
         """
-        response = await get_jailbreaks()
-        try:
-            for object in response[f'{name.lower().replace("œ", "oe").replace("ï", "i")}']:
-                view = discord.ui.View()
-                embed = discord.Embed(
-                    title=object.get('Name'), color=discord.Color.blurple())
-                embed.add_field(
-                    name="Version", value=object['LatestVersion'], inline=True)
+        response = await get_ios_cfw()
+
+        matching_jbs = [jb for jb in response.get("jailbreak") if jb.get("name").lower() == name.lower()]
+        if len(matching_jbs) == 0:
+            raise commands.BadArgument("No jailbreak found with that name.")
+
+        jb = matching_jbs[0]
+
+        embed = discord.Embed(title=jb.get('name'), color=discord.Color.blurple())
+        view = discord.ui.View()
+        
+        info = jb.get('info')
+        if info is not None:
+            embed.add_field(
+                name="Version", value="Placeholder", inline=True)
+            
+            if info.get("firmwares"):
+                # ({len(jb.get("compatibility").get("devices"))} devices)
+                soc = f"Works with {info.get('soc')}" if info.get('soc') else ""
                 embed.add_field(name="Compatible with",
-                                value=object['Versions'], inline=True)
-                embed.add_field(
-                    name="Type", value=object['Type'], inline=False)
-                view.add_item(discord.ui.Button(label='Website', url=object['Website'], style=discord.ButtonStyle.url))
-                if object.get('Guide') is not None:
-                    view.add_item(discord.ui.Button(label='Guide', url=object['Guide'], style=discord.ButtonStyle.url))
-                if object.get('Notes') is not None:
-                    embed.add_field(
-                        name="Notes", value=object['Notes'], inline=False)
-                jba = await iterate_apps(object.get('Name'))
-                signed = await get_signed_status()
-                if jba is not None and signed.get('status') == 'Signed':
-                    view.add_item(discord.ui.Button(label='Install with Jailbreaks.app', url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
-                elif jba is not None and signed.get('status') == 'Revoked':
-                    view.add_item(discord.ui.Button(label='Install with Jailbreaks.app', url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url, disabled=True))
-                if object.get('Icon') is not None:
-                    embed.set_thumbnail(url=object.get('Icon'))
-                if object.get('Color') is not None:
-                    embed.color = int(object.get('Color').replace('#', ''), 16)
-                await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper, view=view)
-        except:
-            await ctx.send_error("Sorry, I couldn't find any jailbreaks with that name.")
+                                value=f'iOS {"-".join(info.get("firmwares"))}\n{f"**{soc}**" if soc else ""}', inline=True)
+            else:
+                embed.add_field(name="Compatible with",
+                            value="Unavailable", inline=True)
+
+            embed.add_field(
+                name="Type", value=info.get("type"), inline=False)
+
+            if info.get("website") is not None:
+                view.add_item(discord.ui.Button(label='Website', url=info.get("website").get("url"), style=discord.ButtonStyle.url))
+
+            if info.get('guide'):
+                for guide in info.get('guide'):
+                    view.add_item(discord.ui.Button(label=f'{guide.get("name")} Guide', url=f"https://ios.cfw.guide{guide.get('url')}", style=discord.ButtonStyle.url))
+            # if object.get('Notes') is not None:
+            #     embed.add_field(
+            #         name="Notes", value=object['Notes'], inline=False)
+        else:
+            embed.description = "No info available."
+
+        jba = await iterate_apps(jb.get("name"))
+        signed = await get_signed_status()
+        if jba is not None and signed.get('status') == 'Signed':
+            view.add_item(discord.ui.Button(label='Install with Jailbreaks.app', url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
+        elif jba is not None and signed.get('status') == 'Revoked':
+            view.add_item(discord.ui.Button(label='Install with Jailbreaks.app', url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url, disabled=True))
+        # if object.get('Icon') is not None:
+        #     embed.set_thumbnail(url=object.get('Icon'))
+        # if object.get('Color') is not None:
+        #     embed.color = int(object.get('Color').replace('#', ''), 16)
+        await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper, view=view)
+
+    # @whisper_in_general()
+    # @slash_command(guild_ids=[cfg.guild_id], description="Get info about a jailbreak.")
+    # async def jailbreak(self, ctx: BlooContext, name: Option(str, description="Name of the jailbreak", autocomplete=jb_autocomplete, required=True)) -> None:
+    #     """Fetches info of jailbreak
+        
+    #     Example usage
+    #     -------------
+    #     /jailbreak name:<name>
+        
+    #     Parameters
+    #     ----------
+    #     name : str
+    #         "Name of jailbreak"
+    #     """
+    #     response = await get_jailbreaks()
+    #     try:
+    #         for object in response[f'{name.lower().replace("œ", "oe").replace("ï", "i")}']:
+    #             view = discord.ui.View()
+    #             embed = discord.Embed(
+    #                 title=object.get('Name'), color=discord.Color.blurple())
+    #             embed.add_field(
+    #                 name="Version", value=object['LatestVersion'], inline=True)
+    #             embed.add_field(name="Compatible with",
+    #                             value=object['Versions'], inline=True)
+    #             embed.add_field(
+    #                 name="Type", value=object['Type'], inline=False)
+    #             view.add_item(discord.ui.Button(label='Website', url=object['Website'], style=discord.ButtonStyle.url))
+    #             if object.get('Guide') is not None:
+    #                 view.add_item(discord.ui.Button(label='Guide', url=object['Guide'], style=discord.ButtonStyle.url))
+    #             if object.get('Notes') is not None:
+    #                 embed.add_field(
+    #                     name="Notes", value=object['Notes'], inline=False)
+    #             jba = await iterate_apps(object.get('Name'))
+    #             signed = await get_signed_status()
+    #             if jba is not None and signed.get('status') == 'Signed':
+    #                 view.add_item(discord.ui.Button(label='Install with Jailbreaks.app', url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
+    #             elif jba is not None and signed.get('status') == 'Revoked':
+    #                 view.add_item(discord.ui.Button(label='Install with Jailbreaks.app', url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url, disabled=True))
+    #             if object.get('Icon') is not None:
+    #                 embed.set_thumbnail(url=object.get('Icon'))
+    #             if object.get('Color') is not None:
+    #                 embed.color = int(object.get('Color').replace('#', ''), 16)
+    #             await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper, view=view)
+    #     except:
+    #         await ctx.send_error("Sorry, I couldn't find any jailbreaks with that name.")
 
     @jailbreak.error
     @remindme.error

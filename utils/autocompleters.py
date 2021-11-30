@@ -63,11 +63,37 @@ async def get_jailbreaks():
 
     return res_apps
 
+@cached(ttl=3600)
+async def get_ios_cfw_jailbreaks():
+    res_apps = []
+    async with aiohttp.ClientSession() as session:
+        async with session.get("https://ios.cfw.guide/main.json") as resp:
+            if resp.status == 200:
+                jailbreaks = await resp.json()
+
+                # try to find an app with the name given in command
+                for jb in jailbreaks.get("jailbreak"):
+                    name = re.sub(r'\((.*?)\)', "", jb["name"])
+                    # get rid of '[ and ']'
+                    name = name.replace('[', '')
+                    name = name.replace(']', '')
+                    name = name.strip()
+                    if name not in res_apps:
+                        res_apps.append(name)
+
+    return res_apps
+
 
 async def jb_autocomplete(ctx: AutocompleteContext):
-    apps = await get_jailbreaks()
+    apps = await get_ios_cfw_jailbreaks()
     apps.sort()
     return [app for app in apps if app.lower().startswith(ctx.value.lower())][:25]
+
+
+# async def jb_autocomplete(ctx: AutocompleteContext):
+#     apps = await get_jailbreaks()
+#     apps.sort()
+#     return [app for app in apps if app.lower().startswith(ctx.value.lower())][:25]
 
 
 async def date_autocompleter(ctx: AutocompleteContext) -> list:

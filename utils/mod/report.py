@@ -3,8 +3,10 @@ from data.services import user_service
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 from discord.utils import format_dt
+from utils.config import cfg
 from utils.context import BlooOldContext
-from utils.views.report import RaidPhraseReportActions, ReportActions, SpamReportActions
+from utils.views.report import (RaidPhraseReportActions, ReportActions,
+                                SpamReportActions)
 
 
 async def report(bot: discord.Client, message: discord.Message, word: str, invite=None):
@@ -26,7 +28,6 @@ async def report(bot: discord.Client, message: discord.Message, word: str, invit
     channel = message.guild.get_channel(db_guild.channel_reports)
 
     ping_string = prepare_ping_string(db_guild, message)
-    # ping_string = ""
     view = ReportActions(message.author)
 
     if invite:
@@ -110,6 +111,9 @@ def prepare_ping_string(db_guild, message):
 
     """
     ping_string = ""
+    if cfg.dev:
+        return ping_string
+    
     role = message.guild.get_role(db_guild.role_moderator)
     for member in role.members:
         offline_ping = (user_service.get_user(member.id)).offline_report_ping

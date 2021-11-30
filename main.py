@@ -1,6 +1,5 @@
 import discord
 from discord.ext import commands
-from data.services import guild_service
 
 import os
 from utils.config import cfg
@@ -93,7 +92,7 @@ bot = Bot(intents=intents, allowed_mentions=mentions)
 @bot.event
 async def on_ready():
     bot.ban_cache = BanCache(bot)
-    logger.neutral("""
+    print("""
             88          88                          
             88          88                          
             88          88                          

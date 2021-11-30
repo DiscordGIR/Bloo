@@ -62,7 +62,7 @@ class ReportActions(ui.View):
             return
         await self.ctx.channel.purge(limit=100)
 
-    @ui.button(emoji="💁‍♀️", label="Claim report", style=discord.ButtonStyle.primary)
+    @ui.button(emoji="🔎", label="Claim report", style=discord.ButtonStyle.primary)
     async def claim(self, button: ui.Button, interaction: discord.Interaction):
         if not self.check(interaction):
             return

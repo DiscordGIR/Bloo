@@ -111,7 +111,7 @@ class WebhookLogger(logging.Handler):
             asyncio.ensure_future(self.post_content(message_body))
 
     async def post_content(self, message_body):
-         async with aiohttp.ClientSession() as session:
+        async with aiohttp.ClientSession() as session:
             the_webhook: discord.Webhook = discord.Webhook.from_url(self.webhook_url, session=session)
             try:
                 await the_webhook.send(**message_body)

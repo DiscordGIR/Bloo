@@ -52,6 +52,10 @@ AARON_ID=123 # ID of whoever owns the server
 DB_HOST="host.docker.internal"
 DB_PORT=27017
 
+# this is optional, set this for development
+# (it's False by default for production)
+DEV=True
+
 # this is optional, if you want logging to be sent to a Discord webhook
 LOGGING_WEBHOOK_URL=""
 

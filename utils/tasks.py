@@ -10,6 +10,7 @@ from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 from utils.config import cfg
 from utils.mod.mod_logs import prepare_unmute_log
+from pytz import utc
 
 executors = {
     'default': ThreadPoolExecutor(20)
@@ -50,7 +51,7 @@ class Tasks():
             }
 
         self.tasks = AsyncIOScheduler(
-            jobstores=jobstores, executors=executors, job_defaults=job_defaults, event_loop=bot.loop)
+            jobstores=jobstores, executors=executors, job_defaults=job_defaults, event_loop=bot.loop, timezone=utc)
         self.tasks.start()
 
     def schedule_unmute(self, id: int, date: datetime) -> None:

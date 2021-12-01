@@ -18,6 +18,7 @@ class User(mongoengine.Document):
     offline_report_ping = mongoengine.BooleanField(default=False, required=True)
     
     birthday            = mongoengine.ListField(default=[])
+    sticky_roles        = mongoengine.ListField(default=[])
 
     meta = {
         'db_alias': 'default',

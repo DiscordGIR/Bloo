@@ -62,6 +62,20 @@ class ReportActions(ui.View):
             return
         await self.ctx.channel.purge(limit=100)
 
+    @ui.button(emoji="🔎", label="Claim report", style=discord.ButtonStyle.primary)
+    async def claim(self, button: ui.Button, interaction: discord.Interaction):
+        if not self.check(interaction):
+            return
+
+        embed = discord.Embed(color=discord.Color.blurple())
+        embed.description = f"{interaction.user.mention} is looking into {self.target_member.mention}'s report!"
+        await self.ctx.send(embed=embed)
+
+        report_embed = self.ctx.message.embeds[0]
+        report_embed.color = discord.Color.orange()
+        report_embed.title = f"{report_embed.title} (claimed)"
+        await self.ctx.message.edit(embed=report_embed)
+
 class RaidPhraseReportActions(ui.View):
     def __init__(self, author: discord.Member, domain: str):
         super().__init__()
@@ -81,6 +95,8 @@ class RaidPhraseReportActions(ui.View):
     async def dismiss(self, button: ui.Button, interaction: discord.Interaction):
         if not self.check(interaction):
             return
+
+        self.ctx.author = self.ctx.message.author = interaction.user
         try:
             await unmute(self.ctx, self.target_member, reason="Reviewed by a moderator.")
         except Exception:
@@ -92,6 +108,8 @@ class RaidPhraseReportActions(ui.View):
     async def ban(self, button: ui.Button, interaction: discord.Interaction):
         if not self.check(interaction):
             return
+
+        self.ctx.author = self.ctx.message.author = interaction.user
         try:
             await ban(self.ctx, self.target_member, reason="Raid phrase detected")
             self.ctx.bot.ban_cache.ban(self.target_member.id)
@@ -124,6 +142,8 @@ class SpamReportActions(ui.View):
     async def dismiss(self, button: ui.Button, interaction: discord.Interaction):
         if not self.check(interaction):
             return
+
+        self.ctx.author = self.ctx.message.author = interaction.user
         try:
             await unmute(self.ctx, self.target_member, reason="Reviewed by a moderator.")
         except:
@@ -135,6 +155,8 @@ class SpamReportActions(ui.View):
     async def ban(self, button: ui.Button, interaction: discord.Interaction):
         if not self.check(interaction):
             return
+
+        self.ctx.author = self.ctx.message.author = interaction.user
         try:
             await ban(self.ctx, self.target_member, reason="Spam detected")
         except Exception:

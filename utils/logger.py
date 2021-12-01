@@ -1,7 +1,12 @@
+import os
+import requests
 import argparse
 import logging
 import sys
+from time import sleep
+from dotenv.main import load_dotenv
 
+load_dotenv()
 
 class Formatter(logging.Formatter):
     def __init__(self):
@@ -40,16 +45,13 @@ class Formatter(logging.Formatter):
     def format(self, record):
         format_orig = self._style._fmt
 
-        if record.levelno == logging.DEBUG:
+        if record.levelname == 'DEBUG':
             self._style._fmt = self.dbg_fmt
-            
-        elif record.levelno == logging.INFO:
+        if record.levelname == 'ingo':
             self._style._fmt = self.info_fmt
-
-        elif record.levelno == logging.WARNING:
+        if record.levelname == 'WARNING':
             self._style._fmt = self.warn_fmt
-            
-        elif record.levelno == logging.ERROR:
+        if record.levelname == 'ERROR':
             self._style._fmt = self.err_fmt
 
         result = logging.Formatter.format(self, record)
@@ -58,11 +60,64 @@ class Formatter(logging.Formatter):
 
         return result
 
+
+class WebhookFormatter(logging.Formatter):
+    def __init__(self):
+        super().__init__()
+        
+    def prefixcalc(self, levelname: str):
+        if levelname == 'DEBUG':
+            return '===| '
+        if levelname == 'INFO':
+            return '+  | '
+        if levelname == 'WARNING':
+            return 'W  | '
+        if levelname == 'ERROR':
+            return '!  | '
+        if levelname == 'CRITICAL':
+            return '-!! | '
+
+    def format(self, record: logging.LogRecord):
+        msg = logging.Formatter.format(self, record)
+        return "```diff\n{}{}```".format(self.prefixcalc(record.levelname), msg)
+
+class WebhookLogger(logging.Handler):
+    def __init__(self):
+        self.level = logging.INFO
+        super().__init__(self.level)
+        self.webhook_url = os.environ.get("WEBHOOK_URL")
+
+    def emit(self, record: logging.LogRecord):
+        self.send(WebhookFormatter().format(record), record)
+            
+    def send(self, formatted, record):
+        if self.webhook_url is None:
+            return
+        
+        parts = [formatted[i:i+2000] for i in range(0, len(formatted), 2000)]
+        for i, part in enumerate(parts):
+            if i == 0:
+                content = f'{part}```'
+                if part == parts[-1]:
+                    content = part
+                    if record.levelname == 'ERROR' or record.levelname == 'CRITICAL':
+                        content += f'<@{os.environ.get("OWNER_ID")}>'
+                requests.post(self.webhook_url, json={'content':content})
+                
+            else:
+                content = f'```diff\n{part}```'
+                if part == parts[-1]:
+                    content = f'```diff\n{part}'
+                    if record.levelname == 'ERROR' or record.levelname == 'CRITICAL':
+                        content += f'<@{os.environ.get("OWNER_ID")}>'
+                requests.post(self.webhook_url, json={'content':content})
+
 class Logger:
     def __init__(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('--disable-discord-logs', help='Disables Discord logging.', action='store_true')
         parser.add_argument('--disable-scheduler-logs', help='Disables scheduler logs.', action='store_true')
+        parser.add_argument('--disable-webhook-logging', help='Disables logging to the webhook.', action='store_true')
 
         args = parser.parse_args()
 
@@ -72,12 +127,18 @@ class Logger:
             discord_logger = logging.getLogger('discord')
             discord_logger.setLevel(logging.INFO)
             discord_logger.addHandler(self.HNDLR)
+            if not args.disable_webhook_logging:
+                discord_logger.addHandler(WebhookLogger())
         if not args.disable_scheduler_logs:
             ap_logger = logging.getLogger('apscheduler')
             ap_logger.setLevel(logging.INFO)
             ap_logger.addHandler(self.HNDLR)
+            if not args.disable_webhook_logging:
+                ap_logger.addHandler(WebhookLogger())
         self.logger = logging.Logger(__name__)
         self.logger.setLevel(logging.INFO)
         self.logger.addHandler(self.HNDLR)
+        if not args.disable_webhook_logging:
+            self.logger.addHandler(WebhookLogger())
         
 logger = Logger().logger

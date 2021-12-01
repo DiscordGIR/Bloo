@@ -25,6 +25,12 @@ class Config:
             self.aaron_role = int(self.aaron_role)
         else:
             self.setup_warning("AARON_ROLE")
+        
+        self.webhook_url = os.environ.get("WEBHOOK_URL")
+        if self.webhook_url is not None:
+            self.webhook_url = str(self.webhook_url)
+        else:
+            self.setup_warning("WEBHOOK_URL")
 
         logger.info(f"Bloo will be running in: {self.guild_id}")
         logger.info(f"Bot owned by: {self.owner_id}")

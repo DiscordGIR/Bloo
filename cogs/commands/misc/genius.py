@@ -7,6 +7,7 @@ import datetime
 import traceback
 from data.services.guild_service import guild_service
 from utils.config import cfg
+from utils.logger import logger
 from utils.context import BlooContext, PromptData
 from utils.permissions.checks import (PermissionsFailure, genius_or_submod_and_up)
 from utils.permissions.slash_perms import slash_perms
@@ -159,7 +160,7 @@ class Genius(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 
 def setup(bot):

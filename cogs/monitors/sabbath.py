@@ -8,6 +8,7 @@ from data.services.guild_service import guild_service
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.permissions import permissions
+from utils.logger import logger
 from utils.permissions.checks import PermissionsFailure, guild_owner_and_up
 from utils.permissions.slash_perms import slash_perms
 
@@ -71,7 +72,7 @@ class Sabbath(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 
 def setup(bot):

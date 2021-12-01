@@ -11,6 +11,7 @@ from utils.mod.modactions_helpers import BanCache
 from utils.permissions.permissions import permissions
 from utils.tasks import Tasks
 
+
 # Remove warning from songs cog
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)

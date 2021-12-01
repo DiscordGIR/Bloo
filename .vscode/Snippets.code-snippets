@@ -1,0 +1,31 @@
+{
+	"Create cog": {
+		"scope": "python",
+		"prefix": "createcog",
+		"body": [
+			"import discord",
+			"from discord.commands import slash_command",
+			"from discord.ext import commands",
+			"",
+			"from utils.context import BlooContext",
+			"from utils.config import cfg",
+			"",
+			"class $1(commands.Cog):",
+			"    def __init__(self, bot):",
+			"        self.bot = bot",
+			"",
+			"",
+			"def setup(bot):",
+			"    bot.add_cog($1(bot))"
+		]
+	},
+	"Create command": {
+		"scope": "python",
+		"prefix": "createcmd",
+		"body": [
+			"@slash_command(guild_ids=[cfg.guild.id], description=\"$1\")",
+			"async def $2(self, ctx: BlooContext):",
+			"    ",
+		]
+	}
+}

@@ -10,6 +10,7 @@ from utils.autocompleters import filterwords_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.menu import Menu
+from utils.logger import logger
 from utils.permissions.checks import (PermissionsFailure, admin_and_up, always_whisper,
                                       mod_and_up)
 from utils.permissions.permissions import permissions
@@ -347,7 +348,7 @@ class Filters(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 
 def setup(bot):

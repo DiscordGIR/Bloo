@@ -1,6 +1,7 @@
 from discord.ext import commands
 import traceback
 from utils.context import BlooContext
+from utils.logger import logger
 from utils.permissions.checks import PermissionsFailure
 
 class ErrorHandler(commands.Cog):
@@ -22,7 +23,7 @@ class ErrorHandler(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 def setup(bot: commands.Bot):
     bot.add_cog(ErrorHandler(bot))

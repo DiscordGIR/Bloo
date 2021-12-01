@@ -1,7 +1,14 @@
+from datetime import datetime
+import os
 import argparse
 import logging
 import sys
+import aiohttp
+from dotenv.main import load_dotenv
+import discord
+import asyncio
 
+load_dotenv()
 
 class Formatter(logging.Formatter):
     def __init__(self):
@@ -40,16 +47,13 @@ class Formatter(logging.Formatter):
     def format(self, record):
         format_orig = self._style._fmt
 
-        if record.levelno == logging.DEBUG:
+        if record.levelname == 'DEBUG':
             self._style._fmt = self.dbg_fmt
-            
-        elif record.levelno == logging.INFO:
+        if record.levelname == 'ingo':
             self._style._fmt = self.info_fmt
-
-        elif record.levelno == logging.WARNING:
+        if record.levelname == 'WARNING':
             self._style._fmt = self.warn_fmt
-            
-        elif record.levelno == logging.ERROR:
+        if record.levelname == 'ERROR':
             self._style._fmt = self.err_fmt
 
         result = logging.Formatter.format(self, record)
@@ -58,11 +62,68 @@ class Formatter(logging.Formatter):
 
         return result
 
+
+class WebhookLogger(logging.Handler):
+    def __init__(self):
+        self.level = logging.INFO
+        super().__init__(self.level)
+        self.webhook_url = os.environ.get("LOGGING_WEBHOOK_URL")
+        self.record_formatter = logging.Formatter()
+        
+    def prefixcalc(self, levelname: str):
+        if levelname == 'DEBUG':
+            return '```bash#| '
+        elif levelname == 'INFO':
+            return '```diff\n+  | '
+        elif levelname == 'WARNING':
+            return '```css\n[  | '
+        elif levelname == 'ERROR':
+            return '```diff\n-!  | '
+        elif levelname == 'CRITICAL':
+            return '```diff\n-!!  | '
+        else:
+            return '```  |'
+
+    def suffixcalc(self, levelname: str):
+        if levelname == 'DEBUG':
+            return '  ]```'
+        elif levelname == 'WARNING':
+            return '  ]```'
+        else:
+            return '```'
+
+    def emit(self, record: logging.LogRecord):
+        self.send(self.record_formatter.format(record), record)
+            
+    def send(self, formatted, record):
+        if self.webhook_url is None:
+            return
+
+        parts = [formatted[i:i+1900] for i in range(0, len(formatted), 1900)]
+        for i, part in enumerate(parts):
+            content = f"{self.prefixcalc(record.levelname)}{part}{self.suffixcalc(record.levelname)}"
+            if i == len(parts) - 1:
+                if record.levelname == 'ERROR' or record.levelname == 'CRITICAL':
+                    content += f'<@{os.environ.get("OWNER_ID")}>'
+            message_body = {
+                "content": content
+            }
+            asyncio.ensure_future(self.post_content(message_body))
+
+    async def post_content(self, message_body):
+         async with aiohttp.ClientSession() as session:
+            the_webhook: discord.Webhook = discord.Webhook.from_url(self.webhook_url, session=session)
+            try:
+                await the_webhook.send(**message_body)
+            except Exception:
+                pass
+
 class Logger:
     def __init__(self):
         parser = argparse.ArgumentParser()
         parser.add_argument('--disable-discord-logs', help='Disables Discord logging.', action='store_true')
         parser.add_argument('--disable-scheduler-logs', help='Disables scheduler logs.', action='store_true')
+        parser.add_argument('--disable-webhook-logging', help='Disables logging to the webhook.', action='store_true')
 
         args = parser.parse_args()
 
@@ -72,12 +133,18 @@ class Logger:
             discord_logger = logging.getLogger('discord')
             discord_logger.setLevel(logging.INFO)
             discord_logger.addHandler(self.HNDLR)
+            if not args.disable_webhook_logging:
+                discord_logger.addHandler(WebhookLogger())
         if not args.disable_scheduler_logs:
             ap_logger = logging.getLogger('apscheduler')
             ap_logger.setLevel(logging.INFO)
             ap_logger.addHandler(self.HNDLR)
+            if not args.disable_webhook_logging:
+                ap_logger.addHandler(WebhookLogger())
         self.logger = logging.Logger(__name__)
         self.logger.setLevel(logging.INFO)
         self.logger.addHandler(self.HNDLR)
+        if not args.disable_webhook_logging:
+            self.logger.addHandler(WebhookLogger())
         
 logger = Logger().logger

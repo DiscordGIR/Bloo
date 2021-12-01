@@ -11,6 +11,7 @@ from utils.message_cooldown import MessageTextBucket
 from data.services.guild_service import guild_service
 from utils.autocompleters import memes_autocomplete
 from utils.config import cfg
+from utils.logger import logger
 from utils.context import BlooContext, PromptData
 from utils.permissions.checks import (PermissionsFailure,
                                       mod_and_up, whisper)
@@ -285,7 +286,7 @@ class Memes(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 
 def setup(bot):

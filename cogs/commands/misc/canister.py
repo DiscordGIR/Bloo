@@ -13,6 +13,7 @@ from colorthief import ColorThief
 from data.services.guild_service import guild_service
 from utils.config import cfg
 from utils.context import BlooContext
+from utils.logger import logger
 from utils.database import Guild
 from utils.menu import TweakMenu
 from utils.permissions.checks import PermissionsFailure
@@ -184,7 +185,7 @@ class Canister(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 def setup(bot):
     bot.add_cog(Canister(bot))

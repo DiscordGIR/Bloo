@@ -1,8 +1,9 @@
-import traceback
-
 import discord
 from discord.commands import Option, slash_command
 from discord.ext import commands
+
+import traceback
+from utils.logger import logger
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.checks import PermissionsFailure, mod_and_up, whisper
@@ -40,7 +41,7 @@ class CogName(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 
 def setup(bot):

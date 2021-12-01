@@ -56,6 +56,9 @@ DB_PORT=27017
 # (it's False by default for production)
 DEV=True
 
+# this is optional, if you want logging to be sent to a Discord webhook
+LOGGING_WEBHOOK_URL=""
+
 # this is optional, for /sabbath commmand
 AARON_ROLE=123
 ```

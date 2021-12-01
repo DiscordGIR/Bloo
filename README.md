@@ -52,6 +52,9 @@ AARON_ID=123 # ID of whoever owns the server
 DB_HOST="host.docker.internal"
 DB_PORT=27017
 
+# this is optional, if you want logging to be sent to a Discord webhook
+LOGGING_WEBHOOK_URL=""
+
 # this is optional, for /sabbath commmand
 AARON_ROLE=123
 ```

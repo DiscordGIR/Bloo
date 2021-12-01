@@ -38,7 +38,7 @@ class Stats(commands.Cog):
         embed.description = "Latency: testing..."
 
         # measure time between sending a message and time it is posted
-        b = datetime.utcnow().a
+        b = datetime.utcnow()
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
         ping = floor((datetime.utcnow() - b).total_seconds() * 1000)

@@ -1,10 +1,12 @@
+from datetime import datetime
 import os
-import requests
 import argparse
 import logging
 import sys
-from time import sleep
+import aiohttp
 from dotenv.main import load_dotenv
+import discord
+import asyncio
 
 load_dotenv()
 
@@ -61,56 +63,60 @@ class Formatter(logging.Formatter):
         return result
 
 
-class WebhookFormatter(logging.Formatter):
-    def __init__(self):
-        super().__init__()
-        
-    def prefixcalc(self, levelname: str):
-        if levelname == 'DEBUG':
-            return '===| '
-        if levelname == 'INFO':
-            return '+  | '
-        if levelname == 'WARNING':
-            return 'W  | '
-        if levelname == 'ERROR':
-            return '!  | '
-        if levelname == 'CRITICAL':
-            return '-!! | '
-
-    def format(self, record: logging.LogRecord):
-        msg = logging.Formatter.format(self, record)
-        return "```diff\n{}{}```".format(self.prefixcalc(record.levelname), msg)
-
 class WebhookLogger(logging.Handler):
     def __init__(self):
         self.level = logging.INFO
         super().__init__(self.level)
-        self.webhook_url = os.environ.get("WEBHOOK_URL")
+        self.webhook_url = os.environ.get("LOGGING_WEBHOOK_URL")
+        self.record_formatter = logging.Formatter()
+        
+    def prefixcalc(self, levelname: str):
+        if levelname == 'DEBUG':
+            return '```bash#| '
+        elif levelname == 'INFO':
+            return '```diff\n+  | '
+        elif levelname == 'WARNING':
+            return '```css\n[  | '
+        elif levelname == 'ERROR':
+            return '```diff\n-!  | '
+        elif levelname == 'CRITICAL':
+            return '```diff\n-!!  | '
+        else:
+            return '```  |'
+
+    def suffixcalc(self, levelname: str):
+        if levelname == 'DEBUG':
+            return '  ]```'
+        elif levelname == 'WARNING':
+            return '  ]```'
+        else:
+            return '```'
 
     def emit(self, record: logging.LogRecord):
-        self.send(WebhookFormatter().format(record), record)
+        self.send(self.record_formatter.format(record), record)
             
     def send(self, formatted, record):
         if self.webhook_url is None:
             return
-        
-        parts = [formatted[i:i+2000] for i in range(0, len(formatted), 2000)]
+
+        parts = [formatted[i:i+1900] for i in range(0, len(formatted), 1900)]
         for i, part in enumerate(parts):
-            if i == 0:
-                content = f'{part}```'
-                if part == parts[-1]:
-                    content = part
-                    if record.levelname == 'ERROR' or record.levelname == 'CRITICAL':
-                        content += f'<@{os.environ.get("OWNER_ID")}>'
-                requests.post(self.webhook_url, json={'content':content})
-                
-            else:
-                content = f'```diff\n{part}```'
-                if part == parts[-1]:
-                    content = f'```diff\n{part}'
-                    if record.levelname == 'ERROR' or record.levelname == 'CRITICAL':
-                        content += f'<@{os.environ.get("OWNER_ID")}>'
-                requests.post(self.webhook_url, json={'content':content})
+            content = f"{self.prefixcalc(record.levelname)}{part}{self.suffixcalc(record.levelname)}"
+            if i == len(parts) - 1:
+                if record.levelname == 'ERROR' or record.levelname == 'CRITICAL':
+                    content += f'<@{os.environ.get("OWNER_ID")}>'
+            message_body = {
+                "content": content
+            }
+            asyncio.ensure_future(self.post_content(message_body))
+
+    async def post_content(self, message_body):
+         async with aiohttp.ClientSession() as session:
+            the_webhook: discord.Webhook = discord.Webhook.from_url(self.webhook_url, session=session)
+            try:
+                await the_webhook.send(**message_body)
+            except Exception:
+                pass
 
 class Logger:
     def __init__(self):

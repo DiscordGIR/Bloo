@@ -108,15 +108,22 @@ class WebhookLogger(logging.Handler):
             message_body = {
                 "content": content
             }
-            asyncio.ensure_future(self.post_content(message_body))
 
-    async def post_content(self, message_body):
-        async with aiohttp.ClientSession() as session:
-            the_webhook: discord.Webhook = discord.Webhook.from_url(self.webhook_url, session=session)
             try:
-                await the_webhook.send(**message_body)
-            except Exception:
-                pass
+                loop = asyncio.get_event_loop()
+                asyncio.ensure_future(post_content(self.webhook_url, message_body))
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(post_content(self.webhook_url, message_body))
+
+async def post_content(webhook_url, message_body):
+    async with aiohttp.ClientSession() as session:
+        the_webhook: discord.Webhook = discord.Webhook.from_url(webhook_url, session=session)
+        try:
+            await the_webhook.send(**message_body)
+        except Exception:
+            pass
 
 class Logger:
     def __init__(self):

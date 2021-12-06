@@ -46,6 +46,7 @@ initial_extensions = [
         "cogs.monitors.songs",
         # "cogs.monitors.sticky_roles",
         "cogs.monitors.xp",
+        "cogs.monitors.status"
 ]
 
 intents = discord.Intents.default()

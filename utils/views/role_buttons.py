@@ -3,24 +3,10 @@ import discord
 import re
 from itertools import takewhile
 
-def derive_label(string):
-    enders = {
-        "AppleEventNews": " ",
-        "SubredditNews": " ",
-        "CommunityEvents": " ",
-        "CommunityEvents": " ",
-        "Giveaway": "Notifications",
-
-    }
-    starter = str("".join(list(takewhile(lambda x: x.islower(), string))))
-    middle = " ".join(re.findall(
-        r'[A-Z0-9](?:[a-z0-9]+|[A-Z0-9]*(?=[A-Z0-9]|$))', string))
-    return f"{starter}{middle} {enders.get(string) or 'Updates'}"
-
 
 class ReactionRoleButton(discord.ui.Button):
     def __init__(self, role: discord.Role, emoji: discord.Emoji):
-        super().__init__(label=derive_label(role.name), style=discord.ButtonStyle.primary, emoji=emoji, custom_id=str(role.id))
+        super().__init__(label=role.name, style=discord.ButtonStyle.primary, emoji=emoji, custom_id=str(role.id))
 
     async def callback(self, interaction: discord.Interaction):
         user = interaction.user

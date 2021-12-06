@@ -111,14 +111,14 @@ def prepare_ping_string(db_guild, message):
 
     """
     ping_string = ""
-    if cfg.dev:
-        return ping_string
+    # if cfg.dev:
+    #     return ping_string
     
-    role = message.guild.get_role(db_guild.role_moderator)
-    for member in role.members:
-        offline_ping = (user_service.get_user(member.id)).offline_report_ping
-        if member.status == discord.Status.online or offline_ping:
-            ping_string += f"{member.mention} "
+    # role = message.guild.get_role(db_guild.role_moderator)
+    # for member in role.members:
+    #     offline_ping = (user_service.get_user(member.id)).offline_report_ping
+    #     if member.status == discord.Status.online or offline_ping:
+    #         ping_string += f"{member.mention} "
 
     return ping_string
 

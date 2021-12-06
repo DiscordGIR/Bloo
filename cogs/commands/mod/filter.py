@@ -57,38 +57,38 @@ class Filters(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @always_whisper()
-    @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Toggles bot pinging for reports when offline.", permissions=slash_perms.mod_and_up())
-    async def offlineping(self, ctx: BlooContext, val: Option(bool, required=False) = None):
-        """Toggles bot pinging for reports when offline
+#    @always_whisper()
+#    @mod_and_up()
+#    @slash_command(guild_ids=[cfg.guild_id], description="Toggles bot pinging for reports when offline.", permissions=slash_perms.mod_and_up())
+#    async def offlineping(self, ctx: BlooContext, val: Option(bool, required=False) = None):
+#        """Toggles bot pinging for reports when offline
 
-        Example usage
-        --------------
-        /offlineping val:<value>
+#        Example usage
+#        --------------
+#        /offlineping val:<value>
 
-        Parameters
-        ----------
-        val : bool
-            "True or False, if you want pings or not"
+#        Parameters
+#        ----------
+#        val : bool
+#            "True or False, if you want pings or not"
 
-        """
+#        """
 
-        cur = user_service.get_user(ctx.author.id)
+#        cur = user_service.get_user(ctx.author.id)
         
-        if val is None:
-            val = not cur.offline_report_ping 
+#        if val is None:
+#            val = not cur.offline_report_ping 
 
-        cur.offline_report_ping = val
-        cur.save()
+#        cur.offline_report_ping = val
+#        cur.save()
 
-        if val:
-            await ctx.send_success("You will now be pinged for reports when offline")
-        else:
-            await ctx.send_warning("You will no longer be pinged for reports when offline")
+#        if val:
+#            await ctx.send_success("You will now be pinged for reports when offline")
+#        else:
+#            await ctx.send_warning("You will no longer be pinged for reports when offline")
 
-    @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Add a word to filter", permissions=slash_perms.admin_and_up())
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Add a word to filter", permissions=slash_perms.mod_and_up())
     async def filter(self, ctx: BlooContext, notify: Option(bool, description="Whether to generate a report or not when this word is filtered"), bypass: Option(int, description="Level that bypasses this filter"), *, phrase: str) -> None:
         """Adds a word to filter (admin only)
 
@@ -171,8 +171,8 @@ class Filters(commands.Cog):
         else:
             await ctx.send_warning("You must filter that word before it can be marked as piracy.", delete_after=5)
 
-    @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Remove word from filter", permissions=slash_perms.admin_and_up())
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Remove word from filter", permissions=slash_perms.mod_and_up())
     async def filterremove(self, ctx: BlooContext, *, word: Option(str, autocomplete=filterwords_autocomplete)):
         """Removes a word from filter (admin only)
 
@@ -330,7 +330,7 @@ class Filters(commands.Cog):
     @filterremove.error
     @filter.error
     @filterlist.error
-    @offlineping.error
+    #@offlineping.error
     @ignorechannel.error
     @unignorechannel.error
     async def info_error(self,  ctx: BlooContext, error):
@@ -347,7 +347,7 @@ class Filters(commands.Cog):
                 or isinstance(error, commands.NoPrivateMessage)):
             await ctx.send_error(error)
         else:
-            await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
+            await ctx.send_error("A fatal error occured. Tell <@848159481255034891> about this.")
             logger.error(traceback.format_exc())
 
 

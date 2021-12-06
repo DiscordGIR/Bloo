@@ -228,7 +228,7 @@ class Tags(commands.Cog):
             else:
                 tag.image.put(image, content_type=_type)
         else:
-            tag.image = None
+            tag.image.delete()
 
         if not guild_service.edit_tag(tag):
             raise commands.BadArgument("An error occurred editing that tag.")
@@ -260,6 +260,9 @@ class Tags(commands.Cog):
         tag = guild_service.get_tag(name)
         if tag is None:
             raise commands.BadArgument("That tag does not exist.")
+
+        if tag.image is not None:
+            tag.image.delete()
 
         guild_service.remove_tag(name)
         await ctx.send_warning(f"Deleted tag `{tag.name}`.", delete_after=5)

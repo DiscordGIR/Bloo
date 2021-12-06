@@ -188,7 +188,7 @@ class Memes(commands.Cog):
             else:
                 meme.image.put(image, content_type=_type)
         else:
-            meme.image = None
+            meme.image.delete()
 
         if not guild_service.edit_meme(meme):
             raise commands.BadArgument("An error occurred editing that meme.")
@@ -220,6 +220,9 @@ class Memes(commands.Cog):
         meme = guild_service.get_meme(name)
         if meme is None:
             raise commands.BadArgument("That meme does not exist.")
+
+        if meme.image is not None:
+            meme.image.delete()
 
         guild_service.remove_meme(name)
         await ctx.send_warning(f"Deleted meme `{meme.name}`.", delete_after=5)

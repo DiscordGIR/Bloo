@@ -16,46 +16,46 @@ class Genius(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Submit a new common issue", permissions=slash_perms.genius_or_submod_and_up())
-    async def commonissue(self, ctx: BlooContext, *, title: str):
-        """Submit a new common issue (Geniuses only)
-        
-        Example usage
-        ------------
-        /commonissue This is a title (you will be prompted for a description)
-        
-        Parameters
-        ----------
-        title : str
-            "Title for the issue"
-            
-        """
+    # @genius_or_submod_and_up()
+    # @slash_command(guild_ids=[cfg.guild_id], description="Submit a new common issue", permissions=slash_perms.genius_or_submod_and_up())
+    # async def commonissue(self, ctx: BlooContext, *, title: str):
+    #     """Submit a new common issue (Geniuses only)
+    #     
+    #     Example usage
+    #     ------------
+    #     /commonissue This is a title (you will be prompted for a description)
+    #     
+    #     Parameters
+    #     ----------
+    #     title : str
+    #         "Title for the issue"
+    #         
+    #     """
 
-        # get #common-issues channel
-        channel = ctx.guild.get_channel(
-            guild_service.get_guild().channel_common_issues)
-        if not channel:
-            raise commands.BadArgument("common issues channel not found")
+    #     # get #common-issues channel
+    #     channel = ctx.guild.get_channel(
+    #         guild_service.get_guild().channel_common_issues)
+    #     if not channel:
+    #         raise commands.BadArgument("common issues channel not found")
 
-        # prompt the user for common issue body
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="description",
-            description="Please enter a description of this common issue (optionally attach an image).",
-            convertor=str,
-            raw=True)
+    #     # prompt the user for common issue body
+    #     await ctx.defer(ephemeral=True)
+    #     prompt = PromptData(
+    #         value_name="description",
+    #         description="Please enter a description of this common issue (optionally attach an image).",
+    #         convertor=str,
+    #         raw=True)
 
-        res = await ctx.prompt(prompt)
-        if res is None:
-            await ctx.send_warning("Cancelled new common issue.")
-            return
-        
-        description, response = res
+    #     res = await ctx.prompt(prompt)
+    #     if res is None:
+    #         await ctx.send_warning("Cancelled new common issue.")
+    #         return
 
-        embed, f = await self.prepare_issues_embed(title, description, response)
-        await channel.send(embed=embed, file=f)
-        await ctx.send_success("Common issue posted!", delete_after=5)
+    #     description, response = res
+
+    #     embed, f = await self.prepare_issues_embed(title, description, response)
+    #     await channel.send(embed=embed, file=f)
+    #     await ctx.send_success("Common issue posted!", delete_after=5)
     
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Post an embed", permissions=slash_perms.genius_or_submod_and_up())
@@ -144,7 +144,7 @@ class Genius(commands.Cog):
 
     @rawembed.error
     @postembed.error
-    @commonissue.error
+    #@commonissue.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original
@@ -159,7 +159,7 @@ class Genius(commands.Cog):
                 or isinstance(error, commands.NoPrivateMessage)):
             await ctx.send_error(error)
         else:
-            await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
+            await ctx.send_error("A fatal error occured. Tell <@848159481255034891> about this.")
             logger.error(traceback.format_exc())
 
 

@@ -14,7 +14,7 @@ from utils.config import cfg
 from utils.logger import logger
 from utils.context import BlooContext, PromptData
 from utils.permissions.checks import (PermissionsFailure,
-                                      mod_and_up, whisper)
+                                      genius_or_submod_and_up, whisper)
 from utils.permissions.slash_perms import slash_perms
 from utils.permissions.permissions import permissions
 from utils.menu import Menu
@@ -76,8 +76,8 @@ class Memes(commands.Cog):
 
         await ctx.respond(content=title, embed=await self.prepare_meme_embed(meme), file=file)
 
-    @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Add a new meme", permissions=slash_perms.mod_and_up())
+    @genius_or_submod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Add a new meme", permissions=slash_perms.genius_or_submod_and_up())
     async def addmeme(self, ctx: BlooContext, name: str) -> None:
         """Add a meme. Optionally attach an image. (Genius only)
 
@@ -144,8 +144,8 @@ class Memes(commands.Cog):
 
         await ctx.respond(f"Added new meme!", file=_file or discord.utils.MISSING, embed=await self.prepare_meme_embed(meme))
 
-    @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Edit an existing meme", permissions=slash_perms.mod_and_up())
+    @genius_or_submod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Edit an existing meme", permissions=slash_perms.genius_or_submod_and_up())
     async def editmeme(self, ctx: BlooContext, name: Option(str, autocomplete=memes_autocomplete)) -> None:
         """Edit a meme's body, optionally attach an image.
         
@@ -204,8 +204,8 @@ class Memes(commands.Cog):
         
         await ctx.respond(f"Meme edited!", file=_file or discord.utils.MISSING, embed=await self.prepare_meme_embed(meme))
 
-    @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Delete a meme", permissions=slash_perms.mod_and_up())
+    @genius_or_submod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Delete a meme", permissions=slash_perms.genius_or_submod_and_up())
     async def delmeme(self, ctx: BlooContext, name: Option(str, description="Name of meme to delete", autocomplete=memes_autocomplete)):
         """Delete meme (geniuses only)
 
@@ -235,7 +235,7 @@ class Memes(commands.Cog):
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="List all memes")
     async def memelist(self, ctx: BlooContext):
-        """List all meemes
+        """List all memes
         """
 
         memes = sorted(guild_service.get_guild().memes, key=lambda meme: meme.name)
@@ -293,7 +293,7 @@ class Memes(commands.Cog):
                 or isinstance(error, commands.NoPrivateMessage)):
             await ctx.send_error(error)
         else:
-            await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
+            await ctx.send_error("A fatal error occured. Tell <@848159481255034891> about this.")
             logger.error(traceback.format_exc())
 
 

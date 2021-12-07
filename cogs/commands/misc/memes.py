@@ -37,7 +37,7 @@ class Memes(commands.Cog):
         self.meme_cooldown = CooldownMapping.from_cooldown(1, 5, MessageTextBucket.custom)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Display a meme")
-    async def meme(self, ctx: BlooContext, name: Option(str, description="Meme name", autocomplete=memes_autocomplete)):
+    async def meme(self, ctx: BlooContext, name: Option(str, description="Meme name", autocomplete=memes_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
         """Displays a meme.
         
         Example usage
@@ -69,7 +69,12 @@ class Memes(commands.Cog):
             file = discord.File(BytesIO(
                 file), filename="image.gif" if meme.image.content_type == "image/gif" else "image.png")
 
-        await ctx.respond(embed=await self.prepare_meme_embed(meme), file=file)
+        if user_to_mention is not None:
+            title = user_to_mention.mention
+        else:
+            title = None
+
+        await ctx.respond(content=title, embed=await self.prepare_meme_embed(meme), file=file)
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Add a new meme", permissions=slash_perms.mod_and_up())

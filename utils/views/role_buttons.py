@@ -10,9 +10,14 @@ def derive_label(string):
         "CommunityEvents": " ",
         "CommunityEvents": " ",
         "Giveaway": "Notifications",
-
+        "OtherUpdates": " "
     }
+
+    if string == "iPadOS":
+        return "iPadOS Updates"
+
     starter = str("".join(list(takewhile(lambda x: x.islower(), string))))
+
     middle = " ".join(re.findall(
         r'[A-Z0-9](?:[a-z0-9]+|[A-Z0-9]*(?=[A-Z0-9]|$))', string))
     return f"{starter}{middle} {enders.get(string) or 'Updates'}"

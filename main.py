@@ -47,6 +47,7 @@ initial_extensions = [
         "cogs.monitors.sticky_roles",
         "cogs.monitors.xp",
         "cogs.monitors.sileo",
+        "cogs.monitors.tweaklist",
 ]
 
 intents = discord.Intents.default()

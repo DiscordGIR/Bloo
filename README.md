@@ -61,6 +61,9 @@ LOGGING_WEBHOOK_URL=""
 
 # this is optional, for /sabbath commmand
 AARON_ROLE=123
+
+# used for automatically uploading tweak lists to paste.ee
+PASTEE_TOKEN="your api key here"
 ```
 
 ## Contributors

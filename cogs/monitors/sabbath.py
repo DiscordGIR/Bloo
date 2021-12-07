@@ -20,9 +20,6 @@ class Sabbath(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if cfg.aaron_id is None or cfg.aaron_role is None:
-            return
-
         if not message.guild:
             return
         if message.guild.id != cfg.guild_id:
@@ -76,4 +73,9 @@ class Sabbath(commands.Cog):
 
 
 def setup(bot):
+    if cfg.aaron_id is None or cfg.aaron_role is None:
+        logger.warn(
+            "Aaron's ID or role not set, disabling the Sabbath cog! If you want this, refer to README.md.")
+        return
+
     bot.add_cog(Sabbath(bot))

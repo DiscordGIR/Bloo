@@ -43,7 +43,7 @@ class Tweaks(commands.Cog):
 def setup(bot):
     if os.environ.get("PASTEE_TOKEN") is None:
         logger.warn(
-            "Pastee token not set, not loading the TweakList cog! If you want this, set PASTEE_TOKEN in the .env file.")
+            "Pastee token not set, not loading the TweakList cog! If you want this, refer to README.md.")
         return
 
     bot.add_cog(Tweaks(bot))

@@ -1,3 +1,4 @@
+import json
 import traceback
 
 import aiohttp
@@ -56,7 +57,8 @@ async def get_signed_status():
     async with aiohttp.ClientSession() as session:
         async with session.get("https://jailbreaks.app/status.php") as resp:
             if resp.status == 200:
-                signed = await resp.json()
+                res = await resp.text()
+                signed = json.loads(res)
     return signed
 
 
@@ -125,8 +127,15 @@ class iOSCFW(commands.Cog):
             if info.get("firmwares"):
                 soc = f"Works with {info.get('soc')}" if info.get(
                     'soc') else ""
+
+                firmwares = info.get("firmwares")
+                if len(firmwares) > 2:
+                    firmwares = ", ".join(firmwares)
+                else:
+                    firmwares = "-".join(info.get("firmwares"))
+
                 embed.add_field(name="Compatible with",
-                                value=f'iOS {"-".join(info.get("firmwares"))}\n{f"**{soc}**" if soc else ""}', inline=True)
+                                value=f'iOS {firmwares}\n{f"**{soc}**" if soc else ""}', inline=True)
             else:
                 embed.add_field(name="Compatible with",
                                 value="Unavailable", inline=True)
@@ -152,12 +161,12 @@ class iOSCFW(commands.Cog):
 
         jba = await iterate_apps(jb.get("name"))
         signed = await get_signed_status()
-        if jba is not None and signed.get('status') == 'Signed':
+        if jba is None or signed.get('status') != 'Signed':
             view.add_item(discord.ui.Button(label='Install with Jailbreaks.app',
-                          url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
+                          url=f"https://api.jailbreaks.app/", style=discord.ButtonStyle.url, disabled=True))
         else:
             view.add_item(discord.ui.Button(label='Install with Jailbreaks.app',
-                          url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url, disabled=True))
+                          url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
 
         await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper, view=view)
 

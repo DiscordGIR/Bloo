@@ -17,7 +17,7 @@ load_dotenv()
 
 @bot.event
 async def on_ready():
-    logger.neutral("""
+    logger.info("""
             88          88                          
             88          88                          
             88          88                          

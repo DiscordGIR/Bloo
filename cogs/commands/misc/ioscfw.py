@@ -8,7 +8,7 @@ from aiocache.decorators import cached
 from discord.commands import slash_command
 from discord.commands.commands import Option
 from discord.ext import commands
-from utils.autocompleters import get_ios_cfw, ios_autocomplete, jb_autocomplete
+from utils.autocompleters import device_autocomplete, get_ios_cfw, ios_autocomplete, jb_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
@@ -167,6 +167,7 @@ class iOSCFW(commands.Cog):
         version : str
             "Version of iOS"
         """
+
         response = await get_ios_cfw()
         ios = response.get("ios")
         ios = [ios for ios in ios if f"{ios.get('version')} ({ios.get('build')})" == version]
@@ -178,44 +179,50 @@ class iOSCFW(commands.Cog):
         embed = discord.Embed(title=f"iOS {matching_ios.get('version')}", color=discord.Color.random())
         embed.add_field(name="Build number", value=matching_ios.get("build"), inline=True)
 
+        embed.add_field(name="Supported devices", value=len(matching_ios.get("devices")) or "None found", inline=True)
+
         release = matching_ios.get("released")
         if release is not None:
             try:
                 release_date = datetime.datetime.strptime(release, "%Y-%m-%d")
-                embed.add_field(name="Release date", value=f"{discord.utils.format_dt(release_date, 'D')} ({discord.utils.format_dt(release_date, 'R')})", inline=True)
+                embed.add_field(name="Release date", value=f"{discord.utils.format_dt(release_date, 'D')} ({discord.utils.format_dt(release_date, 'R')})", inline=False)
             except ValueError:
-                embed.add_field(name="Release date", value=release, inline=True)
-
-        devices_supported = {
-            "iPhone": 0,
-            "iPod": 0,
-            "iPad": 0,
-            "AppleTV": 0,
-            "Watch": 0,
-        }
-        
-        for device in matching_ios.get("devices"):
-            for device_type in devices_supported:
-                if device_type in device:
-                    devices_supported[device_type] += 1
-
-        supported_devices_str = ""
-        total_count = 0
-        for device, count in devices_supported.items():
-            total_count += count
-            if count:
-                if device == "AppleTV":
-                    device = "Apple TV"
-                elif device == "Watch":
-                    device = "Apple Watch"
-                supported_devices_str += f"{device}: {count}\n"
-
-        supported_devices_str += f"({total_count} total)"
-
-        embed.add_field(name="Supported devices", value=supported_devices_str or "None found", inline=False)
+                embed.add_field(name="Release date", value=release, inline=False)
 
         await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
 
+    @whisper_in_general()
+    @slash_command(guild_ids=[cfg.guild_id], description="Get info about an Apple device.")
+    async def deviceinfo(self, ctx: BlooContext, device: Option(str, description="Name of the device", autocomplete=device_autocomplete, required=True)) -> None:
+        """Fetches info of an Apple device
+
+        Example usage
+        -------------
+        /deviceinfo device:<device>
+
+        Parameters
+        ----------
+        version : str
+            "Name of the device"
+        """
+
+        response = await get_ios_cfw()
+        all_devices = response.get("device")
+        devices = [d for d in all_devices if d == device]
+
+        if not devices:
+            raise commands.BadArgument("No device found with that name.")
+
+        matching_device = all_devices.get(devices[0])
+
+        embed = discord.Embed(title=matching_device.get('name'), color=discord.Color.random())
+        embed.add_field(name="Identifier", value=matching_device.get("identifier"), inline=True)
+        embed.add_field(name="SoC", value=f"{matching_device.get('arch')} ({matching_device.get('soc')} chip)", inline=True)
+        embed.add_field(name="Model(s)", value=", ".join(matching_device.get("model")), inline=False)
+
+        await ctx.respond(embed=embed, ephemeral=ctx.whisper)
+
+    @deviceinfo.error
     @firmware.error
     @jailbreak.error
     async def info_error(self, ctx: BlooContext, error):

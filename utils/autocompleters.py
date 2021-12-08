@@ -101,6 +101,16 @@ async def ios_autocomplete(ctx: AutocompleteContext):
     return [f"{v['version']} ({v['build']})" for v in versions if v['version'].lower().startswith(ctx.value.lower())][:25]
 
 
+async def device_autocomplete(ctx: AutocompleteContext):
+    res = await get_ios_cfw()
+    if res is None:
+        return []
+    
+    devices = res.get("device")
+    devices = [d for d in devices]
+    devices.sort(key=lambda x: x.lower())
+    return [device for device in devices if device.lower().startswith(ctx.value.lower())][:25]
+
 # async def jb_autocomplete(ctx: AutocompleteContext):
 #     apps = await get_jailbreaks()
 #     apps.sort()

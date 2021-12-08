@@ -70,7 +70,7 @@ class Memes(commands.Cog):
                 file), filename="image.gif" if meme.image.content_type == "image/gif" else "image.png")
 
         if user_to_mention is not None:
-            title = user_to_mention.mention
+            title = f"{user_to_mention.mention}, have a look at this funny meme! LOL!"
         else:
             title = None
 

@@ -330,7 +330,7 @@ class Logging(commands.Cog):
         guild = self.bot.get_guild(cfg.guild_id)
         channel = guild.get_channel(db_guild.channel_private)
         
-        embed = discord.Embed(title="User Updated")
+        embed = discord.Embed(title="Username Updated")
         embed.color = discord.Color.magenta()
         embed.add_field(
             name="Before", value=f'{before} ({before.mention})', inline=True)

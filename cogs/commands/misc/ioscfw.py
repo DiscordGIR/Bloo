@@ -71,7 +71,7 @@ class iOSCFW(commands.Cog):
 
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info about a jailbreak.")
-    async def jailbreak(self, ctx: BlooContext, name: Option(str, description="Name of the jailbreak", autocomplete=jb_autocomplete, required=True)) -> None:
+    async def jailbreak(self, ctx: BlooContext, name: Option(str, description="Name of the jailbreak", autocomplete=jb_autocomplete, required=True), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)) -> None:
         """Fetches info of jailbreak
 
         Example usage
@@ -151,7 +151,12 @@ class iOSCFW(commands.Cog):
             view.add_item(discord.ui.Button(label='Install with Jailbreaks.app',
                           url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
 
-        await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper, view=view)
+        if user_to_mention is not None:
+            title = f"Hey {user_to_mention.mention}, have a look at this!"
+        else:
+            title = None
+
+        await ctx.respond_or_edit(content=title, embed=embed, ephemeral=ctx.whisper, view=view)
 
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info about an iOS version.")

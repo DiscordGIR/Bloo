@@ -188,9 +188,13 @@ class iOSCFW(commands.Cog):
                 embed.add_field(name="Release date", value=f"{discord.utils.format_dt(release_date, 'D')} ({discord.utils.format_dt(release_date, 'R')})", inline=False)
             except ValueError:
                 embed.add_field(name="Release date", value=release, inline=False)
+        
+        embed.set_footer(text="Powered by https://ios.cfw.guide")
 
-        await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label="View more on ios.cfw.guide", url=f"https://ios.cfw.guide/chart/firmware/{matching_ios.get('build')}"))
 
+        await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info about an Apple device.")
     async def deviceinfo(self, ctx: BlooContext, device: Option(str, description="Name of the device", autocomplete=device_autocomplete, required=True)) -> None:
@@ -220,7 +224,12 @@ class iOSCFW(commands.Cog):
         embed.add_field(name="SoC", value=f"{matching_device.get('arch')} ({matching_device.get('soc')} chip)", inline=True)
         embed.add_field(name="Model(s)", value=", ".join(matching_device.get("model")), inline=False)
 
-        await ctx.respond(embed=embed, ephemeral=ctx.whisper)
+        embed.set_footer(text="Powered by https://ios.cfw.guide")
+
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label="View more on ios.cfw.guide", url=f"https://ios.cfw.guide/chart/device/{matching_device.get('identifier')}"))
+
+        await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
 
     @deviceinfo.error
     @firmware.error

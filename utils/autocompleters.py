@@ -87,7 +87,7 @@ async def jb_autocomplete(ctx: AutocompleteContext):
         return []
 
     apps = apps.get("jailbreak")
-    apps.sort()
+    apps.sort(key=lambda x: x["name"].lower())
     return [app["name"] for app in apps if app["name"].lower().startswith(ctx.value.lower())][:25]
 
 

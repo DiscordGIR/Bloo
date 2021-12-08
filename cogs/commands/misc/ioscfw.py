@@ -1,3 +1,4 @@
+import datetime
 import json
 import traceback
 
@@ -7,7 +8,7 @@ from aiocache.decorators import cached
 from discord.commands import slash_command
 from discord.commands.commands import Option
 from discord.ext import commands
-from utils.autocompleters import jb_autocomplete
+from utils.autocompleters import get_ios_cfw, ios_autocomplete, jb_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
@@ -30,24 +31,6 @@ async def get_jailbreaks_jba():
             if resp.status == 200:
                 res_apps = await resp.json()
     return res_apps
-
-
-@cached(ttl=3600)
-async def get_ios_cfw():
-    """Gets all apps on ios.cfw.guide
-
-    Returns
-    -------
-    dict
-        "ios, jailbreaks, devices"
-    """
-
-    async with aiohttp.ClientSession() as session:
-        async with session.get("https://ios.cfw.guide/main.json") as resp:
-            if resp.status == 200:
-                data = await resp.json()
-
-    return data
 
 
 @cached(ttl=1800)
@@ -170,6 +153,70 @@ class iOSCFW(commands.Cog):
 
         await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper, view=view)
 
+    @whisper_in_general()
+    @slash_command(guild_ids=[cfg.guild_id], description="Get info about an iOS version.")
+    async def firmware(self, ctx: BlooContext, version: Option(str, description="Version of the firmware", autocomplete=ios_autocomplete, required=True)) -> None:
+        """Fetches info of an iOS version
+
+        Example usage
+        -------------
+        /firmware version:<version>
+
+        Parameters
+        ----------
+        version : str
+            "Version of iOS"
+        """
+        response = await get_ios_cfw()
+        ios = response.get("ios")
+        ios = [ios for ios in ios if f"{ios.get('version')} ({ios.get('build')})" == version]
+
+        if not ios:
+            raise commands.BadArgument("No firmware found with that version.")
+
+        matching_ios = ios[0]
+        embed = discord.Embed(title=f"iOS {matching_ios.get('version')}", color=discord.Color.random())
+        embed.add_field(name="Build number", value=matching_ios.get("build"), inline=True)
+
+        release = matching_ios.get("released")
+        if release is not None:
+            try:
+                release_date = datetime.datetime.strptime(release, "%Y-%m-%d")
+                embed.add_field(name="Release date", value=f"{discord.utils.format_dt(release_date, 'D')} ({discord.utils.format_dt(release_date, 'R')})", inline=True)
+            except ValueError:
+                embed.add_field(name="Release date", value=release, inline=True)
+
+        devices_supported = {
+            "iPhone": 0,
+            "iPod": 0,
+            "iPad": 0,
+            "AppleTV": 0,
+            "Watch": 0,
+        }
+        
+        for device in matching_ios.get("devices"):
+            for device_type in devices_supported:
+                if device_type in device:
+                    devices_supported[device_type] += 1
+
+        supported_devices_str = ""
+        total_count = 0
+        for device, count in devices_supported.items():
+            total_count += count
+            if count:
+                if device == "AppleTV":
+                    device = "Apple TV"
+                elif device == "Watch":
+                    device = "Apple Watch"
+                supported_devices_str += f"{device}: {count}\n"
+
+        supported_devices_str += f"({total_count} total)"
+
+        embed.add_field(name="Supported devices", value=supported_devices_str or "None found", inline=False)
+
+        await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
+
+    @firmware.error
     @jailbreak.error
     async def info_error(self, ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):

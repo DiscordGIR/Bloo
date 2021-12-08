@@ -170,7 +170,7 @@ class iOSCFW(commands.Cog):
 
         response = await get_ios_cfw()
         ios = response.get("ios")
-        ios = [ios for ios in ios if f"{ios.get('version')} ({ios.get('build')})" == version]
+        ios = [ios for ios in ios if f"{ios.get('version')} ({ios.get('build')})" == version or ios.get('build').lower() == version.lower() or ios.get('version').lower() == version.lower()]
 
         if not ios:
             raise commands.BadArgument("No firmware found with that version.")
@@ -197,7 +197,7 @@ class iOSCFW(commands.Cog):
         await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info about an Apple device.")
-    async def deviceinfo(self, ctx: BlooContext, device: Option(str, description="Name of the device", autocomplete=device_autocomplete, required=True)) -> None:
+    async def deviceinfo(self, ctx: BlooContext, device: Option(str, description="Device identifier", autocomplete=device_autocomplete, required=True)) -> None:
         """Fetches info of an Apple device
 
         Example usage
@@ -207,7 +207,7 @@ class iOSCFW(commands.Cog):
         Parameters
         ----------
         version : str
-            "Name of the device"
+            "Device identifier"
         """
 
         response = await get_ios_cfw()

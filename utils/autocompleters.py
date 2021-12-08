@@ -97,8 +97,8 @@ async def ios_autocomplete(ctx: AutocompleteContext):
         return []
     
     versions = versions.get("ios")
-    versions.reverse()
-    return [f"{v['version']} ({v['build']})" for v in versions if v['version'].lower().startswith(ctx.value.lower())][:25]
+    versions.sort(key=lambda x: x.get("released") or "1970-01-01", reverse=True)
+    return [f"{v['version']} ({v['build']})" for v in versions if ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()][:25]
 
 
 async def device_autocomplete(ctx: AutocompleteContext):
@@ -109,7 +109,7 @@ async def device_autocomplete(ctx: AutocompleteContext):
     devices = res.get("device")
     devices = [d for d in devices]
     devices.sort(key=lambda x: x.lower())
-    return [device for device in devices if device.lower().startswith(ctx.value.lower())][:25]
+    return [device for device in devices if ctx.value.lower() in device.lower()][:25]
 
 # async def jb_autocomplete(ctx: AutocompleteContext):
 #     apps = await get_jailbreaks()

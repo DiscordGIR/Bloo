@@ -11,6 +11,7 @@ from utils.mod.modactions_helpers import BanCache
 from utils.permissions.permissions import permissions
 from utils.tasks import Tasks
 
+
 # Remove warning from songs cog
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -43,8 +44,10 @@ initial_extensions = [
         "cogs.monitors.role_assignment_buttons",
         "cogs.monitors.sabbath",
         "cogs.monitors.songs",
-        # "cogs.monitors.sticky_roles",
+        "cogs.monitors.sticky_roles",
         "cogs.monitors.xp",
+        "cogs.monitors.sileo",
+        "cogs.monitors.tweaklist",
 ]
 
 intents = discord.Intents.default()

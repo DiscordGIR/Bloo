@@ -11,6 +11,7 @@ from utils.message_cooldown import MessageTextBucket
 from data.services.guild_service import guild_service
 from utils.autocompleters import memes_autocomplete
 from utils.config import cfg
+from utils.logger import logger
 from utils.context import BlooContext, PromptData
 from utils.permissions.checks import (PermissionsFailure,
                                       mod_and_up, whisper)
@@ -36,7 +37,7 @@ class Memes(commands.Cog):
         self.meme_cooldown = CooldownMapping.from_cooldown(1, 5, MessageTextBucket.custom)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Display a meme")
-    async def meme(self, ctx: BlooContext, name: Option(str, description="Meme name", autocomplete=memes_autocomplete)):
+    async def meme(self, ctx: BlooContext, name: Option(str, description="Meme name", autocomplete=memes_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
         """Displays a meme.
         
         Example usage
@@ -68,7 +69,12 @@ class Memes(commands.Cog):
             file = discord.File(BytesIO(
                 file), filename="image.gif" if meme.image.content_type == "image/gif" else "image.png")
 
-        await ctx.respond(embed=await self.prepare_meme_embed(meme), file=file)
+        if user_to_mention is not None:
+            title = f"{user_to_mention.mention}, have a look at this funny meme! LOL!"
+        else:
+            title = None
+
+        await ctx.respond(content=title, embed=await self.prepare_meme_embed(meme), file=file)
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Add a new meme", permissions=slash_perms.mod_and_up())
@@ -187,7 +193,7 @@ class Memes(commands.Cog):
             else:
                 meme.image.put(image, content_type=_type)
         else:
-            meme.image = None
+            meme.image.delete()
 
         if not guild_service.edit_meme(meme):
             raise commands.BadArgument("An error occurred editing that meme.")
@@ -219,6 +225,9 @@ class Memes(commands.Cog):
         meme = guild_service.get_meme(name)
         if meme is None:
             raise commands.BadArgument("That meme does not exist.")
+
+        if meme.image is not None:
+            meme.image.delete()
 
         guild_service.remove_meme(name)
         await ctx.send_warning(f"Deleted meme `{meme.name}`.", delete_after=5)
@@ -285,7 +294,7 @@ class Memes(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 
 def setup(bot):

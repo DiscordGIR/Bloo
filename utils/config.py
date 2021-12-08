@@ -25,6 +25,11 @@ class Config:
             self.aaron_role = int(self.aaron_role)
         else:
             self.setup_warning("AARON_ROLE")
+        
+        if os.environ.get("LOGGING_WEBHOOK_URL") is not None:
+            logger.info("Discord webhook logging is ENABLED!")
+        else:
+            logger.info("Discord webhook logging is DISABLED!")
 
         self.dev = os.environ.get("DEV") is not None
 

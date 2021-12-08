@@ -10,6 +10,7 @@ from utils.context import BlooContext
 from utils.config import cfg
 from data.services.user_service import user_service
 from data.services.guild_service import guild_service
+from utils.logger import logger
 from utils.mod.give_birthday_role import MONTH_MAPPING, give_user_birthday_role
 from utils.permissions.checks import PermissionsFailure, whisper
 from utils.permissions.permissions import permissions
@@ -130,7 +131,7 @@ class Birthday(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error(error)
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 
 def setup(bot):

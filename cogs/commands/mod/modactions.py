@@ -13,7 +13,8 @@ from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 from utils.autocompleters import liftwarn_autocomplete
 from utils.config import cfg
-from utils.context import BlooContext, PromptData
+from utils.logger import logger
+from utils.context import BlooContext
 from utils.mod.mod_logs import (prepare_editreason_log, prepare_liftwarn_log, prepare_mute_log, prepare_removepoints_log, prepare_unban_log, prepare_unmute_log, prepare_warn_log)
 from utils.mod.modactions_helpers import (add_ban_case, add_kick_case, notify_user, notify_user_warn, submit_public_log)
 from utils.mod.global_modactions import warn
@@ -612,7 +613,7 @@ class ModActions(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 
 def setup(bot):

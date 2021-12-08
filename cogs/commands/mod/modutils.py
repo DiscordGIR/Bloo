@@ -13,6 +13,7 @@ from discord.utils import format_dt
 from utils.autocompleters import date_autocompleter
 from utils.config import cfg
 from utils.context import BlooContext
+from utils.logger import logger
 from utils.mod.give_birthday_role import MONTH_MAPPING
 from utils.permissions.checks import (PermissionsFailure, admin_and_up,
                                       guild_owner_and_up, mod_and_up, whisper)
@@ -301,7 +302,7 @@ class ModUtils(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 
 def setup(bot):

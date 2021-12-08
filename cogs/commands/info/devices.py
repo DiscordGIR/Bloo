@@ -6,6 +6,7 @@ import json
 import re
 import traceback
 import aiohttp
+from utils.logger import logger
 from utils.autocompleters import device_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
@@ -254,7 +255,7 @@ class Devices(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 
 def setup(bot):

@@ -11,6 +11,7 @@ from datetime import datetime
 from math import floor
 from data.services.user_service import user_service
 from utils.config import cfg
+from utils.logger import logger
 from utils.context import BlooContext
 from utils.permissions.checks import PermissionsFailure, mod_and_up, whisper
 from utils.permissions.slash_perms import slash_perms
@@ -184,7 +185,7 @@ class Stats(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 
 def setup(bot):

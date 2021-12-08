@@ -8,6 +8,7 @@ from utils.config import cfg
 from utils.context import BlooContext, PromptData, PromptDataReaction
 from utils.permissions.checks import PermissionsFailure, admin_and_up
 from utils.permissions.slash_perms import slash_perms
+from utils.logger import logger
 from utils.views.role_buttons import ReactionRoleButton
 
 class RoleAssignButtons(commands.Cog):
@@ -327,7 +328,7 @@ class RoleAssignButtons(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error(error)
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 
 def setup(bot):

@@ -37,23 +37,20 @@ class Filter(commands.Cog):
             return
         if message.author.bot:
             return
-        if not message.content:
-            return
         if permissions.has(message.guild, message.author, 6):
             return
-
         db_guild = guild_service.get_guild()
         role_submod = message.guild.get_role(db_guild.role_sub_mod)
         if role_submod is not None and role_submod in message.author.roles:
             return
 
         # run through filters
-        if await self.bad_word_filter(message, db_guild):
+        if message.content and await self.bad_word_filter(message, db_guild):
             return
 
         if permissions.has(message.guild, message.author, 5):
             return
-        if await self.do_invite_filter(message, db_guild):
+        if message.content and await self.do_invite_filter(message, db_guild):
             return
         if await self.do_spoiler_newline_filter(message, db_guild):
             return
@@ -137,7 +134,7 @@ class Filter(commands.Cog):
 
         return False
 
-    async def do_spoiler_newline_filter(self, message, db_guild):
+    async def do_spoiler_newline_filter(self, message: discord.Message, db_guild):
         """
         SPOILER FILTER
         """
@@ -154,7 +151,7 @@ class Filter(commands.Cog):
             if a.is_spoiler():
                 await self.delete(message)
                 return True
-
+        
         """
         NEWLINE FILTER
         """

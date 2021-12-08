@@ -8,6 +8,7 @@ from data.services.guild_service import guild_service
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.permissions import permissions
+from utils.logger import logger
 from utils.permissions.checks import PermissionsFailure, guild_owner_and_up
 from utils.permissions.slash_perms import slash_perms
 
@@ -19,9 +20,6 @@ class Sabbath(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
-        if cfg.aaron_id is None or cfg.aaron_role is None:
-            return
-
         if not message.guild:
             return
         if message.guild.id != cfg.guild_id:
@@ -71,8 +69,13 @@ class Sabbath(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 
 def setup(bot):
+    if cfg.aaron_id is None or cfg.aaron_role is None:
+        logger.warn(
+            "Aaron's ID or role not set, disabling the Sabbath cog! If you want this, refer to README.md.")
+        return
+
     bot.add_cog(Sabbath(bot))

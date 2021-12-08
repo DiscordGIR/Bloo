@@ -11,6 +11,7 @@ from data.services.user_service import user_service
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.menu import Menu
+from utils.logger import logger
 from utils.permissions.checks import PermissionsFailure, whisper
 from utils.permissions.converters import user_resolver
 from utils.permissions.permissions import permissions
@@ -363,7 +364,7 @@ class UserInfo(commands.Cog):
             await ctx.send_error(error)
         else:
             await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
 
 
 def xp_for_next_level(_next):

@@ -8,7 +8,7 @@ from aiocache.decorators import cached
 from discord.commands import slash_command
 from discord.commands.commands import Option
 from discord.ext import commands
-from utils.autocompleters import device_autocomplete, get_ios_cfw, ios_autocomplete, jb_autocomplete
+from utils.autocompleters import device_autocomplete, get_ios_cfw, ios_autocomplete, ios_beta_autocomplete, jb_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
@@ -181,6 +181,35 @@ class iOSCFW(commands.Cog):
             raise commands.BadArgument("No firmware found with that version.")
 
         matching_ios = ios[0]
+        await self.do_firmware_response(ctx, matching_ios)
+
+    @whisper_in_general()
+    @slash_command(guild_ids=[cfg.guild_id], description="Get info about a beta iOS version.")
+    async def betafirmware(self, ctx: BlooContext, version: Option(str, description="Version of the beta firmware", autocomplete=ios_beta_autocomplete, required=True)) -> None:
+        """Fetches info of a beta iOS version
+
+        Example usage
+        -------------
+        /betafirmware version:<version>
+
+        Parameters
+        ----------
+        version : str
+            "Version of beta iOS"
+        """
+
+        response = await get_ios_cfw()
+        ios = response.get("ios")
+        ios = [ios for ios in ios if (f"{ios.get('version')} ({ios.get('build')})" == version or ios.get('build').lower() == version.lower() or ios.get('version').lower() == version.lower()) and ios.get('beta')]
+
+        if not ios:
+            raise commands.BadArgument("No firmware found with that version.")
+
+        matching_ios = ios[0]
+        await self.do_firmware_response(ctx, matching_ios)
+
+    async def do_firmware_response(self, ctx, matching_ios):
+        
         embed = discord.Embed(title=f"iOS {matching_ios.get('version')}", color=discord.Color.random())
         embed.add_field(name="Build number", value=matching_ios.get("build"), inline=True)
 
@@ -200,6 +229,8 @@ class iOSCFW(commands.Cog):
         view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label="View more on ios.cfw.guide", url=f"https://ios.cfw.guide/chart/firmware/{matching_ios.get('build')}"))
 
         await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
+
+
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info about an Apple device.")
     async def deviceinfo(self, ctx: BlooContext, device: Option(str, description="Device identifier", autocomplete=device_autocomplete, required=True)) -> None:
@@ -217,7 +248,7 @@ class iOSCFW(commands.Cog):
 
         response = await get_ios_cfw()
         all_devices = response.get("device")
-        devices = [d for d in all_devices if d == device]
+        devices = [d for d in all_devices if d.lower() == device.lower() or all_devices.get(d).get('name').lower() == device.lower()]
 
         if not devices:
             raise commands.BadArgument("No device found with that name.")
@@ -238,6 +269,7 @@ class iOSCFW(commands.Cog):
 
     @deviceinfo.error
     @firmware.error
+    @betafirmware.error
     @jailbreak.error
     async def info_error(self, ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):

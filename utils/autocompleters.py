@@ -98,7 +98,17 @@ async def ios_autocomplete(ctx: AutocompleteContext):
     
     versions = versions.get("ios")
     versions.sort(key=lambda x: x.get("released") or "1970-01-01", reverse=True)
-    return [f"{v['version']} ({v['build']})" for v in versions if ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()][:25]
+    return [f"{v['version']} ({v['build']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and not v['beta']][:25]
+
+
+async def ios_beta_autocomplete(ctx: AutocompleteContext):
+    versions = await get_ios_cfw()
+    if versions is None:
+        return []
+    
+    versions = versions.get("ios")
+    versions.sort(key=lambda x: x.get("released") or "1970-01-01", reverse=True)
+    return [f"{v['version']} ({v['build']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and v['beta']][:25]
 
 
 async def device_autocomplete(ctx: AutocompleteContext):
@@ -107,14 +117,9 @@ async def device_autocomplete(ctx: AutocompleteContext):
         return []
     
     devices = res.get("device")
-    devices = [d for d in devices]
+    devices = [devices.get(d).get('name') for d in devices if ctx.value.lower() in d.lower() or ctx.value.lower() in devices.get(d).get('name').lower()]
     devices.sort(key=lambda x: x.lower())
-    return [device for device in devices if ctx.value.lower() in device.lower()][:25]
-
-# async def jb_autocomplete(ctx: AutocompleteContext):
-#     apps = await get_jailbreaks()
-#     apps.sort()
-#     return [app for app in apps if app.lower().startswith(ctx.value.lower())][:25]
+    return devices[:25]
 
 
 async def date_autocompleter(ctx: AutocompleteContext) -> list:

@@ -20,6 +20,7 @@ from utils.permissions.checks import (PermissionsFailure,
 async def format_jailbreak_page(entries, all_pages, current_page, ctx):
     jb = entries[0]
     info = jb.get('info')
+    info['name'] = jb.get('name')
     ctx.jb_info = info
 
     color = info.get("color")
@@ -43,7 +44,7 @@ async def format_jailbreak_page(entries, all_pages, current_page, ctx):
             if len(firmwares) > 2:
                 firmwares = ", ".join(firmwares)
             else:
-                firmwares = "-".join(info.get("firmwares"))
+                firmwares = " - ".join(info.get("firmwares"))
 
             embed.add_field(name="Compatible with",
                             value=f'iOS {firmwares}\n{f"**{soc}**" if soc else ""}', inline=True)
@@ -58,7 +59,7 @@ async def format_jailbreak_page(entries, all_pages, current_page, ctx):
             embed.add_field(
                 name="Notes", value=info.get('notes'), inline=False)
 
-        embed.set_footer(text="Powered by https://ios.cfw.guide")
+        embed.set_footer(text=f"Powered by https://ios.cfw.guide • Page {current_page} of {len(all_pages)}")
     else:
         embed.description = "No info available."
     
@@ -163,7 +164,7 @@ class iOSCFW(commands.Cog):
                 if len(firmwares) > 2:
                     firmwares = ", ".join(firmwares)
                 else:
-                    firmwares = "-".join(info.get("firmwares"))
+                    firmwares = " - ".join(info.get("firmwares"))
 
                 embed.add_field(name="Compatible with",
                                 value=f'iOS {firmwares}\n{f"**{soc}**" if soc else ""}', inline=True)
@@ -318,7 +319,7 @@ class iOSCFW(commands.Cog):
         model_numbers.sort()
 
         embed.add_field(name="Phones", value=model_names, inline=True)
-        embed.add_field(name="SoC", value=f"{models[0].get('arch')} ({models[0].get('soc')} chip)", inline=True)
+        embed.add_field(name="SoC", value=f"{models[0].get('soc')} chip ({models[0].get('arch')})", inline=True)
         embed.add_field(name="Model(s)", value='`' + "`, `".join(model_numbers) + "`", inline=False)
         embed.set_footer(text="Powered by https://ios.cfw.guide")
 
@@ -346,16 +347,18 @@ class iOSCFW(commands.Cog):
 
         response = await get_ios_cfw()
         all_devices = response.get("device")
-        devices = [d for d in all_devices if d.lower() == device.lower() or all_devices.get(d).get('name').lower() == device.lower()]
+        device_groups = response.get("groups")
+        devices = [group for group in device_groups if group.get('name').lower() == device.lower()]
 
         if not devices:
             raise commands.BadArgument("No device found with that name.")
 
-        matching_device = all_devices.get(devices[0])
-        
+        device = devices[0].get("devices")[0]
+        matching_device = all_devices.get(device)
+
         response = await get_ios_cfw()
         ios = response.get("ios")
-        ios = [ios for ios in ios if f"{ios.get('version')} ({ios.get('build')})" == version or ios.get('build').lower() == version.lower() or ios.get('version').lower() == version.lower()]
+        ios = [v for v in ios if device in v.get('devices') and version == v.get('version')]
 
         if not ios:
             raise commands.BadArgument("No firmware found with that version.")

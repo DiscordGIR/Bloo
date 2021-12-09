@@ -11,6 +11,12 @@ from aiocache import cached
 from utils.mod.give_birthday_role import MONTH_MAPPING
 
 
+def sort_versions(version):
+    v = version.split(' ')
+    v[0] = list(map(int, v[0].split('.')))
+    return v
+
+
 @cached(ttl=3600)
 async def get_devices():
     res_devices = []
@@ -107,19 +113,21 @@ async def verison_jb_autocomplete(ctx: AutocompleteContext):
     cfw = await get_ios_cfw()
     if cfw is None:
         return []
-    
+
     ios = cfw.get("ios")
-    devices = cfw.get("device")
+    devices = cfw.get("groups")
     selected_device = ctx.options.get("device")
 
-    matching_devices = [d for d in devices if d.lower() == selected_device.lower() or devices.get(d).get('name').lower() == selected_device.lower()]
+    matching_devices = [d for d in devices if selected_device.lower() == d.get('name').lower()]
     if not matching_devices:
         return []
     
-    matching_device = matching_devices[0]
-    matching_ios = [version.get("version") for version in ios if matching_device in version.get('devices')]
-    matching_ios.sort(reverse=True)
+    matching_device = matching_devices[0].get("devices")[0]
+    matching_ios = [version.get("version") for version in ios if matching_device in version.get('devices') and ctx.value.lower() in version.get('version').lower()]
+
+    matching_ios.sort(key=sort_versions,reverse=True)
     return matching_ios[:25]
+
 
 async def ios_beta_autocomplete(ctx: AutocompleteContext):
     versions = await get_ios_cfw()
@@ -167,6 +175,7 @@ async def tags_autocomplete(ctx: AutocompleteContext):
     tags = [tag.name.lower() for tag in guild_service.get_guild().tags]
     tags.sort()
     return [tag for tag in tags if tag.lower().startswith(ctx.value.lower())][:25]
+
 
 async def memes_autocomplete(ctx: AutocompleteContext):
     memes = [meme.name.lower() for meme in guild_service.get_guild().memes]

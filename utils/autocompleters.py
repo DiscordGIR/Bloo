@@ -162,6 +162,29 @@ async def device_autocomplete(ctx: AutocompleteContext):
     return [device.get('name') for device in devices][:25]
 
 
+async def device_autocomplete_jb(ctx: AutocompleteContext):
+    res = await get_ios_cfw()
+    if res is None:
+        return []
+    
+    devices = res.get("groups")
+    devices = [d for d in devices if (ctx.value.lower() in [in_device.lower() for in_device in d.get('devices')] or ctx.value.lower() in d.get('name').lower()) and d.get('type') not in ["TV", "Watch", ]]
+
+    devices.sort(key=lambda x: x.get('type') or "zzz")
+    devices_groups = groupby(devices, lambda x: x.get('type'))
+    
+    devices = []
+    for _, group in devices_groups:
+        group = list(group)
+        group.sort(key=lambda x: x.get('order'), reverse=True)
+        devices.extend(group)
+        
+        if len(devices) >= 25:
+            break
+
+    return [device.get('name') for device in devices][:25]
+
+
 async def date_autocompleter(ctx: AutocompleteContext) -> list:
     """Autocompletes the date parameter for !mybirthday"""
     month = MONTH_MAPPING.get(ctx.options.get("month"))

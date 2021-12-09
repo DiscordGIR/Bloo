@@ -8,7 +8,7 @@ from aiocache.decorators import cached
 from discord.commands import slash_command
 from discord.commands.commands import Option
 from discord.ext import commands
-from utils.autocompleters import device_autocomplete, get_ios_cfw, ios_autocomplete, ios_beta_autocomplete, jb_autocomplete, verison_jb_autocomplete
+from utils.autocompleters import device_autocomplete, device_autocomplete_jb, get_ios_cfw, ios_autocomplete, ios_beta_autocomplete, jb_autocomplete, verison_jb_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
@@ -330,7 +330,7 @@ class iOSCFW(commands.Cog):
 
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Find out if you can jailbreak your device!")
-    async def canijailbreak(self, ctx: BlooContext, device: Option(str, autocomplete=device_autocomplete), version: Option(str, autocomplete=verison_jb_autocomplete)) -> None:
+    async def canijailbreak(self, ctx: BlooContext, device: Option(str, autocomplete=device_autocomplete_jb), version: Option(str, autocomplete=verison_jb_autocomplete)) -> None:
         """Find out if you can jailbreak your device!
 
         Example usage

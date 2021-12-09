@@ -18,8 +18,9 @@ def sort_versions(version):
 
 
 @cached(ttl=3600)
-async def get_devices():
+async def get_devices_ipswme():
     res_devices = []
+    seen_devices = set()
     async with aiohttp.ClientSession() as session:
         async with session.get("https://api.ipsw.me/v4/devices") as resp:
             if resp.status == 200:
@@ -36,39 +37,46 @@ async def get_devices():
                     name = name.replace('[', '')
                     name = name.replace(']', '')
                     name = name.strip()
-                    if name not in res_devices:
-                        res_devices.append(name)
+                    
+                    
+                    if name not in seen_devices:
+                        d["name"] = name
+                        res_devices.append(d)
+                        seen_devices.add(name)
 
     return res_devices
 
 
-async def device_autocomplete(ctx: AutocompleteContext):
-    devices = await get_devices()
-    devices.sort()
-    return [device for device in devices if device.lower().startswith(ctx.value.lower()) and device.lower().split()[0] in ['iphone', 'ipod', 'ipad', 'homepod', 'apple']][:25]
-
-
 @cached(ttl=3600)
-async def get_jailbreaks():
-    res_apps = []
+async def find_firmwares_from_ipsw_me(identifier):
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://assets.stkc.win/jailbreaks.json") as resp:
+        async with session.get(f"https://api.ipsw.me/v4/device/{identifier}") as resp:
             if resp.status == 200:
-                data = await resp.text()
-                jailbreaks = json.loads(data)
+                firmwares = json.loads(await resp.text())["firmwares"]
+                firmwares = [firmware["version"] for firmware in firmwares]
 
-                # try to find an app with the name given in command
-                for d in jailbreaks:
-                    jb = jailbreaks[d][0]
-                    name = re.sub(r'\((.*?)\)', "", jb["Name"])
-                    # get rid of '[ and ']'
-                    name = name.replace('[', '')
-                    name = name.replace(']', '')
-                    name = name.strip()
-                    if name not in res_apps:
-                        res_apps.append(name)
+    firmwares.sort(key=sort_versions, reverse=True)
+    return firmwares
 
-    return res_apps
+
+async def device_autocomplete_ipswme(ctx: AutocompleteContext):
+    devices = await get_devices_ipswme()
+    devices.sort(key=lambda x: x['name'].lower())
+    return [device["name"] for device in devices if device["name"].lower().startswith(ctx.value.lower()) and device["name"].lower().split()[0] in ['iphone', 'ipod', 'ipad']][:25]
+
+
+async def ios_on_device_autocomplete_ipswme(ctx: AutocompleteContext):
+    device = ctx.options.get("device")
+    all_devices = await get_devices_ipswme()
+    device_final = [d["identifier"] for d in all_devices if device.lower() == d["name"].lower()]
+    
+    if not device_final:
+        return []
+    
+    device_final = device_final[0]
+    firmwares = await find_firmwares_from_ipsw_me(device_final)
+    return firmwares[:25]
+    
 
 @cached(ttl=3600)
 async def get_ios_cfw():

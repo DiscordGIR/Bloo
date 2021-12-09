@@ -310,15 +310,16 @@ class iOSCFW(commands.Cog):
         models = [real.get(dev) for dev in real if dev in matching_device_group.get("devices")]
         
         model_numbers = []
+        model_names = ""
         for model_number in models:
             model_numbers.extend(model_number.get("model"))
+            model_names += f"{model_number.get('name')} (`{model_number.get('identifier')}`)\n"
 
         model_numbers.sort()
 
-        embed.add_field(name="Identifier", value='`' + "`, `".join([model.get('identifier') for model in models]) + "`", inline=True)
+        embed.add_field(name="Phones", value=model_names, inline=True)
         embed.add_field(name="SoC", value=f"{models[0].get('arch')} ({models[0].get('soc')} chip)", inline=True)
         embed.add_field(name="Model(s)", value='`' + "`, `".join(model_numbers) + "`", inline=False)
-
         embed.set_footer(text="Powered by https://ios.cfw.guide")
 
         view = discord.ui.View()

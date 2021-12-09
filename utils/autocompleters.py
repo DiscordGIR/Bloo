@@ -1,13 +1,13 @@
-from itertools import chain, groupby
 import json
 import re
+from itertools import groupby
 
 import aiohttp
+from aiocache import cached
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 from discord.commands.context import AutocompleteContext
 
-from aiocache import cached
 from utils.mod.give_birthday_role import MONTH_MAPPING
 
 
@@ -81,8 +81,7 @@ async def get_ios_cfw():
     """
 
     async with aiohttp.ClientSession() as session:
-        # async with session.get("https://ios.cfw.guide/main.json") as resp:
-        async with session.get("https://cdn.discordapp.com/attachments/846383888862937183/918382158601670666/main.json") as resp:
+        async with session.get("https://ios.cfw.guide/main.json") as resp:
             if resp.status == 200:
                 data = await resp.json()
 
@@ -99,17 +98,18 @@ async def jb_autocomplete(ctx: AutocompleteContext):
     return [app["name"] for app in apps if app["name"].lower().startswith(ctx.value.lower())][:25]
 
 
-async def ios_autocomplete(ctx: AutocompleteContext):
+async def ios_version_autocomplete(ctx: AutocompleteContext):
     versions = await get_ios_cfw()
     if versions is None:
         return []
-    
+
     versions = versions.get("ios")
-    versions.sort(key=lambda x: x.get("released") or "1970-01-01", reverse=True)
+    versions.sort(key=lambda x: x.get("released")
+                  or "1970-01-01", reverse=True)
     return [f"{v['version']} ({v['build']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and not v['beta']][:25]
 
 
-async def verison_jb_autocomplete(ctx: AutocompleteContext):
+async def ios_on_device_autocomplete(ctx: AutocompleteContext):
     cfw = await get_ios_cfw()
     if cfw is None:
         return []
@@ -118,44 +118,37 @@ async def verison_jb_autocomplete(ctx: AutocompleteContext):
     devices = cfw.get("groups")
     selected_device = ctx.options.get("device")
 
-    matching_devices = [d for d in devices if selected_device.lower() == d.get('name').lower()]
+    matching_devices = [
+        d for d in devices if selected_device.lower() == d.get('name').lower()]
     if not matching_devices:
         return []
-    
+
     matching_device = matching_devices[0].get("devices")[0]
-    matching_ios = [version.get("version") for version in ios if matching_device in version.get('devices') and ctx.value.lower() in version.get('version').lower()]
+    matching_ios = [version.get("version") for version in ios if matching_device in version.get(
+        'devices') and ctx.value.lower() in version.get('version').lower()]
 
-    matching_ios.sort(key=sort_versions,reverse=True)
+    matching_ios.sort(key=sort_versions, reverse=True)
     return matching_ios[:25]
-
-
-async def ios_beta_autocomplete(ctx: AutocompleteContext):
-    versions = await get_ios_cfw()
-    if versions is None:
-        return []
-    
-    versions = versions.get("ios")
-    versions.sort(key=lambda x: x.get("released") or "1970-01-01", reverse=True)
-    return [f"{v['version']} ({v['build']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and v['beta']][:25]
 
 
 async def device_autocomplete(ctx: AutocompleteContext):
     res = await get_ios_cfw()
     if res is None:
         return []
-    
+
     devices = res.get("groups")
-    devices = [d for d in devices if ctx.value.lower() in [in_device.lower() for in_device in d.get('devices')] or ctx.value.lower() in d.get('name').lower()]
+    devices = [d for d in devices if ctx.value.lower() in [in_device.lower(
+    ) for in_device in d.get('devices')] or ctx.value.lower() in d.get('name').lower()]
 
     devices.sort(key=lambda x: x.get('type') or "zzz")
     devices_groups = groupby(devices, lambda x: x.get('type'))
-    
+
     devices = []
     for _, group in devices_groups:
         group = list(group)
         group.sort(key=lambda x: x.get('order'), reverse=True)
         devices.extend(group)
-        
+
         if len(devices) >= 25:
             break
 
@@ -166,23 +159,35 @@ async def device_autocomplete_jb(ctx: AutocompleteContext):
     res = await get_ios_cfw()
     if res is None:
         return []
-    
+
     devices = res.get("groups")
-    devices = [d for d in devices if (ctx.value.lower() in [in_device.lower() for in_device in d.get('devices')] or ctx.value.lower() in d.get('name').lower()) and d.get('type') not in ["TV", "Watch", ]]
+    devices = [d for d in devices if (ctx.value.lower() in [in_device.lower() for in_device in d.get(
+        'devices')] or ctx.value.lower() in d.get('name').lower()) and d.get('type') not in ["TV", "Watch", ]]
 
     devices.sort(key=lambda x: x.get('type') or "zzz")
     devices_groups = groupby(devices, lambda x: x.get('type'))
-    
+
     devices = []
     for _, group in devices_groups:
         group = list(group)
         group.sort(key=lambda x: x.get('order'), reverse=True)
         devices.extend(group)
-        
+
         if len(devices) >= 25:
             break
 
     return [device.get('name') for device in devices][:25]
+
+
+async def ios_beta_version_autocomplete(ctx: AutocompleteContext):
+    versions = await get_ios_cfw()
+    if versions is None:
+        return []
+
+    versions = versions.get("ios")
+    versions.sort(key=lambda x: x.get("released")
+                  or "1970-01-01", reverse=True)
+    return [f"{v['version']} ({v['build']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and v['beta']][:25]
 
 
 async def date_autocompleter(ctx: AutocompleteContext) -> list:

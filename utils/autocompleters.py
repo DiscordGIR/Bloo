@@ -1,3 +1,4 @@
+from itertools import chain, groupby
 import json
 import re
 
@@ -74,7 +75,8 @@ async def get_ios_cfw():
     """
 
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://ios.cfw.guide/main.json") as resp:
+        # async with session.get("https://ios.cfw.guide/main.json") as resp:
+        async with session.get("https://cdn.discordapp.com/attachments/846383888862937183/918382158601670666/main.json") as resp:
             if resp.status == 200:
                 data = await resp.json()
 
@@ -101,6 +103,24 @@ async def ios_autocomplete(ctx: AutocompleteContext):
     return [f"{v['version']} ({v['build']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and not v['beta']][:25]
 
 
+async def verison_jb_autocomplete(ctx: AutocompleteContext):
+    cfw = await get_ios_cfw()
+    if cfw is None:
+        return []
+    
+    ios = cfw.get("ios")
+    devices = cfw.get("device")
+    selected_device = ctx.options.get("device")
+
+    matching_devices = [d for d in devices if d.lower() == selected_device.lower() or devices.get(d).get('name').lower() == selected_device.lower()]
+    if not matching_devices:
+        return []
+    
+    matching_device = matching_devices[0]
+    matching_ios = [version.get("version") for version in ios if matching_device in version.get('devices')]
+    matching_ios.sort(reverse=True)
+    return matching_ios[:25]
+
 async def ios_beta_autocomplete(ctx: AutocompleteContext):
     versions = await get_ios_cfw()
     if versions is None:
@@ -116,10 +136,22 @@ async def device_autocomplete(ctx: AutocompleteContext):
     if res is None:
         return []
     
-    devices = res.get("device")
-    devices = [devices.get(d).get('name') for d in devices if ctx.value.lower() in d.lower() or ctx.value.lower() in devices.get(d).get('name').lower()]
-    devices.sort(key=lambda x: x.lower())
-    return devices[:25]
+    devices = res.get("groups")
+    devices = [d for d in devices if ctx.value.lower() in [in_device.lower() for in_device in d.get('devices')] or ctx.value.lower() in d.get('name').lower()]
+
+    devices.sort(key=lambda x: x.get('type') or "zzz")
+    devices_groups = groupby(devices, lambda x: x.get('type'))
+    
+    devices = []
+    for _, group in devices_groups:
+        group = list(group)
+        group.sort(key=lambda x: x.get('order'), reverse=True)
+        devices.extend(group)
+        
+        if len(devices) >= 25:
+            break
+
+    return [device.get('name') for device in devices][:25]
 
 
 async def date_autocompleter(ctx: AutocompleteContext) -> list:

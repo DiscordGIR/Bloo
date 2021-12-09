@@ -48,7 +48,7 @@
 		"scope": "python",
 		"prefix": "createcmd",
 		"body": [
-            "@slash_command(guild_ids=[cfg.guild.id], description=\"$1\")",
+            "@slash_command(guild_ids=[cfg.guild_id], description=\"$1\")",
             "async def $2(self, ctx: BlooContext):",
             "    ",
 		]

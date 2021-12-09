@@ -48,17 +48,6 @@ class TweakMenu(Menu):
         # Prepare inital embed
         embed = await self.page_formatter(entries=self.pages[0], all_pages=self.pages, current_page=1, ctx=self.ctx)
         # Initialize our menu
-        if self.ctx.repo:
-            self.extra_buttons = [
-                discord.ui.Button(label='Add Repo to Sileo', emoji="<:sileo:679466569407004684>", url=f'https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={self.ctx.repo}', style=discord.ButtonStyle.url),
-                discord.ui.Button(label='Add Repo to Zebra', emoji="<:zebra:911433583032422420>", url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={self.ctx.repo}', style=discord.ButtonStyle.url)
-            ]
-        else:
-            self.extra_buttons = [
-                discord.ui.Button(label='Cannot add default repo', emoji="<:sileo:679466569407004684>", url=f'https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={self.ctx.repo}', disabled=True, style=discord.ButtonStyle.url),
-                discord.ui.Button(label='Cannot add default repo', emoji="🦓", url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={self.ctx.repo}', disabled=True, style=discord.ButtonStyle.url)
-            ]
-
         await TweakMenuButtons(self.ctx, self.pages, self.page_formatter, self.channel, self.is_interaction, self.should_whisper, no_skip=self.no_skip, extra_buttons=self.extra_buttons).launch(embed)
 
 
@@ -78,6 +67,78 @@ class TweakMenuButtons(MenuButtons):
                 discord.ui.Button(label='Cannot add default repo', emoji="🦓", url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={self.ctx.repo}', disabled=True, style=discord.ButtonStyle.url)
             ]
         
+        await super().launch(embed)
+
+    async def on_timeout(self):
+        # Check if we even have any components enabled (if we don't, we don't need to do anything!)
+        componentEnabled = False
+        if 0 <= (self.array_current_page - 1) < len(self.pages):
+            componentEnabled = True
+        if len(self.pages) > self.current_page:
+            componentEnabled = True
+        if componentEnabled is False:
+            return
+
+        # Recursively disable all buttons
+        for child in self.children:
+            if child not in self.extra_buttons:
+                child.disabled = True
+        
+        # If we aren't in an interaction, just edit the current message
+        if self.is_interaction is False:
+            await self.msg.edit(embed=self.embed, view=self)
+        # Otherwise, handle with context
+        else:
+            if self.should_whisper is True:
+                await self.ctx.respond_or_edit(embed=self.embed, view=self, ephemeral=True)
+            else:
+                await self.ctx.respond_or_edit(embed=self.embed, view=self)
+
+
+class CIJMenu(Menu):
+    def __init__(self, *args, **kwargs):
+        # Declare variables that we need to use globally throughout the menu
+        super().__init__(*args, **kwargs)
+
+    async def start(self):
+        """Initializes a menu"""
+        def chunks(lst, n):
+            """Yield successive n-sized chunks from lst."""
+            for i in range(0, len(lst), n):
+                yield lst[i:i + n]
+        
+        self.pages = list(chunks(self.pages, self.per_page))
+        
+        # Prepare inital embed
+        embed = await self.page_formatter(entries=self.pages[0], all_pages=self.pages, current_page=1, ctx=self.ctx)
+
+        await CIJMenuButtons(self.ctx, self.pages, self.page_formatter, self.channel, self.is_interaction, self.should_whisper, no_skip=self.no_skip, extra_buttons=self.extra_buttons).launch(embed)
+
+
+class CIJMenuButtons(MenuButtons):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+    async def launch(self, embed):
+        self.extra_buttons = []
+        if self.ctx.jb_info.get("website") is not None:
+            self.extra_buttons.append(discord.ui.Button(label='Website', url=self.ctx.jb_info.get(
+                "website").get("url"), style=discord.ButtonStyle.url))
+
+        if self.ctx.jb_info.get('guide'):
+            added = False
+            for guide in self.ctx.jb_info.get('guide')[1:]:
+                if self.ctx.build in guide.get("firmwares") and self.ctx.device_id in guide.get("devices"):
+                    self.extra_buttons.append(discord.ui.Button(
+                        label=f'{guide.get("name")} Guide', url=f"https://ios.cfw.guide{guide.get('url')}", style=discord.ButtonStyle.url))
+                    added = True
+                    break
+            
+            if not added:
+                guide = self.ctx.jb_info.get('guide')[0]
+                self.extra_buttons.append(discord.ui.Button(
+                        label=f'{guide.get("name")} Guide', url=f"https://ios.cfw.guide{guide.get('url')}", style=discord.ButtonStyle.url))
+
         await super().launch(embed)
 
     async def on_timeout(self):

@@ -8,13 +8,61 @@ from aiocache.decorators import cached
 from discord.commands import slash_command
 from discord.commands.commands import Option
 from discord.ext import commands
-from utils.autocompleters import device_autocomplete, get_ios_cfw, ios_autocomplete, ios_beta_autocomplete, jb_autocomplete
+from utils.autocompleters import device_autocomplete, get_ios_cfw, ios_autocomplete, ios_beta_autocomplete, jb_autocomplete, verison_jb_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
+from utils.menu import CIJMenu
 from utils.permissions.checks import (PermissionsFailure,
                                       whisper_in_general)
 
+
+async def format_jailbreak_page(entries, all_pages, current_page, ctx):
+    jb = entries[0]
+    info = jb.get('info')
+    ctx.jb_info = info
+
+    color = info.get("color")
+    if color is not None:
+        color = int(color.replace("#", ""), 16)
+
+    embed = discord.Embed(title="Good news, your device is jailbreakable!", color=color or discord.Color.random())
+    embed.description = f"{jb.get('name')} works on {ctx.device} on {ctx.version}!"
+
+    if info is not None:
+        embed.set_thumbnail(url=f"https://ios.cfw.guide{info.get('icon')}")
+
+        embed.add_field(
+            name="Version", value=info.get("latestVer"), inline=True)
+
+        if info.get("firmwares"):
+            soc = f"Works with {info.get('soc')}" if info.get(
+                'soc') else ""
+
+            firmwares = info.get("firmwares")
+            if len(firmwares) > 2:
+                firmwares = ", ".join(firmwares)
+            else:
+                firmwares = "-".join(info.get("firmwares"))
+
+            embed.add_field(name="Compatible with",
+                            value=f'iOS {firmwares}\n{f"**{soc}**" if soc else ""}', inline=True)
+        else:
+            embed.add_field(name="Compatible with",
+                            value="Unavailable", inline=True)
+
+        embed.add_field(
+            name="Type", value=info.get("type"), inline=False)
+
+        if info.get('notes') is not None:
+            embed.add_field(
+                name="Notes", value=info.get('notes'), inline=False)
+
+        embed.set_footer(text="Powered by https://ios.cfw.guide")
+    else:
+        embed.description = "No info available."
+    
+    return embed
 
 @cached(ttl=3600)
 async def get_jailbreaks_jba():
@@ -137,19 +185,20 @@ class iOSCFW(commands.Cog):
             if info.get('notes') is not None:
                 embed.add_field(
                     name="Notes", value=info.get('notes'), inline=False)
+            
+            if info.get("jailbreaksmeapp") is not None:
+                jba = await iterate_apps(jb.get("name"))
+                signed = await get_signed_status()
+                if jba is None or signed.get('status') != 'Signed':
+                    view.add_item(discord.ui.Button(label='Install with Jailbreaks.app',
+                                url=f"https://api.jailbreaks.app/", style=discord.ButtonStyle.url, disabled=True))
+                else:
+                    view.add_item(discord.ui.Button(label='Install with Jailbreaks.app',
+                                url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
 
             embed.set_footer(text="Powered by https://ios.cfw.guide")
         else:
             embed.description = "No info available."
-
-        jba = await iterate_apps(jb.get("name"))
-        signed = await get_signed_status()
-        if jba is None or signed.get('status') != 'Signed':
-            view.add_item(discord.ui.Button(label='Install with Jailbreaks.app',
-                          url=f"https://api.jailbreaks.app/", style=discord.ButtonStyle.url, disabled=True))
-        else:
-            view.add_item(discord.ui.Button(label='Install with Jailbreaks.app',
-                          url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
 
         if user_to_mention is not None:
             title = f"Hey {user_to_mention.mention}, have a look at this!"
@@ -242,8 +291,56 @@ class iOSCFW(commands.Cog):
 
         Parameters
         ----------
-        version : str
+        device : str
             "Device identifier"
+        """
+
+        response = await get_ios_cfw()
+        all_devices = response.get("groups")
+        devices = [d for d in all_devices if d.get('name').lower() == device.lower() or device.lower() in [x.lower() for x in d.get('devices')]]
+
+        if not devices:
+            raise commands.BadArgument("No device found with that name.")
+
+        matching_device_group = devices[0]
+
+        embed = discord.Embed(title=matching_device_group.get('name'), color=discord.Color.random())
+
+        real = response.get("device")
+        models = [real.get(dev) for dev in real if dev in matching_device_group.get("devices")]
+        
+        model_numbers = []
+        for model_number in models:
+            model_numbers.extend(model_number.get("model"))
+
+        model_numbers.sort()
+
+        embed.add_field(name="Identifier", value='`' + "`, `".join([model.get('identifier') for model in models]) + "`", inline=True)
+        embed.add_field(name="SoC", value=f"{models[0].get('arch')} ({models[0].get('soc')} chip)", inline=True)
+        embed.add_field(name="Model(s)", value='`' + "`, `".join(model_numbers) + "`", inline=False)
+
+        embed.set_footer(text="Powered by https://ios.cfw.guide")
+
+        view = discord.ui.View()
+        view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label="View more on ios.cfw.guide", url=f"https://ios.cfw.guide/chart/device/{matching_device_group.get('name').replace(' ', '-')}"))
+
+        await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
+
+    @whisper_in_general()
+    @slash_command(guild_ids=[cfg.guild_id], description="Find out if you can jailbreak your device!")
+    async def canijailbreak(self, ctx: BlooContext, device: Option(str, autocomplete=device_autocomplete), version: Option(str, autocomplete=verison_jb_autocomplete)) -> None:
+        """Find out if you can jailbreak your device!
+
+        Example usage
+        -------------
+        /canijailbreak device:<device> version:<version>
+
+        Parameters
+        ----------
+        device : str
+            "Device identifier"
+        version : str
+            "version identifier"
         """
 
         response = await get_ios_cfw()
@@ -254,19 +351,46 @@ class iOSCFW(commands.Cog):
             raise commands.BadArgument("No device found with that name.")
 
         matching_device = all_devices.get(devices[0])
+        
+        response = await get_ios_cfw()
+        ios = response.get("ios")
+        ios = [ios for ios in ios if f"{ios.get('version')} ({ios.get('build')})" == version or ios.get('build').lower() == version.lower() or ios.get('version').lower() == version.lower()]
 
-        embed = discord.Embed(title=matching_device.get('name'), color=discord.Color.random())
-        embed.add_field(name="Identifier", value=matching_device.get("identifier"), inline=True)
-        embed.add_field(name="SoC", value=f"{matching_device.get('arch')} ({matching_device.get('soc')} chip)", inline=True)
-        embed.add_field(name="Model(s)", value=", ".join(matching_device.get("model")), inline=False)
+        if not ios:
+            raise commands.BadArgument("No firmware found with that version.")
 
-        embed.set_footer(text="Powered by https://ios.cfw.guide")
+        matching_ios = ios[0]
 
-        view = discord.ui.View()
-        view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label="View more on ios.cfw.guide", url=f"https://ios.cfw.guide/chart/device/{matching_device.get('identifier')}"))
+        found_jbs = []
 
-        await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
+        jailbreaks = response.get("jailbreak")
+        for jb in jailbreaks:
+            if jb.get("compatibility") is None:
+                continue
 
+            for jb_version in jb.get("compatibility"):
+                if matching_device.get("identifier") in jb_version.get("devices") and matching_ios.get("build") in jb_version.get("firmwares"):
+                    found_jbs.append(jb)
+                    break
+
+        if not found_jbs:
+            embed = discord.Embed(description=f"Sorry, **{matching_device.get('name')}** is not jailbreakable on **{matching_ios.get('version')}**.", color=discord.Color.red())
+            await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
+        else:
+            ctx.device = matching_device.get("name")
+            ctx.device_id = matching_device.get("identifier")
+            ctx.version = matching_ios.get("version")
+            ctx.build = matching_ios.get("build")
+
+            if len(found_jbs) > 0:
+                found_jbs.sort(key=lambda x: str(x.get("priority")) or x.get("name"))
+
+            menu = CIJMenu(pages=found_jbs, channel=ctx.channel,
+                        format_page=format_jailbreak_page, interaction=True, ctx=ctx, no_skip=True)
+
+            await menu.start()
+
+    @canijailbreak.error
     @deviceinfo.error
     @firmware.error
     @betafirmware.error

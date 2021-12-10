@@ -1,4 +1,3 @@
-from aiocache import cached
 import discord
 from discord.commands import Option, slash_command
 from discord.commands.commands import message_command, user_command
@@ -9,83 +8,14 @@ import datetime
 import io
 import json
 import traceback
-import aiohttp
 import pytimeparse
 from PIL import Image
 from data.services.guild_service import guild_service
-from utils.autocompleters import jb_autocomplete
 from utils.logger import logger
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.permissions.checks import PermissionsFailure, whisper, whisper_in_general
+from utils.permissions.checks import PermissionsFailure, whisper
 from utils.permissions.permissions import permissions
-
-
-@cached(ttl=3600)
-async def get_jailbreaks_jba():
-    """Gets all apps on Jailbreaks.app
-    
-    Returns
-    -------
-    dict
-        "Apps"
-    """
-    res_apps = []
-    async with aiohttp.ClientSession() as session:
-        async with session.get("https://jailbreaks.app/json/apps.json") as resp:
-            if resp.status == 200:
-                data = await resp.text()
-                res_apps = json.loads(data)
-    return res_apps
-
-@cached(ttl=1800)
-async def get_signed_status():
-    """Gets Jailbreaks.app's signed status"""
-    signed = []
-    async with aiohttp.ClientSession() as session:
-        async with session.get("https://jailbreaks.app/status.php") as resp:
-            if resp.status == 200:
-                data = await resp.text()
-                signed = json.loads(data)
-    return signed
-
-
-@cached(ttl=3600)
-async def get_jailbreaks():
-    """Gets all jailbreaks on stkc's API
-    
-    Returns
-    -------
-    list
-        "Jailbreaks"
-    """
-    response = {}
-    async with aiohttp.ClientSession() as client:
-        async with client.get('https://assets.stkc.win/jailbreaks.json') as resp:
-            if resp.status == 200:
-                data = await resp.text()
-                response = json.loads(data)
-    return response
-
-
-async def iterate_apps(query) -> dict:
-    """Iterates through Jailbreaks.app apps, looking for a matching query
-    
-    Parameters
-    ----------
-    query : str
-        "App to look for"
-        
-    Returns
-    -------
-    dict
-        "List of apps that match the query"
-    
-    """
-    apps = await get_jailbreaks_jba()
-    for possibleApp in apps:
-        if possibleApp.get('name').lower() == query.lower().replace("œ", "oe"):
-            return possibleApp
 
 
 class PFPView(discord.ui.View):
@@ -138,10 +68,6 @@ class Misc(commands.Cog):
         self.bot = bot
         self.spam_cooldown = commands.CooldownMapping.from_cooldown(
             3, 15.0, commands.BucketType.channel)
-
-        # self.CIJ_KEY = os.environ.get('CIJ_KEY')
-        # self.cij_baseurl = "https://canijailbreak2.com/v1/pls"
-        # self.devices_url = "https://api.ipsw.me/v4/devices"
 
         try:
             with open('emojis.json') as f:
@@ -280,53 +206,6 @@ class Misc(commands.Cog):
 
         view.message = await ctx.respond(embed=embed, ephemeral=ctx.whisper, view=view)
 
-    @whisper_in_general()
-    @slash_command(guild_ids=[cfg.guild_id], description="Get info about a jailbreak.")
-    async def jailbreak(self, ctx: BlooContext, name: Option(str, description="Name of the jailbreak", autocomplete=jb_autocomplete, required=True)) -> None:
-        """Fetches info of jailbreak
-        
-        Example usage
-        -------------
-        /jailbreak name:<name>
-        
-        Parameters
-        ----------
-        name : str
-            "Name of jailbreak"
-        """
-        response = await get_jailbreaks()
-        try:
-            for object in response[f'{name.lower().replace("œ", "oe").replace("ï", "i")}']:
-                view = discord.ui.View()
-                embed = discord.Embed(
-                    title=object.get('Name'), color=discord.Color.blurple())
-                embed.add_field(
-                    name="Version", value=object['LatestVersion'], inline=True)
-                embed.add_field(name="Compatible with",
-                                value=object['Versions'], inline=True)
-                embed.add_field(
-                    name="Type", value=object['Type'], inline=False)
-                view.add_item(discord.ui.Button(label='Website', url=object['Website'], style=discord.ButtonStyle.url))
-                if object.get('Guide') is not None:
-                    view.add_item(discord.ui.Button(label='Guide', url=object['Guide'], style=discord.ButtonStyle.url))
-                if object.get('Notes') is not None:
-                    embed.add_field(
-                        name="Notes", value=object['Notes'], inline=False)
-                jba = await iterate_apps(object.get('Name'))
-                signed = await get_signed_status()
-                if jba is not None and signed.get('status') == 'Signed':
-                    view.add_item(discord.ui.Button(label='Install with Jailbreaks.app', url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
-                elif jba is not None and signed.get('status') == 'Revoked':
-                    view.add_item(discord.ui.Button(label='Install with Jailbreaks.app', url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url, disabled=True))
-                if object.get('Icon') is not None:
-                    embed.set_thumbnail(url=object.get('Icon'))
-                if object.get('Color') is not None:
-                    embed.color = int(object.get('Color').replace('#', ''), 16)
-                await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper, view=view)
-        except:
-            await ctx.send_error("Sorry, I couldn't find any jailbreaks with that name.")
-
-    @jailbreak.error
     @remindme.error
     @jumbo.error
     @avatar.error

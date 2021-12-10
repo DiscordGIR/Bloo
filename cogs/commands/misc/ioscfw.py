@@ -414,7 +414,7 @@ class iOSCFW(commands.Cog):
                     x.get("priority")) or x.get("name"))
 
             menu = CIJMenu(pages=found_jbs, channel=ctx.channel,
-                           format_page=format_jailbreak_page, interaction=True, ctx=ctx, no_skip=True, should_whisper=ctx.whisper)
+                           format_page=format_jailbreak_page, interaction=True, ctx=ctx, no_skip=True, whisper=ctx.whisper)
 
             await menu.start()
 

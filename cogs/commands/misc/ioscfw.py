@@ -11,7 +11,7 @@ from discord.ext import commands
 from utils.autocompleters import (device_autocomplete, device_autocomplete_jb,
                                   get_ios_cfw, ios_beta_version_autocomplete,
                                   ios_on_device_autocomplete,
-                                  ios_version_autocomplete, jb_autocomplete)
+                                  ios_version_autocomplete, jb_autocomplete, transform_groups)
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
@@ -310,7 +310,8 @@ class iOSCFW(commands.Cog):
 
         response = await get_ios_cfw()
         all_devices = response.get("groups")
-        devices = [d for d in all_devices if d.get('name').lower() == device.lower(
+        transformed_devices = transform_groups(all_devices)
+        devices = [d for d in transformed_devices if d.get('name').lower() == device.lower(
         ) or device.lower() in [x.lower() for x in d.get('devices')]]
 
         if not devices:
@@ -366,8 +367,10 @@ class iOSCFW(commands.Cog):
         response = await get_ios_cfw()
         all_devices = response.get("device")
         device_groups = response.get("groups")
-        devices = [group for group in device_groups if group.get(
-            'name').lower() == device.lower()]
+
+        transformed_groups = transform_groups(device_groups)
+        devices = [group for group in transformed_groups if group.get(
+            'name').lower() == device.lower() or device.lower() in [x.lower() for x in group.get('devices')]]
 
         if not devices:
             raise commands.BadArgument("No device found with that name.")

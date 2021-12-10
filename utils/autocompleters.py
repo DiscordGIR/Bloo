@@ -17,6 +17,19 @@ def sort_versions(version):
     return v
 
 
+def transform_groups(groups):
+    final_groups = []
+    for group in groups:
+        if group.get("subgroups") is not None:
+            for subgroup in group.get('subgroups'):
+                subgroup['order'] = group.get('order')
+                final_groups.append(subgroup)
+        else:
+            final_groups.append(group)
+
+    return final_groups
+
+
 @cached(ttl=3600)
 async def get_devices_ipswme():
     res_devices = []
@@ -124,10 +137,12 @@ async def ios_on_device_autocomplete(ctx: AutocompleteContext):
 
     ios = cfw.get("ios")
     devices = cfw.get("groups")
+    transformed_devices = transform_groups(devices)
     selected_device = ctx.options.get("device")
 
     matching_devices = [
-        d for d in devices if selected_device.lower() == d.get('name').lower()]
+        d for d in transformed_devices if selected_device.lower() == d.get('name').lower() or any(selected_device.lower() == x.lower() for x in d.get("devices"))]
+
     if not matching_devices:
         return []
 
@@ -144,9 +159,9 @@ async def device_autocomplete(ctx: AutocompleteContext):
     if res is None:
         return []
 
-    devices = res.get("groups")
-    devices = [d for d in devices if ctx.value.lower() in [in_device.lower(
-    ) for in_device in d.get('devices')] or ctx.value.lower() in d.get('name').lower()]
+    all_devices = res.get("groups")
+    transformed_devices = transform_groups(all_devices)
+    devices = [d for d in transformed_devices if (any(ctx.value.lower() in x.lower() for x in d.get('devices')) or ctx.value.lower() in d.get('name').lower())]
 
     devices.sort(key=lambda x: x.get('type') or "zzz")
     devices_groups = groupby(devices, lambda x: x.get('type'))
@@ -168,9 +183,10 @@ async def device_autocomplete_jb(ctx: AutocompleteContext):
     if res is None:
         return []
 
-    devices = res.get("groups")
-    devices = [d for d in devices if (ctx.value.lower() in [in_device.lower() for in_device in d.get(
-        'devices')] or ctx.value.lower() in d.get('name').lower()) and d.get('type') not in ["TV", "Watch", ]]
+    all_devices = res.get("groups")
+    transformed_devices = transform_groups(all_devices)
+    devices = [d for d in transformed_devices if (any(ctx.value.lower() in x.lower() for x in d.get(
+        'devices')) or ctx.value.lower() in d.get('name').lower()) and d.get('type') not in ["TV", "Watch"]]
 
     devices.sort(key=lambda x: x.get('type') or "zzz")
     devices_groups = groupby(devices, lambda x: x.get('type'))

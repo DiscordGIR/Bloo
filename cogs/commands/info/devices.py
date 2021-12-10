@@ -91,10 +91,10 @@ class Devices(commands.Cog):
             new_nick = f"{new_nick} [{name}, {firmware}]"
 
             if len(new_nick) > 32:
-                raise commands.BadArgument(f"Discord's nickname character limit is 32. `{new_nick}` is too long.")
+                raise commands.BadArgument(f"Discord's nickname character limit is 32. `{discord.utils.escape_markdown(new_nick)}` is too long.")
 
             await ctx.author.edit(nick=new_nick)
-            await ctx.send_success("Changed your nickname!")
+            await ctx.send_success(f"Changed your nickname to `{discord.utils.escape_markdown(new_nick)}`!")
 
     @ensure_invokee_role_lower_than_bot()
     @always_whisper()

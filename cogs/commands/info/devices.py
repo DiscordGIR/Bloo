@@ -65,7 +65,7 @@ class Devices(commands.Cog):
         if not devices:
             raise commands.BadArgument("No device found with that name.")
 
-        matching_device =  devices[0]
+        matching_device = devices[0]
         board = devices[0].get("devices")[0]
 
         ios = response.get("ios")
@@ -78,13 +78,16 @@ class Devices(commands.Cog):
         firmware = firmware[0].get('version')
         # change the user's nickname!
         if firmware is not None:
-            name = matching_device["name"]
-            name = name.replace(' Plus', '+')
-            name = name.replace('Pro Max', 'PM')
-            name = re.sub(r'\(?(\d\d?(\.\d)?\)?)-inch\)?', r'\1"', name)
-            name = re.sub(r'\(\d+(st|nd|rd|th)) generation\)', r'\1 gen', name)
+            # name = matching_device["name"]
+            # name = name.replace(' Plus', '+')
+            # name = name.replace('Pro Max', 'PM')
+            # # name = re.sub(r'\(?(\d\d?(\.\d)?\)?)-inch\)?', r'\1"', name)
+            # name = re.sub(r' \(?\d+(\.\d+)?-inch\)?', "", name)
+            # name = re.sub(r'\((\d+)(st|nd|rd|th) generation\)', r'\1', name)
             
             firmware = re.sub(r' beta (\d+)', r'b\1', firmware)
+            detailed_device = response.get("device").get(matching_device.get("devices")[0])
+            name = detailed_device["soc"]
             new_nick = f"{new_nick} [{name}, {firmware}]"
 
             if len(new_nick) > 32:

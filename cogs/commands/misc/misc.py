@@ -69,10 +69,6 @@ class Misc(commands.Cog):
         self.spam_cooldown = commands.CooldownMapping.from_cooldown(
             3, 15.0, commands.BucketType.channel)
 
-        # self.CIJ_KEY = os.environ.get('CIJ_KEY')
-        # self.cij_baseurl = "https://canijailbreak2.com/v1/pls"
-        # self.devices_url = "https://api.ipsw.me/v4/devices"
-
         try:
             with open('emojis.json') as f:
                 self.emojis = json.loads(f.read())

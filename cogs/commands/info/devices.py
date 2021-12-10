@@ -1,24 +1,20 @@
-from operator import pos
+from collections import defaultdict
 import discord
 from discord.commands import Option, slash_command
 from discord.ext import commands
 
-import json
 import re
 import traceback
-import aiohttp
 from utils.logger import logger
-from utils.autocompleters import device_autocomplete_ipswme, find_firmwares_from_ipsw_me, get_devices_ipswme, ios_on_device_autocomplete_ipswme
+from utils.autocompleters import device_autocomplete, get_ios_cfw, ios_on_device_autocomplete, transform_groups
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.checks import (PermissionsFailure, always_whisper, ensure_invokee_role_lower_than_bot, whisper)
-from utils.views.devices import Confirm, FirmwareDropdown
+from utils.views.devices import Confirm
 
 class Devices(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.devices_url = "https://api.ipsw.me/v4/devices"
-        self.firmwares_url = "https://api.ipsw.me/v4/device/"
         self.devices_test = re.compile(r'^.+ \[.+\,.+\]$')
         self.devices_remove_re = re.compile(r'\[.+\,.+\]$')
         self.possible_devices = ['iphone', 'ipod', 'ipad', 'homepod', 'apple']
@@ -26,7 +22,7 @@ class Devices(commands.Cog):
     @ensure_invokee_role_lower_than_bot()
     @always_whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Add device to nickname")
-    async def adddevice(self, ctx: BlooContext, device: Option(str, description="Name of your device", autocomplete=device_autocomplete_ipswme), version: Option(str, description="Device OS version", autocomplete=ios_on_device_autocomplete_ipswme)) -> None:
+    async def adddevice(self, ctx: BlooContext, device: Option(str, description="Name of your device", autocomplete=device_autocomplete), version: Option(str, description="Device OS version", autocomplete=ios_on_device_autocomplete)) -> None:
         """Add device name to your nickname, i.e `SlimShadyIAm [iPhone 12, 14.2]`. See /listdevices for valid device inputs.
 
         Example usage
@@ -59,36 +55,40 @@ class Devices(commands.Cog):
             else:
                 return
 
-        if not device.split(" ")[0].lower() in self.possible_devices:
-            raise commands.BadArgument(
-                "Unsupported device. Please see `/listdevices` for possible devices.")
+        response = await get_ios_cfw()
+        device_groups = response.get("groups")
 
-        possible_devices = await get_devices_ipswme()
-        possible_devices = [d for d in possible_devices if d['name'].lower() == device.lower()]
+        transformed_groups = transform_groups(device_groups)
+        devices = [group for group in transformed_groups if group.get(
+            'name').lower() == device.lower() or device.lower() in [x.lower() for x in group.get('devices')]]
 
-        # did we find a device with given name?
-        if not possible_devices:
-            raise commands.BadArgument("Device doesn't exist!")
+        if not devices:
+            raise commands.BadArgument("No device found with that name.")
 
-        the_device = possible_devices[0]
-        # prompt user for which firmware they want in their name
-        firmwares_for_device = await find_firmwares_from_ipsw_me(the_device['identifier'])
-        firmwares_for_device = [f for f in firmwares_for_device if f.lower() == version.lower()]
+        matching_device =  devices[0]
+        board = devices[0].get("devices")[0]
 
-        if not firmwares_for_device:
-            raise commands.BadArgument("That firmware wasn't found for that device!")
+        ios = response.get("ios")
+        firmware = [v for v in ios if board in v.get(
+            'devices') and version == v.get('version')]
 
-        firmware = firmwares_for_device[0]
+        if not firmware:
+            raise commands.BadArgument("No firmware found with that version.")
 
+        firmware = firmware[0].get('version')
         # change the user's nickname!
         if firmware is not None:
-            name = the_device["name"]
+            name = matching_device["name"]
             name = name.replace(' Plus', '+')
             name = name.replace('Pro Max', 'PM')
+            name = re.sub(r'\(?(\d\d?(\.\d)?\)?)-inch\)?', r'\1"', name)
+            name = re.sub(r'\(\d+(st|nd|rd|th)) generation\)', r'\1 gen', name)
+            
+            firmware = re.sub(r' beta (\d+)', r'b\1', firmware)
             new_nick = f"{new_nick} [{name}, {firmware}]"
 
             if len(new_nick) > 32:
-                raise commands.BadArgument("Nickname too long! Aborting.")
+                raise commands.BadArgument(f"Discord's nickname character limit is 32. `{new_nick}` is too long.")
 
             await ctx.author.edit(nick=new_nick)
             await ctx.send_success("Changed your nickname!")
@@ -127,40 +127,32 @@ class Devices(commands.Cog):
         
         """
 
-        devices_dict = {
-            'iPhone': set(),
-            'iPod': set(),
-            'iPad': set(),
-            'Apple TV': set(),
-            'Apple Watch': set(),
-            'HomePod': set(),
-        }
+        devices_dict = defaultdict(list)
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(self.devices_url) as resp:
-                if resp.status == 200:
-                    data = await resp.text()
-                    devices = json.loads(data)
-                    for d in devices:
-                        name = re.sub(r'\((.*?)\)', "", d["name"])
-                        name = name.replace('[', '')
-                        name = name.replace(']', '')
-                        name = name.strip()
-                        for key in devices_dict.keys():
-                            if key in name:
-                                devices_dict[key].add(name)
+        response = await get_ios_cfw()
+        devices = response.get("groups")
+        devices_transformed = transform_groups(devices)
 
-        # stupid ipsw.me api doesn't have these devices
-        devices_dict["iPhone"].add("iPhone SE 2")
+        for device in devices_transformed:
+            device_type = device.get("type")
+            if device_type == "TV":
+                devices_dict['Apple TV'].append(device)
+            elif device_type == "Watch":
+                devices_dict['Apple Watch'].append(device)
+            elif device_type in ['iPad', 'Pro', 'Air', 'mini']:
+                devices_dict['iPad'].append(device)
+            else:
+                devices_dict[device_type].append(device)
 
         embed = discord.Embed(title="Devices list")
         embed.color = discord.Color.blurple()
-        for key in devices_dict.keys():
-            temp = list(devices_dict[key])
-            temp.sort()
+        for key, devices in devices_dict.items():
+            devices.sort(key=lambda x: x.get('order'))
+            devices = [device.get("name") for device in devices]
             embed.add_field(name=key, value=', '.join(
-                map(str, temp)), inline=False)
+                devices), inline=False)
 
+        embed.set_footer(text="Powered by https://ios.cfw.guide")
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @removedevice.error

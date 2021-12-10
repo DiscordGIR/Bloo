@@ -378,7 +378,6 @@ class iOSCFW(commands.Cog):
         device = devices[0].get("devices")[0]
         matching_device = all_devices.get(device)
 
-        response = await get_ios_cfw()
         ios = response.get("ios")
         ios = [v for v in ios if device in v.get(
             'devices') and version == v.get('version')]

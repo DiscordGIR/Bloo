@@ -295,7 +295,7 @@ class iOSCFW(commands.Cog):
 
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info about an Apple device.")
-    async def deviceinfo(self, ctx: BlooContext, device: Option(str, description="Device identifier", autocomplete=device_autocomplete, required=True)) -> None:
+    async def deviceinfo(self, ctx: BlooContext, device: Option(str, description="Name or board identifier", autocomplete=device_autocomplete, required=True)) -> None:
         """Fetches info of an Apple device
 
         Example usage
@@ -349,7 +349,7 @@ class iOSCFW(commands.Cog):
 
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Find out if you can jailbreak your device!")
-    async def canijailbreak(self, ctx: BlooContext, device: Option(str, autocomplete=device_autocomplete_jb), version: Option(str, autocomplete=ios_on_device_autocomplete)) -> None:
+    async def canijailbreak(self, ctx: BlooContext, device: Option(str, autocomplete=device_autocomplete_jb, description="Name or board identifier of the device"), version: Option(str, autocomplete=ios_on_device_autocomplete, description="Device OS version")) -> None:
         """Find out if you can jailbreak your device!
 
         Example usage

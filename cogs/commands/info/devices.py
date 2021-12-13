@@ -1,6 +1,6 @@
 from collections import defaultdict
 import discord
-from discord.commands import Option, slash_command
+from discord.commands import Option
 from discord.ext import commands
 
 import re
@@ -17,17 +17,18 @@ class Devices(commands.Cog):
         self.bot = bot
         self.devices_test = re.compile(r'^.+ \[.+\,.+\]$')
         self.devices_remove_re = re.compile(r'\[.+\,.+\]$')
-        self.possible_devices = ['iphone', 'ipod', 'ipad', 'homepod', 'apple']
+
+    device = discord.SlashCommandGroup("device", "Manage devices in your nickname", guild_ids=[cfg.guild_id])
 
     @ensure_invokee_role_lower_than_bot()
     @always_whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Add device to nickname")
-    async def adddevice(self, ctx: BlooContext, device: Option(str, description="Name of your device", autocomplete=device_autocomplete), version: Option(str, description="Device OS version", autocomplete=ios_on_device_autocomplete)) -> None:
+    @device.command(description="Add device to nickname")
+    async def add(self, ctx: BlooContext, device: Option(str, description="Name of your device", autocomplete=device_autocomplete), version: Option(str, description="Device OS version", autocomplete=ios_on_device_autocomplete)) -> None:
         """Add device name to your nickname, i.e `SlimShadyIAm [iPhone 12, 14.2]`. See /listdevices for valid device inputs.
 
         Example usage
         -------------
-        /adddevice device:<devicename>
+        /device add device:<devicename>
 
         Parameters
         ----------
@@ -98,13 +99,13 @@ class Devices(commands.Cog):
 
     @ensure_invokee_role_lower_than_bot()
     @always_whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Remove device from nickname")
-    async def removedevice(self, ctx: BlooContext) -> None:
+    @device.command(description="Remove device from nickname")
+    async def remove(self, ctx: BlooContext) -> None:
         """Removes device from your nickname
 
         Example usage
         -------------
-        /removedevice
+        /device remove
 
         """
 
@@ -120,13 +121,13 @@ class Devices(commands.Cog):
         await ctx.send_success("Removed device from your nickname!")
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="List all devices you can set your nickname to")
-    async def listdevices(self, ctx: BlooContext) -> None:
+    @device.command(description="List all devices you can set your nickname to", name="list")
+    async def _list(self, ctx: BlooContext) -> None:
         """List all possible devices you can set your nickname to.
 
         Example usage
         -------------
-        /listdevices
+        /device list
         
         """
 
@@ -156,9 +157,9 @@ class Devices(commands.Cog):
         embed.set_footer(text="Powered by https://ios.cfw.guide")
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
-    @removedevice.error
-    @adddevice.error
-    @listdevices.error
+    @remove.error
+    @add.error
+    @_list.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original

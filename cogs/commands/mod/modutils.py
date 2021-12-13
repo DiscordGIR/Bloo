@@ -106,20 +106,6 @@ class ModUtils(commands.Cog):
         await ctx.send_success(f"{user.mention}'s xp was {'frozen' if results.is_xp_frozen else 'unfrozen'}.")
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="", permissions=slash_perms.mod_and_up())
-    async def musicban(self, ctx: BlooContext, user: discord.Member):
-        if user.id == self.bot.user.id:
-            await ctx.send_error("You can't call that on me :(")
-            raise commands.BadArgument("You can't call that on me :(")
-
-        results = user_service.get_user(user.id)
-        results.is_music_banned = True
-        results.save()
-
-        await ctx.send_success(f"{user.mention} was banned from music.")
-
-
-    @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Ban a user from birthdays", permissions=slash_perms.mod_and_up())
     async def birthdayexclude(self, ctx: BlooContext, user: discord.Member):
         if user.id == self.bot.user.id:
@@ -283,7 +269,6 @@ class ModUtils(commands.Cog):
     @transferprofile.error
     @clem.error
     @freezexp.error
-    @musicban.error
     @birthdayexclude.error
     @removebirthday.error
     @setbirthday.error

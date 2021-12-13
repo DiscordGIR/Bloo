@@ -27,14 +27,16 @@ class Giveaway(commands.Cog):
         self.bot = bot
         self.giveaway_messages = {}
 
+    giveaway = discord.SlashCommandGroup("giveaway", "Interact with giveaways", guild_ids=[cfg.guild_id], permissions=slash_perms.admin_and_up())
+
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Start a giveaway.", permissions=slash_perms.admin_and_up())
-    async def giveawaystart(self, ctx: BlooContext, prize: Option(str, description="Name of the giveaway"), sponsor: Option(discord.Member, description="Who sponsored the giveaway"), time: Option(str, description="How long should the giveaway last?", autocomplete=time_suggestions), winners: Option(int, description="How many winners?", min_value=1), channel: Option(discord.TextChannel, description="Where to post the giveaway")):
+    @giveaway.command(description="Start a giveaway.")
+    async def start(self, ctx: BlooContext, prize: Option(str, description="Name of the giveaway"), sponsor: Option(discord.Member, description="Who sponsored the giveaway"), time: Option(str, description="How long should the giveaway last?", autocomplete=time_suggestions), winners: Option(int, description="How many winners?", min_value=1), channel: Option(discord.TextChannel, description="Where to post the giveaway")):
         """Starts a giveaway
         
         Example usage
         -------------
-        /giveawaystart prize:<giveawayname> sponsor:<giveawaysponsor> time:<giveawaytime> winners:<giveawaywinnernumber> channel:<giveawaychannel>
+        /giveaway start prize:<giveawayname> sponsor:<giveawaysponsor> time:<giveawaytime> winners:<giveawaywinnernumber> channel:<giveawaychannel>
         
         Parameters
         ----------
@@ -87,13 +89,13 @@ class Giveaway(commands.Cog):
             channel_id=channel.id, message_id=message.id, date=end_time, winners=winners)
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Pick a new winner of an already ended giveaway.", permissions=slash_perms.admin_and_up())
-    async def giveawayreroll(self, ctx: BlooContext, message_id: str):
+    @giveaway.command(description="Pick a new winner of an already ended giveaway.")
+    async def reroll(self, ctx: BlooContext, message_id: str):
         """Picks a new winner of an already ended giveaway
         
         Example usage
         -------------
-        /giveawayreroll <messageid>
+        /giveaway reroll <messageid>
         
         Parameters
         ----------
@@ -131,13 +133,13 @@ class Giveaway(commands.Cog):
         await ctx.send_success("Rerolled!", delete_after=5)
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="End a giveaway early.", permissions=slash_perms.admin_and_up())
-    async def giveawayend(self, ctx: BlooContext, message_id: str):
+    @giveaway.command(description="End a giveaway early.")
+    async def end(self, ctx: BlooContext, message_id: str):
         """Ends a giveaway early
         
         Example usage
         -------------
-        /giveawayreroll <messageid>
+        /giveaway end <messageid>
         
         Parameters
         ----------
@@ -188,9 +190,9 @@ class Giveaway(commands.Cog):
                            value=f"Less than {humanize.naturaldelta(end_time - now)}")
         await message.edit(embed=embed)
 
-    @giveawaystart.error
-    @giveawayreroll.error
-    @giveawayend.error
+    @start.error
+    @reroll.error
+    @end.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original

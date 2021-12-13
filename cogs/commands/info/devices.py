@@ -142,8 +142,6 @@ class Devices(commands.Cog):
                 devices_dict['Apple TV'].append(device)
             elif device_type == "Watch":
                 devices_dict['Apple Watch'].append(device)
-            elif device_type in ['iPad', 'Pro', 'Air', 'mini']:
-                devices_dict['iPad'].append(device)
             else:
                 devices_dict[device_type].append(device)
 

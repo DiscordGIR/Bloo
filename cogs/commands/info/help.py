@@ -15,6 +15,9 @@ async def commands_list(ctx: AutocompleteContext):
     res = []
     for cog in ctx.bot.cogs:
         for command in ctx.bot.cogs[cog].get_commands():
+            if isinstance(command, discord.MessageCommand) or isinstance(command, discord.UserCommand):
+                continue
+
             if ctx.value.lower() in command.name.lower():
                 res.append(command.name.lower())
 

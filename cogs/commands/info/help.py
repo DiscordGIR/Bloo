@@ -54,6 +54,9 @@ class Utilities(commands.Cog):
                 string += f"== {cog_name} ==\n"
 
                 for command in cog.get_commands():
+                    if isinstance(command, discord.MessageCommand) or isinstance(command, discord.UserCommand):
+                        continue
+
                     command: SlashCommand = command
                     # print(type(command), command)
                     spaces_left = ' ' * (self.left_col_length - len(command.name))

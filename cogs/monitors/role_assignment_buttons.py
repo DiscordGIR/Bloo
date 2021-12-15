@@ -29,9 +29,11 @@ class RoleAssignButtons(commands.Cog):
 
             self.bot.add_view(view)
 
+    buttons = discord.SlashCommandGroup("buttons", "Interact with role buttons", guild_ids=[cfg.guild_id], permissions=slash_perms.admin_and_up())
+
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Post the button role assignment message", permissions=slash_perms.admin_and_up())
-    async def postbuttonmessage(self, ctx: BlooContext):
+    @buttons.command(description="Post the button role assignment message")
+    async def post_message(self, ctx: BlooContext):
         # timeout is None because we want this view to be persistent
         channel = ctx.guild.get_channel(
             guild_service.get_guild().channel_reaction_roles)
@@ -44,13 +46,13 @@ class RoleAssignButtons(commands.Cog):
         await ctx.send_success(f"Posted in {channel.mention}!")
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Prompt to add role assignment buttons to a message", permissions=slash_perms.admin_and_up())
-    async def setbuttons(self, ctx: BlooContext, message_id: str):
+    @buttons.command(name="set", description="Prompt to add role assignment buttons to a message")
+    async def _set(self, ctx: BlooContext, message_id: str):
         """Prompt to add multiple reaction roles to a message (admin only)
 
         Example usage
         -------------
-        !setbuttons <message ID>
+        /buttons set <message ID>
 
         Parameters
         ----------
@@ -110,13 +112,13 @@ class RoleAssignButtons(commands.Cog):
         await ctx.send_success(title="Reaction roles set!", description=resulting_reactions_list)
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Add a new role assignment button to a message", permissions=slash_perms.admin_and_up())
-    async def addbutton(self, ctx: BlooContext, message_id: str):
+    @buttons.command(description="Add a new role assignment button to a message")
+    async def add(self, ctx: BlooContext, message_id: str):
         """Add one new reaction to a given message
 
         Example usage
         -------------
-        !addbutton <message ID>
+        /buttons add <message ID>
 
         Parameters
         ----------
@@ -218,13 +220,13 @@ class RoleAssignButtons(commands.Cog):
         return await ctx.prompt(prompt_role)
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Move buttons from one message to another", permissions=slash_perms.admin_and_up())
-    async def movebuttons(self, ctx: BlooContext, before: Option(str, description="ID of the old message"), after: Option(str, description="ID of the new message")):
+    @buttons.command(description="Move buttons from one message to another")
+    async def move(self, ctx: BlooContext, before: Option(str, description="ID of the old message"), after: Option(str, description="ID of the new message")):
         """Move reactions from one message to another.
 
         Example use
         -----------
-        !movereactions <before message ID> <after message ID>
+        /buttons move <before message ID> <after message ID>
 
         Parameters
         ----------
@@ -279,8 +281,8 @@ class RoleAssignButtons(commands.Cog):
         await ctx.send_success(title="Reaction roles moved!", description=resulting_reactions_list)
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Repost all buttons", permissions=slash_perms.admin_and_up())
-    async def repostbuttons(self, ctx: BlooContext):
+    @buttons.command(description="Repost all buttons")
+    async def repost(self, ctx: BlooContext):
         """Repost all reactions to messages with reaction roles (admin only)
         """
 
@@ -308,11 +310,11 @@ class RoleAssignButtons(commands.Cog):
 
         await ctx.send_success("Done!")
 
-    @movebuttons.error
-    @addbutton.error
-    @setbuttons.error
-    @postbuttonmessage.error
-    @repostbuttons.error
+    @move.error
+    @add.error
+    @_set.error
+    @post_message.error
+    @repost.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original

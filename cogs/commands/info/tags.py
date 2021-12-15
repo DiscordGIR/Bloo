@@ -154,9 +154,27 @@ class Tags(commands.Cog):
             else:
                 await ctx.send(part, file=file if i == len(parts) - 1 else discord.utils.MISSING, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
 
+    @whisper()
+    @slash_command(guild_ids=[cfg.guild_id], description="List all tags")
+    async def taglist(self, ctx: BlooContext):
+        """List all tags
+        """
+
+        tags = sorted(guild_service.get_guild().tags, key=lambda tag: tag.name)
+
+        if len(tags) == 0:
+            raise commands.BadArgument("There are no tags defined.")
+
+        menu = Menu(tags, ctx.channel, per_page=12,
+                    format_page=format_tag_page, interaction=True, ctx=ctx, whisper=ctx.whisper)
+
+        await menu.start()
+
+    tags = discord.SlashCommandGroup("tags", "Interact with tags", guild_ids=[cfg.guild_id], permissions=slash_perms.genius_or_submod_and_up())
+
     @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Add a new tag", permissions=slash_perms.genius_or_submod_and_up())
-    async def addtag(self, ctx: BlooContext, name: str) -> None:
+    @tags.command(guild_ids=[cfg.guild_id], description="Add a new tag")
+    async def add(self, ctx: BlooContext, name: str) -> None:
         """Add a tag. Optionally attach an image. (Genius only)
 
         Example usage
@@ -223,8 +241,8 @@ class Tags(commands.Cog):
         await ctx.respond(f"Added new tag!", file=_file or discord.utils.MISSING, embed=await self.prepare_tag_embed(tag))
 
     @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Edit an existing tag", permissions=slash_perms.genius_or_submod_and_up())
-    async def edittag(self, ctx: BlooContext, name: Option(str, autocomplete=tags_autocomplete)) -> None:
+    @tags.command(guild_ids=[cfg.guild_id], description="Edit an existing tag")
+    async def edit(self, ctx: BlooContext, name: Option(str, autocomplete=tags_autocomplete)) -> None:
         """Edit a tag's body, optionally attach an image.
 
         Example usage
@@ -284,8 +302,8 @@ class Tags(commands.Cog):
         await ctx.respond(f"Tag edited!", file=_file or discord.utils.MISSING, embed=await self.prepare_tag_embed(tag))
 
     @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Delete a tag", permissions=slash_perms.genius_or_submod_and_up())
-    async def deltag(self, ctx: BlooContext, name: Option(str, description="Name of tag to delete", autocomplete=tags_autocomplete)):
+    @tags.command(guild_ids=[cfg.guild_id], description="Delete a tag")
+    async def delete(self, ctx: BlooContext, name: Option(str, description="Name of tag to delete", autocomplete=tags_autocomplete)):
         """Delete tag (geniuses only)
 
         Example usage
@@ -310,22 +328,6 @@ class Tags(commands.Cog):
 
         guild_service.remove_tag(name)
         await ctx.send_warning(f"Deleted tag `{tag.name}`.", delete_after=5)
-
-    @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="List all tags")
-    async def taglist(self, ctx: BlooContext):
-        """List all tags
-        """
-
-        tags = sorted(guild_service.get_guild().tags, key=lambda tag: tag.name)
-
-        if len(tags) == 0:
-            raise commands.BadArgument("There are no tags defined.")
-
-        menu = Menu(tags, ctx.channel, per_page=12,
-                    format_page=format_tag_page, interaction=True, ctx=ctx, whisper=ctx.whisper)
-
-        await menu.start()
 
     async def prepare_tag_embed(self, tag):
         """Given a tag object, prepare the appropriate embed for it
@@ -352,14 +354,14 @@ class Tags(commands.Cog):
             text=f"Added by {tag.added_by_tag} | Used {tag.use_count} times")
         return embed
 
-    @edittag.error
+    @edit.error
     @tag.error
     @support_tag_msg.error
     @support_tag_rc.error
     @rawtag.error
     @taglist.error
-    @deltag.error
-    @addtag.error
+    @delete.error
+    @add.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original

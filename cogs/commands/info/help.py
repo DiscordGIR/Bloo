@@ -1,6 +1,7 @@
+import typing
 import discord
 from discord.ext import commands
-from discord.commands.commands import Option, SlashCommand, slash_command
+from discord.commands.commands import Option, SlashCommand, SlashCommandGroup, slash_command
 from discord.commands.context import AutocompleteContext
 
 import traceback
@@ -17,9 +18,13 @@ async def commands_list(ctx: AutocompleteContext):
         for command in ctx.bot.cogs[cog].get_commands():
             if isinstance(command, discord.MessageCommand) or isinstance(command, discord.UserCommand):
                 continue
-
-            if ctx.value.lower() in command.name.lower():
-                res.append(command.name.lower())
+            elif isinstance(command, SlashCommandGroup):
+                for sub_command in command.subcommands:
+                    if ctx.value.lower() in f"{command.name} {sub_command.name}":
+                        res.append(f"{command.name} {sub_command.name}")
+            else:
+                if ctx.value.lower() in command.name:
+                    res.append(command.name.lower())
 
     res.sort()
     return res
@@ -59,9 +64,7 @@ class Utilities(commands.Cog):
                 for command in cog.get_commands():
                     if isinstance(command, discord.MessageCommand) or isinstance(command, discord.UserCommand):
                         continue
-
-                    command: SlashCommand = command
-                    # print(type(command), command)
+                    command: typing.Union[SlashCommand, SlashCommandGroup] = command
                     spaces_left = ' ' * (self.left_col_length - len(command.name))
                     if command.description is not None:
                         command.brief = command.description.split("\n")[0]
@@ -69,12 +72,12 @@ class Utilities(commands.Cog):
                         command.brief = "No description."
                     cmd_desc = command.brief[0:self.right_col_length] + "..." if len(command.brief) > self.right_col_length else command.brief
 
-                    if isinstance(command, commands.core.Group):
+                    if isinstance(command, SlashCommandGroup):
                         string += f"\t* {command.name}{spaces_left} :: {cmd_desc}\n"
-                        for c in command.commands:
+                        for c in command.subcommands:
                             spaces_left = ' ' * (self.left_col_length - len(c.name)-4)
-                            if c.help is not None:
-                                c.brief = c.help.split("\n")[0]
+                            if c.description is not None:
+                                c.brief = c.description.split("\n")[0]
                             else:
                                 c.brief = "No description."
                             cmd_desc = c.brief[0:self.right_col_length] + "..." if len(c.brief) > self.right_col_length else c.brief
@@ -132,13 +135,22 @@ class Utilities(commands.Cog):
         command_arg : str
             "Name of command"
         """
-        
-        command = self.bot.get_application_command(command_arg.lower())
-        if command:
-            embed = await self.get_usage_embed(ctx, command)
-            await ctx.respond(embed=embed, ephemeral=ctx.whisper)
+
+        command_arg_split = command_arg.split()
+        if len(command_arg_split) > 1:
+            # TODO fix this
+            main_command: SlashCommandGroup = self.bot.get_application_command(command_arg_split[0].lower())
+            sub_commands = [sc for sc in main_command.subcommands if command_arg.lower() in f"{main_command.name} {sc.name}"]
+            if not sub_commands:
+                raise commands.BadArgument("Command not found.")
+            command = sub_commands[0]
         else:
-            raise commands.BadArgument("Command not found.")
+            command = self.bot.get_application_command(command_arg.lower())
+            if not command:
+                raise commands.BadArgument("Command not found.")
+
+        embed = await self.get_usage_embed(ctx, command)
+        await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     async def get_usage_embed(self,  ctx: BlooContext, command: SlashCommand):
         if command.cog.qualified_name in self.mod_only and not permissions.has(ctx.guild, ctx.author, 5):

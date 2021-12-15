@@ -76,14 +76,32 @@ class Memes(commands.Cog):
 
         await ctx.respond(content=title, embed=await self.prepare_meme_embed(meme), file=file)
 
+    @whisper()
+    @slash_command(guild_ids=[cfg.guild_id], description="List all memes")
+    async def memelist(self, ctx: BlooContext):
+        """List all meemes
+        """
+
+        memes = sorted(guild_service.get_guild().memes, key=lambda meme: meme.name)
+
+        if len(memes) == 0:
+            raise commands.BadArgument("There are no memes defined.")
+        
+        menu = Menu(memes, ctx.channel, per_page=12,
+                    format_page=format_meme_page, interaction=True, ctx=ctx, whisper=ctx.whisper)
+
+        await menu.start()
+
+    memes = discord.SlashCommandGroup("memes", "Interact with memes", guild_ids=[cfg.guild_id], permissions=slash_perms.mod_and_up())
+
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Add a new meme", permissions=slash_perms.mod_and_up())
-    async def addmeme(self, ctx: BlooContext, name: str) -> None:
+    @memes.command(description="Add a new meme")
+    async def add(self, ctx: BlooContext, name: str) -> None:
         """Add a meme. Optionally attach an image. (Genius only)
 
         Example usage
         -------------
-        /addmeme roblox
+        /memes add roblox
 
         Parameters
         ----------
@@ -145,8 +163,8 @@ class Memes(commands.Cog):
         await ctx.respond(f"Added new meme!", file=_file or discord.utils.MISSING, embed=await self.prepare_meme_embed(meme))
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Edit an existing meme", permissions=slash_perms.mod_and_up())
-    async def editmeme(self, ctx: BlooContext, name: Option(str, autocomplete=memes_autocomplete)) -> None:
+    @memes.command(description="Edit an existing meme")
+    async def edit(self, ctx: BlooContext, name: Option(str, autocomplete=memes_autocomplete)) -> None:
         """Edit a meme's body, optionally attach an image.
         
         Example usage
@@ -205,13 +223,13 @@ class Memes(commands.Cog):
         await ctx.respond(f"Meme edited!", file=_file or discord.utils.MISSING, embed=await self.prepare_meme_embed(meme))
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Delete a meme", permissions=slash_perms.mod_and_up())
-    async def delmeme(self, ctx: BlooContext, name: Option(str, description="Name of meme to delete", autocomplete=memes_autocomplete)):
+    @memes.command(description="Delete a meme")
+    async def delete(self, ctx: BlooContext, name: Option(str, description="Name of meme to delete", autocomplete=memes_autocomplete)):
         """Delete meme (geniuses only)
 
         Example usage
         --------------
-        /delmeme name:<memename>
+        /memes delete name:<memename>
 
         Parameters
         ----------
@@ -231,23 +249,6 @@ class Memes(commands.Cog):
 
         guild_service.remove_meme(name)
         await ctx.send_warning(f"Deleted meme `{meme.name}`.", delete_after=5)
-
-    @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="List all memes")
-    async def memelist(self, ctx: BlooContext):
-        """List all meemes
-        """
-
-        memes = sorted(guild_service.get_guild().memes, key=lambda meme: meme.name)
-
-        if len(memes) == 0:
-            raise commands.BadArgument("There are no memes defined.")
-        
-        menu = Menu(memes, ctx.channel, per_page=12,
-                    format_page=format_meme_page, interaction=True, ctx=ctx, whisper=ctx.whisper)
-
-        await menu.start()
-
 
     async def prepare_meme_embed(self, meme):
         """Given a meme object, prepare the appropriate embed for it
@@ -274,11 +275,11 @@ class Memes(commands.Cog):
             text=f"Added by {meme.added_by_tag} | Used {meme.use_count} times")
         return embed
 
-    @editmeme.error
+    @edit.error
     @meme.error
     @memelist.error
-    @delmeme.error
-    @addmeme.error
+    @delete.error
+    @add.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original

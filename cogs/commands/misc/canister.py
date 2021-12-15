@@ -88,7 +88,7 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
     if entry.get('tintColor') is None and entry.get('packageIcon') is not None and pattern.match(entry.get('packageIcon')):
         async with aiohttp.ClientSession() as session:
             async with session.get(entry.get('packageIcon')) as icon:
-                color = ColorThief(io.BytesIO(await icon.read())).get_color(quality=1)
+                color = ColorThief(io.BytesIO(await icon.read())).get_color(quality=1000)
                 embed.color = discord.Color.from_rgb(
                     color[0], color[1], color[2])
     elif entry.get('tintColor') is not None:

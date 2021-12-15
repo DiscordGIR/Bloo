@@ -160,12 +160,12 @@ class Tags(commands.Cog):
         """List all tags
         """
 
-        tags = sorted(guild_service.get_guild().tags, key=lambda tag: tag.name)
+        _tags = sorted(guild_service.get_guild().tags, key=lambda tag: tag.name)
 
-        if len(tags) == 0:
+        if len(_tags) == 0:
             raise commands.BadArgument("There are no tags defined.")
 
-        menu = Menu(tags, ctx.channel, per_page=12,
+        menu = Menu(_tags, ctx.channel, per_page=12,
                     format_page=format_tag_page, interaction=True, ctx=ctx, whisper=ctx.whisper)
 
         await menu.start()

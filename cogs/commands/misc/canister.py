@@ -1,5 +1,6 @@
 import discord
 from discord.commands import Option, slash_command
+from discord.commands.context import AutocompleteContext
 from discord.ext import commands
 
 import io
@@ -8,13 +9,14 @@ import re
 import traceback
 import urllib
 import aiohttp
+from aiocache import cached
 from datetime import datetime
 from colorthief import ColorThief
 from data.services.guild_service import guild_service
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
-from utils.database import Guild
+from data.services.guild_service import guild_service
 from utils.menu import TweakMenu
 from utils.permissions.checks import PermissionsFailure
 from utils.permissions.permissions import permissions
@@ -29,7 +31,20 @@ default_repos = [
     "repo.theodyssey.dev",
 ]
 
-async def format_page(entries, all_pages, current_page, ctx):
+@cached(ttl=3600)
+async def fetch_repos():
+    async with aiohttp.ClientSession() as client:
+        async with client.get('https://raw.githubusercontent.com/cnstr/manifests/main/manifests/index-repositories.json') as resp:
+            response = await resp.json(content_type=None)
+            return response
+
+async def repo_autocomplete(ctx: AutocompleteContext):
+    repos = await fetch_repos()
+    repos = [repo['slug'] for repo in repos if repo.get("slug") and repo.get("slug") is not None]
+    repos.sort()
+    return [repo for repo in repos if ctx.value.lower() in repo.lower()][:25]
+
+async def format_tweak_page(entries, all_pages, current_page, ctx):
     """Formats the page for the tweak embed.
     
     Parameters
@@ -82,6 +97,32 @@ async def format_page(entries, all_pages, current_page, ctx):
     embed.timestamp = datetime.now()
     return embed
 
+async def format_repo_page(entries, all_pages, current_page, ctx):
+    repo_data = entries[0]
+    # if not repo_data.get('isDefault'):
+    #     ctx.repo = repo_data.get('url')
+    # else:
+    #     ctx.repo = None
+
+    ctx.repo = repo_data.get('uri')
+    for repo in default_repos:
+        if repo in repo_data.get('uri'):
+            ctx.repo = None
+            break
+
+    embed = discord.Embed(title=repo_data.get(
+        'name'), color=discord.Color.blue())
+    embed.add_field(name="URL", value=repo_data.get('uri'), inline=True)
+    embed.add_field(name="Version", value=repo_data.get('version'), inline=True)
+    # if repo_data.get('isDefault') is False:
+    #     embed.add_field(
+    #         name="Add Repo", value=f'[Click Here](https://sharerepo.stkc.win/?repo={repo_data.get("url")})', inline=True)
+    embed.set_thumbnail(url=f'{repo_data.get("uri")}/CydiaIcon.png')
+    if repo_data.get('isDefault') == True:
+        embed.set_footer(text='Default Repo')
+
+    return embed
+
 async def search(query):
     """Search for a tweak in Canister's catalogue
 
@@ -106,15 +147,47 @@ async def search(query):
                     return None
             else:
                 return None
+            
+async def search_repo(query):
+    """Search for a repo in Canister's catalogue
+
+    Parameters
+    ----------
+    query : str
+        "Query to search for"
+
+    Returns
+    -------
+    list
+        "List of repos that Canister found matching the query"
+    
+    """
+    async with aiohttp.ClientSession() as client:
+        async with client.get(f'https://api.canister.me/v1/community/repositories/search?query={urllib.parse.quote(query)}') as resp:
+            if resp.status == 200:
+                response = json.loads(await resp.text())
+                if response.get('status') == "Successful":
+                    return response.get('data')
+                else:
+                    return None
+            else:
+                return None
 
 async def canister(bot, ctx: BlooContext, interaction: bool, whisper: bool, query: str):
-    async with ctx.typing():
-        result = list(await search(query))
+    result = list(await search(query))
     if len(result) == 0:
         if interaction is True:
             await ctx.send_error("That package isn't registered with Canister's database.")
         return
-    await TweakMenu(result, ctx.channel, format_page, interaction, ctx, whisper, no_skip=True).start()
+    await TweakMenu(result, ctx.channel, format_tweak_page, interaction, ctx, whisper, no_skip=True).start()
+    
+async def canister_repo(bot, ctx: BlooContext, interaction: bool, whisper: bool, query: str):
+    result = list(await search_repo(query))
+    if len(result) == 0:
+        await ctx.send_error("That repository isn't registered with Canister's database.")
+        return
+    ctx.repo = result[0].get('uri')
+    await TweakMenu(result, ctx.channel, format_repo_page, interaction, ctx, whisper, no_skip=True).start()
 
 class Canister(commands.Cog):
     def __init__(self, bot):
@@ -130,7 +203,7 @@ class Canister(commands.Cog):
         if author is None:
             return
 
-        if not permissions.has(message.guild, author, 5) and message.channel.id == Guild.channel_general:
+        if not permissions.has(message.guild, author, 5) and message.channel.id == guild_service.get_guild().channel_general:
             return
 
         pattern = re.compile(
@@ -168,8 +241,28 @@ class Canister(commands.Cog):
             should_whisper = True
             
         await canister(self.bot, ctx, True, should_whisper, query)
+        
+    @slash_command(guild_ids=[cfg.guild_id], description="Search for a repository")
+    async def repo(self, ctx: BlooContext, query: Option(str, description="Name of the repository to search for.", autocomplete=repo_autocomplete)) -> None:
+        """Search for a repo.
+
+        Parameters
+        ----------
+            query : str
+                "Name of the repository to search for"
+        """
+        repos = await fetch_repos()
+        if query not in [repo['slug'] for repo in repos if repo.get("slug") and repo.get("slug") is not None]:
+            await ctx.send_error("That repository isn't registered with Canister's database.")
+            return
+        should_whisper = False
+        if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == guild_service.get_guild().channel_general:
+            should_whisper = True
+        
+        await canister_repo(self.bot, ctx, True, should_whisper, query)
 
     @package.error
+    @repo.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original

@@ -13,6 +13,7 @@ from aiocache import cached
 from datetime import datetime
 from colorthief import ColorThief
 from data.services.guild_service import guild_service
+from utils.autocompleters import fetch_repos, repo_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
@@ -31,18 +32,6 @@ default_repos = [
     "repo.theodyssey.dev",
 ]
 
-@cached(ttl=3600)
-async def fetch_repos():
-    async with aiohttp.ClientSession() as client:
-        async with client.get('https://raw.githubusercontent.com/cnstr/manifests/main/manifests/index-repositories.json') as resp:
-            response = await resp.json(content_type=None)
-            return response
-
-async def repo_autocomplete(ctx: AutocompleteContext):
-    repos = await fetch_repos()
-    repos = [repo['slug'] for repo in repos if repo.get("slug") and repo.get("slug") is not None]
-    repos.sort()
-    return [repo for repo in repos if ctx.value.lower() in repo.lower()][:25]
 
 async def format_tweak_page(entries, all_pages, current_page, ctx):
     """Formats the page for the tweak embed.
@@ -99,10 +88,6 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
 
 async def format_repo_page(entries, all_pages, current_page, ctx):
     repo_data = entries[0]
-    # if not repo_data.get('isDefault'):
-    #     ctx.repo = repo_data.get('url')
-    # else:
-    #     ctx.repo = None
 
     ctx.repo = repo_data.get('uri')
     for repo in default_repos:

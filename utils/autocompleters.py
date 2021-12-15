@@ -100,7 +100,8 @@ async def device_autocomplete(ctx: AutocompleteContext):
 
     all_devices = res.get("groups")
     transformed_devices = transform_groups(all_devices)
-    devices = [d for d in transformed_devices if (any(ctx.value.lower() in x.lower() for x in d.get('devices')) or ctx.value.lower() in d.get('name').lower())]
+    devices = [d for d in transformed_devices if (any(ctx.value.lower() in x.lower(
+    ) for x in d.get('devices')) or ctx.value.lower() in d.get('name').lower())]
 
     devices.sort(key=lambda x: x.get('type') or "zzz")
     devices_groups = groupby(devices, lambda x: x.get('type'))
@@ -187,3 +188,24 @@ async def filterwords_autocomplete(ctx: AutocompleteContext):
     words.sort()
 
     return [word for word in words if str(word).startswith(str(ctx.value))][:25]
+
+
+@cached(ttl=3600)
+async def fetch_repos():
+    async with aiohttp.ClientSession() as client:
+        async with client.get('https://api.canister.me/v1/community/repositories/search?query=') as resp:
+            if resp.status == 200:
+                response = await resp.json(content_type=None)
+                return response.get("data")
+
+            return None
+
+
+async def repo_autocomplete(ctx: AutocompleteContext):
+    repos = await fetch_repos()
+    if repos is None:
+        return []
+    repos = [repo['slug'] for repo in repos if repo.get(
+        "slug") and repo.get("slug") is not None]
+    repos.sort()
+    return [repo for repo in repos if ctx.value.lower() in repo.lower()][:25]

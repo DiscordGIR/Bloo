@@ -82,9 +82,9 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
         entry.get('latestVersion') or "No Version"), inline=True)
     embed.add_field(name="Price", value=entry.get(
         "price") or "Free", inline=True)
-    embed.add_field(name="Bundle ID", value=entry.get("identifier") or "Not found", inline=True)
     embed.add_field(
         name="Repo", value=f"[{entry.get('repository').get('name')}]({entry.get('repository').get('uri')})" or "No Repo", inline=True)
+    embed.add_field(name="Bundle ID", value=entry.get("identifier") or "Not found", inline=True)
     if entry.get('tintColor') is None and entry.get('packageIcon') is not None and pattern.match(entry.get('packageIcon')):
         async with aiohttp.ClientSession() as session:
             async with session.get(entry.get('packageIcon')) as icon:

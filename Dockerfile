@@ -20,6 +20,7 @@ ENV PATH="/root/.nvm/versions/node/v${NODE_VERSION}/bin/:${PATH}"
 # python dependencies
 COPY ./requirements.txt .
 COPY . .
+RUN pip install --upgrade pip setuptools wheel
 RUN pip install -r requirements.txt
 RUN pip install autopep8
 RUN npm i -g nodemon

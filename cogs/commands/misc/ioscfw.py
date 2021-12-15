@@ -16,7 +16,7 @@ from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
 from utils.menu import CIJMenu
-from utils.permissions.checks import PermissionsFailure, whisper_in_general
+from utils.permissions.checks import PermissionsFailure, whisper, whisper_in_general
 
 
 async def format_jailbreak_page(entries, all_pages, current_page, ctx):
@@ -347,7 +347,7 @@ class iOSCFW(commands.Cog):
 
         await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
 
-    @whisper_in_general()
+    @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Find out if you can jailbreak your device!")
     async def canijailbreak(self, ctx: BlooContext, device: Option(str, autocomplete=device_autocomplete_jb, description="Name or board identifier of the device"), version: Option(str, autocomplete=ios_on_device_autocomplete, description="Device OS version")) -> None:
         """Find out if you can jailbreak your device!

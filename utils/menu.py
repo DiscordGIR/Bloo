@@ -76,7 +76,11 @@ class TweakMenuButtons(MenuButtons):
                 discord.ui.Button(label='Cannot add default repo', emoji="🦓",
                                   url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={self.ctx.repo}', disabled=True, style=discord.ButtonStyle.url)
             ]
-
+        if self.ctx.depiction:
+            self.extra_buttons.insert(0,
+                discord.ui.Button(label='View Depiction', emoji="🔎",
+                                  url=self.ctx.depiction, style=discord.ButtonStyle.url),
+            )
         await super().launch(embed)
 
     async def on_timeout(self):

@@ -92,7 +92,7 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
     #     ctx.repo = entry.get('repo').get('url')
     # else:
     #     ctx.repo = None
-
+    ctx.depiction = None
     ctx.repo = entry.get('repo').get('url')
     for repo in default_repos:
         if repo in entry.get('repo').get('url'):
@@ -138,7 +138,7 @@ async def format_repo_page(entries, all_pages, current_page, ctx):
     #     ctx.repo = repo_data.get('url')
     # else:
     #     ctx.repo = None
-
+    ctx.depiction = None
     ctx.repo = repo_data.get('url')
     for repo in default_repos:
         if repo in repo_data.get('url'):

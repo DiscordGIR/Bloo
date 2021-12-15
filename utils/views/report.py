@@ -78,7 +78,7 @@ class ReportActions(ui.View):
 
 class RaidPhraseReportActions(ui.View):
     def __init__(self, author: discord.Member, domain: str):
-        super().__init__()
+        super().__init__(timeout=None)
         self.target_member = author
         self.domain = domain
 
@@ -126,7 +126,7 @@ class RaidPhraseReportActions(ui.View):
 
 class SpamReportActions(ui.View):
     def __init__(self, author: discord.Member):
-        super().__init__()
+        super().__init__(timeout=None)
         self.target_member = author
 
     async def start(self, ctx: Context):

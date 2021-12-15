@@ -110,6 +110,8 @@ async def format_repo_page(entries, all_pages, current_page, ctx):
             ctx.repo = None
             break
 
+    ctx.depiction = None
+
     embed = discord.Embed(title=repo_data.get(
         'name'), color=discord.Color.blue())
     embed.add_field(name="URL", value=repo_data.get('uri'), inline=True)

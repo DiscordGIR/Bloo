@@ -32,6 +32,10 @@ default_repos = [
 ]
 
 
+pattern = re.compile(
+    r"((http|https)\:\/\/)[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*")
+
+
 async def format_tweak_page(entries, all_pages, current_page, ctx):
     """Formats the page for the tweak embed.
 
@@ -52,6 +56,7 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
     """
     entry = entries[0]
     ctx.repo = entry.get('repository').get('uri')
+    ctx.depiction = entry.get('depiction')
 
     for repo in default_repos:
         if repo in entry.get('repository').get('uri'):
@@ -77,13 +82,9 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
         entry.get('latestVersion') or "No Version"), inline=True)
     embed.add_field(name="Price", value=entry.get(
         "price") or "Free", inline=True)
+    embed.add_field(name="Bundle ID", value=entry.get("identifier") or "Not found", inline=True)
     embed.add_field(
         name="Repo", value=f"[{entry.get('repository').get('name')}]({entry.get('repository').get('uri')})" or "No Repo", inline=True)
-    embed.add_field(
-        name="Add Repo", value=f"[Click Here](https://sharerepo.stkc.win/?repo={entry.get('repository').get('uri')})" or "No Repo", inline=True)
-    pattern = re.compile(
-        r"((http|https)\:\/\/)[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*")
-
     if entry.get('tintColor') is None and entry.get('packageIcon') is not None and pattern.match(entry.get('packageIcon')):
         async with aiohttp.ClientSession() as session:
             async with session.get(entry.get('packageIcon')) as icon:
@@ -95,8 +96,7 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
 
     if entry.get('packageIcon') is not None and pattern.match(entry.get('packageIcon')):
         embed.set_thumbnail(url=entry.get('packageIcon'))
-    embed.set_footer(icon_url=f"{entry.get('repository').get('uri')}/CydiaIcon.png", text=discord.utils.escape_markdown(
-        f"{entry.get('repository').get('name')} • Page {current_page}/{len(all_pages)}" or "No Package"))
+    embed.set_footer(icon_url=f"{entry.get('repository').get('uri')}/CydiaIcon.png", text=f"Powered by Canister • Page {current_page}/{len(all_pages)}" or "No Package")
     embed.timestamp = datetime.now()
     return embed
 
@@ -117,6 +117,7 @@ async def format_repo_page(entries, all_pages, current_page, ctx):
         'version'), inline=True)
 
     embed.set_thumbnail(url=f'{repo_data.get("uri")}/CydiaIcon.png')
+    embed.set_footer(text="Powered by Canister")
 
     return embed
 

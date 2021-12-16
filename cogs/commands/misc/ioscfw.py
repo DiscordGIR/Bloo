@@ -295,26 +295,33 @@ class iOSCFW(commands.Cog):
         embed.color = discord.Color.greyple()
 
         if matching_ios.get("beta"):
-            embed.add_field(name="Signing status", value="Unknown", inline=True)
-            return embed, view
-        
-        ipsw_me_firmwares = await self.get_ipsw_firmware_info(matching_ios.get('version'))
-        if not ipsw_me_firmwares:
-            embed.add_field(name="Signing status", value="Unknown", inline=True)
+            embed.add_field(name="Signing status",
+                            value="Unknown", inline=True)
             return embed, view
 
-        filtered_firmwares = [firmware for firmware in ipsw_me_firmwares if firmware.get('buildid').lower() == matching_ios.get('build').lower()]
-        signed_firmwares = [firmware for firmware in filtered_firmwares if firmware.get('signed')]
+        ipsw_me_firmwares = await self.get_ipsw_firmware_info(matching_ios.get('version'))
+        if not ipsw_me_firmwares:
+            embed.add_field(name="Signing status",
+                            value="Unknown", inline=True)
+            return embed, view
+
+        filtered_firmwares = [firmware for firmware in ipsw_me_firmwares if firmware.get(
+            'buildid').lower() == matching_ios.get('build').lower()]
+        signed_firmwares = [
+            firmware for firmware in filtered_firmwares if firmware.get('signed')]
 
         if not signed_firmwares:
             embed.color = discord.Color.red()
-            embed.add_field(name="Signing status", value="Not signed", inline=True)
+            embed.add_field(name="Signing status",
+                            value="Not signed", inline=True)
         elif len(signed_firmwares) == len(filtered_firmwares):
             embed.color = discord.Color.green()
-            embed.add_field(name="Signing status", value="Signed for all devices!", inline=True)
+            embed.add_field(name="Signing status",
+                            value="Signed for all devices!", inline=True)
         else:
             embed.color = discord.Color.yellow()
-            embed.add_field(name="Signing status", value="Signed for some devices!", inline=True)
+            embed.add_field(name="Signing status",
+                            value="Signed for some devices!", inline=True)
 
         return embed, view
 
@@ -335,7 +342,6 @@ class iOSCFW(commands.Cog):
                     return data
 
                 return []
-
 
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info about an Apple device.")
@@ -378,19 +384,20 @@ class iOSCFW(commands.Cog):
 
         model_numbers.sort()
 
-        embed.add_field(name="All brand names", value=model_names, inline=False)
+        embed.add_field(name="All brand names",
+                        value=model_names, inline=False)
         embed.add_field(name="Model(s)", value='`' +
                         "`, `".join(model_numbers) + "`", inline=True)
 
-        supported_firmwares = [firmware for firmware in response.get("ios") if model_number.get("identifier") in firmware.get("devices")]
+        supported_firmwares = [firmware for firmware in response.get(
+            "ios") if model_number.get("identifier") in firmware.get("devices")]
         supported_firmwares.sort(key=lambda x: x.get("released"))
-        
+
         if supported_firmwares:
             latest_firmware = supported_firmwares[-1]
             if latest_firmware:
                 embed.add_field(name="Latest firmware",
                                 value=f"{latest_firmware.get('version')} (`{latest_firmware.get('build')}`)", inline=True)
-
 
         embed.add_field(
             name="SoC", value=f"{models[0].get('soc')} chip ({models[0].get('arch')})", inline=True)

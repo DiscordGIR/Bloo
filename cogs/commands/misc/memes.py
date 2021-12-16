@@ -1,54 +1,57 @@
-import discord
-from discord.commands import Option, slash_command
-from discord.ext import commands
-from discord.ext.commands.cooldowns import CooldownMapping
-
+import random
 import traceback
 from datetime import datetime
 from io import BytesIO
+
+import discord
 from data.model.tag import Tag
-from utils.message_cooldown import MessageTextBucket
 from data.services.guild_service import guild_service
+from discord.commands import Option, slash_command
+from discord.ext import commands
+from discord.ext.commands.cooldowns import CooldownMapping
 from utils.autocompleters import memes_autocomplete
 from utils.config import cfg
-from utils.logger import logger
 from utils.context import BlooContext, PromptData
-from utils.permissions.checks import (PermissionsFailure,
-                                      mod_and_up, whisper)
-from utils.permissions.slash_perms import slash_perms
-from utils.permissions.permissions import permissions
+from utils.logger import logger
 from utils.menu import Menu
+from utils.message_cooldown import MessageTextBucket
+from utils.permissions.checks import PermissionsFailure, mod_and_up, whisper
+from utils.permissions.permissions import permissions
+from utils.permissions.slash_perms import slash_perms
+
 
 async def format_meme_page(entries, all_pages, current_page, ctx):
-        embed = discord.Embed(
-            title=f'All memes', color=discord.Color.blurple())
-        for meme in entries:
-            desc = f"Added by: {meme.added_by_tag}\nUsed {meme.use_count} times"
-            if meme.image.read() is not None:
-                desc += "\nHas image attachment"
-            embed.add_field(name=meme.name, value=desc)
-        embed.set_footer(
-            text=f"Page {current_page} of {len(all_pages)}")
-        return embed
+    embed = discord.Embed(
+        title=f'All memes', color=discord.Color.blurple())
+    for meme in entries:
+        desc = f"Added by: {meme.added_by_tag}\nUsed {meme.use_count} times"
+        if meme.image.read() is not None:
+            desc += "\nHas image attachment"
+        embed.add_field(name=meme.name, value=desc)
+    embed.set_footer(
+        text=f"Page {current_page} of {len(all_pages)}")
+    return embed
+
 
 class Memes(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.meme_cooldown = CooldownMapping.from_cooldown(1, 5, MessageTextBucket.custom)
+        self.meme_cooldown = CooldownMapping.from_cooldown(
+            1, 5, MessageTextBucket.custom)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Display a meme")
     async def meme(self, ctx: BlooContext, name: Option(str, description="Meme name", autocomplete=memes_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
         """Displays a meme.
-        
+
         Example usage
         -------------
         /meme name:<memename>
-        
+
         Parameters
         ----------
         name : str
             "Name of meme to display"
-        
+
         """
         name = name.lower()
         meme = guild_service.get_meme(name)
@@ -82,17 +85,19 @@ class Memes(commands.Cog):
         """List all meemes
         """
 
-        memes = sorted(guild_service.get_guild().memes, key=lambda meme: meme.name)
+        memes = sorted(guild_service.get_guild().memes,
+                       key=lambda meme: meme.name)
 
         if len(memes) == 0:
             raise commands.BadArgument("There are no memes defined.")
-        
+
         menu = Menu(memes, ctx.channel, per_page=12,
                     format_page=format_meme_page, interaction=True, ctx=ctx, whisper=ctx.whisper)
 
         await menu.start()
 
-    memes = discord.SlashCommandGroup("memes", "Interact with memes", guild_ids=[cfg.guild_id], permissions=slash_perms.mod_and_up())
+    memes = discord.SlashCommandGroup("memes", "Interact with memes", guild_ids=[
+                                      cfg.guild_id], permissions=slash_perms.mod_and_up())
 
     @mod_and_up()
     @memes.command(description="Add a new meme")
@@ -107,7 +112,7 @@ class Memes(commands.Cog):
         ----------
         name : str
             "Name of the meme"
-        
+
         """
 
         if not name.isalnum():
@@ -131,7 +136,7 @@ class Memes(commands.Cog):
         if res is None:
             await ctx.send_warning("Cancelled.")
             return
-            
+
         description, response = res
         # prepare meme data for database
         meme = Tag()
@@ -166,7 +171,7 @@ class Memes(commands.Cog):
     @memes.command(description="Edit an existing meme")
     async def edit(self, ctx: BlooContext, name: Option(str, autocomplete=memes_autocomplete)) -> None:
         """Edit a meme's body, optionally attach an image.
-        
+
         Example usage
         -------------
         /editmeme roblox this would be the body
@@ -183,10 +188,10 @@ class Memes(commands.Cog):
 
         name = name.lower()
         meme = guild_service.get_meme(name)
-        
+
         if meme is None:
             raise commands.BadArgument("That meme does not exist.")
-        
+
         await ctx.defer(ephemeral=True)
         prompt = PromptData(
             value_name="description",
@@ -195,7 +200,7 @@ class Memes(commands.Cog):
             raw=True)
         description, response = await ctx.prompt(prompt)
         meme.content = description
-        
+
         if len(response.attachments) > 0:
             # ensure the attached file is an image
             image = response.attachments[0]
@@ -204,7 +209,7 @@ class Memes(commands.Cog):
                 raise commands.BadArgument("Attached file was not an image.")
             else:
                 image = await image.read()
-            
+
             # save image bytes
             if meme.image is not None:
                 meme.image.replace(image, content_type=_type)
@@ -215,11 +220,12 @@ class Memes(commands.Cog):
 
         if not guild_service.edit_meme(meme):
             raise commands.BadArgument("An error occurred editing that meme.")
-        
+
         _file = meme.image.read()
         if _file is not None:
-            _file = discord.File(BytesIO(_file), filename="image.gif" if meme.image.content_type == "image/gif" else "image.png")
-        
+            _file = discord.File(BytesIO(
+                _file), filename="image.gif" if meme.image.content_type == "image/gif" else "image.png")
+
         await ctx.respond(f"Meme edited!", file=_file or discord.utils.MISSING, embed=await self.prepare_meme_embed(meme))
 
     @mod_and_up()
@@ -275,6 +281,21 @@ class Memes(commands.Cog):
             text=f"Added by {meme.added_by_tag} | Used {meme.use_count} times")
         return embed
 
+    @whisper()
+    @slash_command(guild_ids=[cfg.guild_id], description="Ooo magic", name="8ball")
+    async def _8ball(self, ctx: BlooContext, question: Option(str, description="Question")) -> None:
+        responses = ["As I see it, yes.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.",
+                     "Don’t count on it.", "It is certain.", "It is decidedly so.", "Most likely.", "My reply is no.", "My sources say no.",
+                     "Outlook not so good.", "Outlook good.", "Reply hazy, try again.", "Signs point to yes.", "Very doubtful.", "Without a doubt.",
+                     "Yes.", "Yes – definitely.", "You may rely on it."]
+        
+        response = random.choice(responses)
+        embed = discord.Embed(color=discord.Color.blurple())
+        embed.add_field(name="Question", value=discord.utils.escape_markdown(question), inline=False)
+        embed.add_field(name="Answer", value=response, inline=False)
+        await ctx.respond(embed=embed)
+
+    @_8ball.error
     @edit.error
     @meme.error
     @memelist.error

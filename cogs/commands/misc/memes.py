@@ -293,7 +293,7 @@ class Memes(commands.Cog):
         embed = discord.Embed(color=discord.Color.blurple())
         embed.add_field(name="Question", value=discord.utils.escape_markdown(question), inline=False)
         embed.add_field(name="Answer", value=response, inline=False)
-        await ctx.respond(embed=embed)
+        await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @_8ball.error
     @edit.error

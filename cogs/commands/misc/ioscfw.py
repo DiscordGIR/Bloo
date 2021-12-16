@@ -237,7 +237,8 @@ class iOSCFW(commands.Cog):
             raise commands.BadArgument("No firmware found with that version.")
 
         matching_ios = ios[0]
-        await self.do_firmware_response(ctx, matching_ios)
+        embed, view = await self.do_firmware_response(ctx, matching_ios)
+        await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
 
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info about a beta iOS version.")
@@ -263,12 +264,12 @@ class iOSCFW(commands.Cog):
             raise commands.BadArgument("No firmware found with that version.")
 
         matching_ios = ios[0]
-        await self.do_firmware_response(ctx, matching_ios)
+        embed, view = await self.do_firmware_response(ctx, matching_ios)
+        await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
 
     async def do_firmware_response(self, ctx, matching_ios):
-
         embed = discord.Embed(
-            title=f"iOS {matching_ios.get('version')}", color=discord.Color.random())
+            title=f"iOS {matching_ios.get('version')}")
         embed.add_field(name="Build number",
                         value=matching_ios.get("build"), inline=True)
 
@@ -291,7 +292,50 @@ class iOSCFW(commands.Cog):
         view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label="View more on ios.cfw.guide",
                       url=f"https://ios.cfw.guide/chart/firmware/{matching_ios.get('build')}"))
 
-        await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
+        embed.color = discord.Color.greyple()
+
+        if matching_ios.get("beta"):
+            embed.add_field(name="Signing status", value="Unknown", inline=True)
+            return embed, view
+        
+        ipsw_me_firmwares = await self.get_ipsw_firmware_info(matching_ios.get('version'))
+        if not ipsw_me_firmwares:
+            embed.add_field(name="Signing status", value="Unknown", inline=True)
+            return embed, view
+
+        filtered_firmwares = [firmware for firmware in ipsw_me_firmwares if firmware.get('buildid').lower() == matching_ios.get('build').lower()]
+        signed_firmwares = [firmware for firmware in filtered_firmwares if firmware.get('signed')]
+
+        if not signed_firmwares:
+            embed.color = discord.Color.red()
+            embed.add_field(name="Signing status", value="Not signed", inline=True)
+        elif len(signed_firmwares) == len(filtered_firmwares):
+            embed.color = discord.Color.green()
+            embed.add_field(name="Signing status", value="Signed for all devices!", inline=True)
+        else:
+            embed.color = discord.Color.yellow()
+            embed.add_field(name="Signing status", value="Signed for some devices!", inline=True)
+
+        return embed, view
+
+    @cached(ttl=3600)
+    async def get_ipsw_firmware_info(self, version: str):
+        """Gets all apps on ios.cfw.guide
+
+        Returns
+        -------
+        dict
+            "ios, jailbreaks, devices"
+        """
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get(f"https://api.ipsw.me/v4/ipsw/{version}") as resp:
+                if resp.status == 200:
+                    data = await resp.json()
+                    return data
+
+                return []
+
 
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Get info about an Apple device.")
@@ -334,11 +378,23 @@ class iOSCFW(commands.Cog):
 
         model_numbers.sort()
 
-        embed.add_field(name="Phones", value=model_names, inline=True)
+        embed.add_field(name="All brand names", value=model_names, inline=False)
+        embed.add_field(name="Model(s)", value='`' +
+                        "`, `".join(model_numbers) + "`", inline=True)
+
+        supported_firmwares = [firmware for firmware in response.get("ios") if model_number.get("identifier") in firmware.get("devices")]
+        supported_firmwares.sort(key=lambda x: x.get("released"))
+        
+        if supported_firmwares:
+            latest_firmware = supported_firmwares[-1]
+            if latest_firmware:
+                embed.add_field(name="Latest firmware",
+                                value=f"{latest_firmware.get('version')} (`{latest_firmware.get('build')}`)", inline=True)
+
+
         embed.add_field(
             name="SoC", value=f"{models[0].get('soc')} chip ({models[0].get('arch')})", inline=True)
-        embed.add_field(name="Model(s)", value='`' +
-                        "`, `".join(model_numbers) + "`", inline=False)
+
         embed.set_footer(text="Powered by https://ios.cfw.guide")
 
         view = discord.ui.View()

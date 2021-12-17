@@ -10,7 +10,7 @@ from utils.logger import logger
 from utils.context import BlooContext, PromptData
 from utils.permissions.checks import PermissionsFailure, admin_and_up, mod_and_up
 from utils.permissions.slash_perms import slash_perms
-from utils.views.devices import Confirm
+from utils.views.confirm import Confirm
 
 
 class AntiRaid(commands.Cog):

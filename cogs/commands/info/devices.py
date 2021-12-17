@@ -10,7 +10,7 @@ from utils.autocompleters import device_autocomplete, get_ios_cfw, ios_on_device
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.checks import (PermissionsFailure, always_whisper, ensure_invokee_role_lower_than_bot, whisper)
-from utils.views.devices import Confirm
+from utils.views.confirm import Confirm
 
 class Devices(commands.Cog):
     def __init__(self, bot):

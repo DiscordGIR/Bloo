@@ -13,7 +13,7 @@ from utils.mod.give_birthday_role import MONTH_MAPPING
 
 def sort_versions(version):
     v = version.split(' ')
-    v[0] = list(map(int, v[0].split('.')))
+    v[0] = list(map(int, v[1].split('.')))
     return v
 
 
@@ -28,6 +28,26 @@ def transform_groups(groups):
             final_groups.append(group)
 
     return final_groups
+
+
+def resolve_os_version(version):
+    if version.get("devices"):
+        try:
+            first_device = list(version.get("devices").keys())[0]
+            if first_device.startswith("AppleTV"):
+                os_version = "tvOS"
+            elif first_device.startswith("Watch"):
+                os_version = "watchOS"
+            elif int(version.get("version").split(".")[0]) < 3 and first_device.startswith("iPhone"):
+                os_version = "iPhoneOS"
+            else:
+                os_version = "iOS"
+        except:
+            os_version = "iOS"
+    else:
+        os_version = "iOS"
+    
+    return os_version
 
 
 @cached(ttl=3600)
@@ -66,7 +86,18 @@ async def ios_version_autocomplete(ctx: AutocompleteContext):
     versions = versions.get("ios")
     versions.sort(key=lambda x: x.get("released")
                   or "1970-01-01", reverse=True)
-    return [f"{v['version']} ({v['build']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and not v['beta']][:25]
+    return [f"{resolve_os_version(v)} {v['version']} ({v['build']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and not v['beta']][:25]
+
+
+async def ios_beta_version_autocomplete(ctx: AutocompleteContext):
+    versions = await get_ios_cfw()
+    if versions is None:
+        return []
+
+    versions = versions.get("ios")
+    versions.sort(key=lambda x: x.get("released")
+                  or "1970-01-01", reverse=True)
+    return [f"{resolve_os_version(v)} {v['version']} ({v['build']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and v['beta']][:25]
 
 
 async def ios_on_device_autocomplete(ctx: AutocompleteContext):
@@ -86,7 +117,7 @@ async def ios_on_device_autocomplete(ctx: AutocompleteContext):
         return []
 
     matching_device = matching_devices[0].get("devices")[0]
-    matching_ios = [version.get("version") for version in ios if matching_device in version.get(
+    matching_ios = [f'{resolve_os_version(version)} {version.get("version")}' for version in ios if matching_device in version.get(
         'devices') and ctx.value.lower() in version.get('version').lower()]
 
     matching_ios.sort(key=sort_versions, reverse=True)
@@ -141,17 +172,6 @@ async def device_autocomplete_jb(ctx: AutocompleteContext):
             break
 
     return [device.get('name') for device in devices][:25]
-
-
-async def ios_beta_version_autocomplete(ctx: AutocompleteContext):
-    versions = await get_ios_cfw()
-    if versions is None:
-        return []
-
-    versions = versions.get("ios")
-    versions.sort(key=lambda x: x.get("released")
-                  or "1970-01-01", reverse=True)
-    return [f"{v['version']} ({v['build']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and v['beta']][:25]
 
 
 async def date_autocompleter(ctx: AutocompleteContext) -> list:

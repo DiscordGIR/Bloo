@@ -11,7 +11,7 @@ from discord.ext import commands
 from utils.autocompleters import (device_autocomplete, device_autocomplete_jb,
                                   get_ios_cfw, ios_beta_version_autocomplete,
                                   ios_on_device_autocomplete,
-                                  ios_version_autocomplete, jb_autocomplete, transform_groups)
+                                  ios_version_autocomplete, jb_autocomplete, resolve_os_version, transform_groups)
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
@@ -232,6 +232,8 @@ class iOSCFW(commands.Cog):
         """
 
         response = await get_ios_cfw()
+        for os_version in ["iOS", "tvOS", "watchOS"]:
+            version = version.replace(os_version + " ", "")
         ios = response.get("ios")
         ios = [ios for ios in ios if f"{ios.get('version')} ({ios.get('build')})" == version or ios.get(
             'build').lower() == version.lower() or ios.get('version').lower() == version.lower()]
@@ -259,6 +261,8 @@ class iOSCFW(commands.Cog):
         """
 
         response = await get_ios_cfw()
+        for os_version in ["iOS", "tvOS", "watchOS"]:
+            version = version.replace(os_version + " ", "")
         ios = response.get("ios")
         ios = [ios for ios in ios if (f"{ios.get('version')} ({ios.get('build')})" == version or ios.get(
             'build').lower() == version.lower() or ios.get('version').lower() == version.lower()) and ios.get('beta')]
@@ -271,8 +275,10 @@ class iOSCFW(commands.Cog):
         await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
 
     async def do_firmware_response(self, ctx, matching_ios):
+        os_version = resolve_os_version(matching_ios)
+
         embed = discord.Embed(
-            title=f"iOS {matching_ios.get('version')}")
+            title=f"{os_version} {matching_ios.get('version')}")
         embed.add_field(name="Build number",
                         value=matching_ios.get("build"), inline=True)
 
@@ -430,6 +436,8 @@ class iOSCFW(commands.Cog):
             "version identifier"
         """
 
+        for os_version in ["iOS", "tvOS", "watchOS"]:
+            version = version.replace(os_version + " ", "")
         response = await get_ios_cfw()
         all_devices = response.get("device")
         device_groups = response.get("groups")
@@ -467,12 +475,12 @@ class iOSCFW(commands.Cog):
 
         if not found_jbs:
             embed = discord.Embed(
-                description=f"Sorry, **{matching_device.get('name')}** is not jailbreakable on **{matching_ios.get('version')}**.", color=discord.Color.red())
+                description=f"Sorry, **{matching_device.get('name')}** is not jailbreakable on **{resolve_os_version(matching_ios)} {matching_ios.get('version')}**.", color=discord.Color.red())
             await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
         else:
             ctx.device = matching_device.get("name")
             ctx.device_id = matching_device.get("identifier")
-            ctx.version = matching_ios.get("version")
+            ctx.version = f'{resolve_os_version(matching_ios)} {matching_ios.get("version")}'
             ctx.build = matching_ios.get("build")
 
             if len(found_jbs) > 0:

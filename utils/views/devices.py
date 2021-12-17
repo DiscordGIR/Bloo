@@ -58,7 +58,7 @@ class FirmwareDropdown(ui.View):
 
 
 class Confirm(ui.View):
-    def __init__(self, ctx: BlooContext, true_response, false_response):
+    def __init__(self, ctx: BlooContext, true_response = None, false_response = None):
         super().__init__()
         self.ctx = ctx
         self.value = None
@@ -78,6 +78,7 @@ class Confirm(ui.View):
     @ui.button(label='No', style=discord.ButtonStyle.grey)
     async def cancel(self, button: ui.Button, interaction: discord.Interaction):
         if interaction.user == self.ctx.author:
-            await self.ctx.send_warning(description=self.false_response)
+            if self.false_response is not None:
+                await self.ctx.send_warning(description=self.false_response)
             self.value = False
             self.stop()

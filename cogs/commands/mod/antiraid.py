@@ -7,9 +7,10 @@ from data.services.guild_service import guild_service
 from data.services.user_service import user_service
 from utils.config import cfg
 from utils.logger import logger
-from utils.context import BlooContext
+from utils.context import BlooContext, PromptData
 from utils.permissions.checks import PermissionsFailure, admin_and_up, mod_and_up
 from utils.permissions.slash_perms import slash_perms
+from utils.views.devices import Confirm
 
 
 class AntiRaid(commands.Cog):
@@ -40,60 +41,70 @@ class AntiRaid(commands.Cog):
         else:
             await ctx.send_success(description=f"Added `{phrase}` to the raid phrase list!", delete_after=5)
 
-    # @admin_and_up()
-    # @slash_command(guild_ids=[cfg.guild_id], description="Add a list of (newline-separated) phrases to the raid filter.", permissions=slash_perms.mod_and_up())
-    # async def batchraid(self, ctx: BlooContext, *, phrases: str) -> None:
-    #     """Add a list of (newline-separated) phrases to the raid filter.
+    @admin_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Add a list of (newline-separated) phrases to the raid filter.", permissions=slash_perms.admin_and_up())
+    async def batchraid(self, ctx: BlooContext) -> None:
+        """Add a list of (newline-separated) phrases to the raid filter.
 
-    #     Example usage
-    #     --------------
-    #     !raid <phrase>
+        Example usage
+        --------------
+        /batchraid
 
-    #     Parameters
-    #     ----------
-    #     phrases : str
-    #         "Phrases to add, separated with enter"
-    #     """
+        Parameters
+        ----------
+        phrases : str
+            "Phrases to add, separated with enter"
+        """
 
-    #     async with ctx.typing():
-    #         phrases = list(set(phrases.split("\n")))
-    #         phrases = [phrase.strip() for phrase in phrases]
+        await ctx.defer(ephemeral=True)
+        prompt = PromptData(
+            value_name="description",
+            description="Please enter the list of things you want added to raid filter (separated by newlines).",
+            convertor=str)
 
-    #         phrases_contenders = set(phrases)
-    #         phrases_already_in_db = set([phrase.word for phrase in ctx.settings.guild().raid_phrases])
+        phrases = await ctx.prompt(prompt)
 
-    #         duplicate_count = len(phrases_already_in_db & phrases_contenders) # count how many duplicates we have
-    #         new_phrases = list(phrases_contenders - phrases_already_in_db)
+        if phrases is None:
+            await ctx.send_warning("Cancelled.")
+            return
 
-    #     if not new_phrases:
-    #         raise commands.BadArgument("All the phrases you supplied are already in the database.")
+        async with ctx.typing():
+            phrases = list(set(phrases.split("\n")))
+            phrases = [phrase.strip() for phrase in phrases]
 
-    #     phrases_prompt_string = "\n".join([f"**{i+1}**. {phrase}" for i, phrase in enumerate(new_phrases)])
-    #     if len(phrases_prompt_string) > 3900:
-    #         phrases_prompt_string = phrases_prompt_string[:3500] + "\n... (and some more)"
+            phrases_contenders = set(phrases)
+            phrases_already_in_db = set([phrase.word for phrase in guild_service.get_guild().raid_phrases])
 
-    #     embed = Embed(title="Confirm raidphrase batch",
-    #                 color=discord.Color.dark_orange(),
-    #                 description=f"{phrases_prompt_string}\n\nShould we add these {len(new_phrases)} phrases?")
+            duplicate_count = len(phrases_already_in_db & phrases_contenders) # count how many duplicates we have
+            new_phrases = list(phrases_contenders - phrases_already_in_db)
 
-    #     if duplicate_count > 0:
-    #         embed.set_footer(text=f"Note: we found {duplicate_count} duplicates in your list.")
+        if not new_phrases:
+            raise commands.BadArgument("All the phrases you supplied are already in the database.")
 
-    #     message = await ctx.send(embed=embed)
+        phrases_prompt_string = "\n".join([f"**{i+1}**. {phrase}" for i, phrase in enumerate(new_phrases)])
+        if len(phrases_prompt_string) > 3900:
+            phrases_prompt_string = phrases_prompt_string[:3500] + "\n... (and some more)"
 
-    #     prompt_data = context.PromptDataReaction(message=message, reactions=['✅', '❌'], timeout=120, delete_after=True)
-    #     response, _ = await ctx.prompt_reaction(info=prompt_data)
+        embed = discord.Embed(title="Confirm raidphrase batch",
+                        color=discord.Color.dark_orange(),
+                        description=f"{phrases_prompt_string}\n\nShould we add these {len(new_phrases)} phrases?")
 
-    #     if response == '✅':
-    #         async with ctx.typing():
-    #             for phrase in new_phrases:
-    #                 await ctx.settings.add_raid_phrase(phrase)
+        if duplicate_count > 0:
+            embed.set_footer(text=f"Note: we found {duplicate_count} duplicates in your list.")
 
-    #         await ctx.send_success(f"Added {len(new_phrases)} phrases to the raid filter.")
-    #     else:
-    #         await ctx.send_warning("Cancelled.")
+        view = Confirm(ctx)
+        await ctx.respond_or_edit(embed=embed, view=view, ephemeral=True)
+        await view.wait()
+        do_add = view.value
 
-    #     await ctx.message.delete(delay=5)
+        if do_add:
+            async with ctx.typing():
+                for phrase in new_phrases:
+                    guild_service.add_raid_phrase(phrase)
+
+            await ctx.send_success(f"Added {len(new_phrases)} phrases to the raid filter.")
+        else:
+            await ctx.send_warning("Cancelled.")
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Remove a phrase from the raid filter.", permissions=slash_perms.mod_and_up())
@@ -337,7 +348,7 @@ class AntiRaid(commands.Cog):
     @verify.error
     @spammode.error
     @removeraid.error
-    # @batchraid.error
+    @batchraid.error
     @raid.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):

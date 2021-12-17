@@ -166,10 +166,13 @@ class iOSCFW(commands.Cog):
                     'soc') else ""
 
                 firmwares = info.get("firmwares")
-                if len(firmwares) > 2:
-                    firmwares = ", ".join(firmwares)
+                if isinstance(firmwares, list):
+                    if len(firmwares) > 2:
+                        firmwares = ", ".join(firmwares)
+                    else:
+                        firmwares = " - ".join(info.get("firmwares"))
                 else:
-                    firmwares = " - ".join(info.get("firmwares"))
+                    firmwares = info.get("firmwares")
 
                 embed.add_field(name="Compatible with",
                                 value=f'iOS {firmwares}\n{f"**{soc}**" if soc else ""}', inline=True)

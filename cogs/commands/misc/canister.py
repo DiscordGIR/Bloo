@@ -15,7 +15,7 @@ from discord.commands.context import AutocompleteContext
 from discord.ext import commands
 from utils.autocompleters import fetch_repos, repo_autocomplete
 from utils.config import cfg
-from utils.context import BlooContext
+from utils.context import BlooContext, BlooOldContext
 from utils.logger import logger
 from utils.menu import TweakMenu
 from utils.permissions.checks import PermissionsFailure
@@ -177,15 +177,15 @@ async def search_repo(query):
 
 
 async def canister(ctx: BlooContext, interaction: bool, whisper: bool, result):
-    if len(result) == 0:
-        if interaction is True:
-            await ctx.send_error("That package isn't registered with Canister's database.")
+    if not result:
+        await ctx.send_error("That package isn't registered with Canister's database.")
         return
+
     await TweakMenu(result, ctx.channel, format_tweak_page, interaction, ctx, whisper, no_skip=True).start()
 
 
 async def canister_repo(ctx: BlooContext, interaction: bool, whisper: bool, result):
-    if len(result) == 0:
+    if not result:
         await ctx.send_error("That repository isn't registered with Canister's database.")
         return
     ctx.repo = result[0].get('uri')
@@ -221,7 +221,7 @@ class Canister(commands.Cog):
         if not search_term:
             return
 
-        ctx = await self.bot.get_context(message)
+        ctx = await self.bot.get_context(message, cls=BlooOldContext)
         
         async with ctx.typing():
             result = list(await search(search_term))

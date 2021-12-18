@@ -176,8 +176,7 @@ async def search_repo(query):
                 return None
 
 
-async def canister(bot, ctx: BlooContext, interaction: bool, whisper: bool, query: str):
-    result = list(await search(query))
+async def canister(ctx: BlooContext, interaction: bool, whisper: bool, result):
     if len(result) == 0:
         if interaction is True:
             await ctx.send_error("That package isn't registered with Canister's database.")
@@ -185,8 +184,7 @@ async def canister(bot, ctx: BlooContext, interaction: bool, whisper: bool, quer
     await TweakMenu(result, ctx.channel, format_tweak_page, interaction, ctx, whisper, no_skip=True).start()
 
 
-async def canister_repo(bot, ctx: BlooContext, interaction: bool, whisper: bool, query: str):
-    result = list(await search_repo(query))
+async def canister_repo(ctx: BlooContext, interaction: bool, whisper: bool, result):
     if len(result) == 0:
         await ctx.send_error("That repository isn't registered with Canister's database.")
         return
@@ -224,7 +222,11 @@ class Canister(commands.Cog):
             return
 
         ctx = await self.bot.get_context(message)
-        await canister(self.bot, ctx, False, False, search_term)
+        
+        async with ctx.typing():
+            result = list(await search(search_term))
+        
+        await canister(ctx, False, False, result)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Search for a package")
     async def package(self, ctx: BlooContext, query: Option(str, description="Name of the package to search for.")) -> None:
@@ -244,7 +246,9 @@ class Canister(commands.Cog):
         if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == guild_service.get_guild().channel_general:
             should_whisper = True
 
-        await canister(self.bot, ctx, True, should_whisper, query)
+        await ctx.defer(ephemeral=should_whisper)
+        result = list(await search(query))
+        await canister(ctx, True, should_whisper, result)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Search for a repository")
     async def repo(self, ctx: BlooContext, query: Option(str, description="Name of the repository to search for.", autocomplete=repo_autocomplete)) -> None:
@@ -263,7 +267,9 @@ class Canister(commands.Cog):
         if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == guild_service.get_guild().channel_general:
             should_whisper = True
 
-        await canister_repo(self.bot, ctx, True, should_whisper, query)
+        await ctx.defer(ephemeral=should_whisper)
+        result = list(await search_repo(query))
+        await canister_repo(ctx, True, should_whisper, result)
 
     @package.error
     @repo.error

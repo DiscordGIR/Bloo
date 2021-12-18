@@ -96,9 +96,11 @@ class TweakMenuButtons(MenuButtons):
                 discord.ui.Button(label='View Depiction', emoji="🔎",
                                   url=self.ctx.depiction, style=discord.ButtonStyle.url),
             )
-        
-        self.jump_button = JumpButton(self.ctx.bot, len(self.pages), self)
-        self.extra_buttons.append(self.jump_button)
+
+        if len(self.pages) > 1:
+            self.jump_button = JumpButton(self.ctx.bot, len(self.pages), self)
+            self.extra_buttons.append(self.jump_button)
+
         await super().launch(embed)
 
     async def on_timeout(self):
@@ -129,7 +131,7 @@ class TweakMenuButtons(MenuButtons):
 
 class JumpButton(discord.ui.Button):
     def __init__(self, bot, max_page: int, tmb):
-        super().__init__(disabled=max_page < 2, style=discord.ButtonStyle.primary, emoji="⤴️")
+        super().__init__(style=discord.ButtonStyle.primary, emoji="⤴️")
         self.max_page = max_page
         self.bot = bot
         self.tmb = tmb
@@ -146,13 +148,17 @@ class JumpButton(discord.ui.Button):
             value_name="page",
             description="What page do you want to jump to?",
             convertor=int)
+        
         res = await ctx.prompt(prompt)
-        if res < 0 or res > self.max_page:
+        if res is None:
+            await ctx.send_warning("Cancelled")
+            return
+        elif res < 0 or res > self.max_page:
             await interaction.response.edit(content="Invalid page number!")
             return
 
         await self.tmb.jump_to_page(res)
-        await ctx.send_success(f"Jumped to Page {res}!")
+        await ctx.send_success(f"Jumped to page {res}!")
 
 
 @cached(ttl=3600)

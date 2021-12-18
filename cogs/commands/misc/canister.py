@@ -88,9 +88,12 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
     if entry.get('tintColor') is None and entry.get('packageIcon') is not None and pattern.match(entry.get('packageIcon')):
         async with aiohttp.ClientSession() as session:
             async with session.get(entry.get('packageIcon')) as icon:
-                color = ColorThief(io.BytesIO(await icon.read())).get_color(quality=1000)
-                embed.color = discord.Color.from_rgb(
-                    color[0], color[1], color[2])
+                if icon.status == 200:
+                    color = ColorThief(io.BytesIO(await icon.read())).get_color(quality=1000)
+                    embed.color = discord.Color.from_rgb(
+                        color[0], color[1], color[2])
+                else:
+                    embed.color = discord.Color.blue()
     elif entry.get('tintColor') is not None:
         embed.color = int(entry.get('tintColor').replace('#', '0x'), 0)
 
@@ -226,7 +229,8 @@ class Canister(commands.Cog):
         async with ctx.typing():
             result = list(await search(search_term))
         
-        await canister(ctx, False, False, result)
+        if result:
+            await canister(ctx, False, False, result)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Search for a package")
     async def package(self, ctx: BlooContext, query: Option(str, description="Name of the package to search for.")) -> None:
@@ -242,13 +246,18 @@ class Canister(commands.Cog):
             "Name of the package to search for"
 
         """
+        if len(query) < 2:
+            raise commands.BadArgument("Please enter a longer query.")
+
         should_whisper = False
         if not permissions.has(ctx.guild, ctx.author, 5) and ctx.channel.id == guild_service.get_guild().channel_general:
             should_whisper = True
 
         await ctx.defer(ephemeral=should_whisper)
         result = list(await search(query))
-        await canister(ctx, True, should_whisper, result)
+
+        if result:
+            await canister(ctx, True, should_whisper, result)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Search for a repository")
     async def repo(self, ctx: BlooContext, query: Option(str, description="Name of the repository to search for.", autocomplete=repo_autocomplete)) -> None:
@@ -269,7 +278,9 @@ class Canister(commands.Cog):
 
         await ctx.defer(ephemeral=should_whisper)
         result = list(await search_repo(query))
-        await canister_repo(ctx, True, should_whisper, result)
+
+        if result:
+            await canister_repo(ctx, True, should_whisper, result)
 
     @package.error
     @repo.error

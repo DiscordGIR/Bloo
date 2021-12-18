@@ -70,7 +70,7 @@ class MenuButtons(ui.View):
                 self.add_item(self.pause)
                 self.add_item(self.next)
                 if not self.no_skip:
-                    self.Add_item(self.last)
+                    self.add_item(self.last)
         
         msg_send_method = self.channel.send
         if self.is_interaction:

@@ -5,7 +5,7 @@ import aiohttp
 import discord
 from aiocache.decorators import cached
 
-from utils.context import BlooContext
+from utils.context import BlooContext, PromptData
 from utils.views.menu import MenuButtons
 
 
@@ -41,6 +41,7 @@ class TweakMenu(Menu):
     def __init__(self, *args, **kwargs):
         # Declare variables that we need to use globally throughout the menu
         super().__init__(*args, **kwargs)
+        self.tweak_menu_buttons = None
 
     async def start(self):
         """Initializes a menu"""
@@ -54,11 +55,25 @@ class TweakMenu(Menu):
         # Prepare inital embed
         embed = await self.page_formatter(entries=self.pages[0], all_pages=self.pages, current_page=1, ctx=self.ctx)
         # Initialize our menu
-        await TweakMenuButtons(self.ctx, self.pages, self.page_formatter, self.channel, self.is_interaction, self.should_whisper, no_skip=self.no_skip, extra_buttons=self.extra_buttons).launch(embed)
+        self.tweak_menu_buttons = TweakMenuButtons(self.ctx, self.pages, self.page_formatter, self.channel, self.is_interaction, self.should_whisper, no_skip=self.no_skip, extra_buttons=self.extra_buttons, jump_to_page=self.jump_to_page)
+        await self.tweak_menu_buttons.launch(embed)
+
+    async def jump_to_page(self, page: int):
+        self.tweak_menu_buttons.array_current_page = page - 1
+        # Pull down actual current page
+        self.tweak_menu_buttons.current_page = page
+        # Prepare our embed
+        embed = await self.page_formatter(entries=self.tweak_menu_buttons.pages[self.tweak_menu_buttons.array_current_page], all_pages=self.tweak_menu_buttons.pages, current_page=self.tweak_menu_buttons.current_page, ctx=self.tweak_menu_buttons.ctx)
+        # Launch!
+        await self.tweak_menu_buttons.launch(embed)
 
 
 class TweakMenuButtons(MenuButtons):
     def __init__(self, *args, **kwargs):
+        self.jump_to_page = kwargs.get("jump_to_page")
+        if "jump_to_page" in kwargs:
+            del kwargs["jump_to_page"]
+
         super().__init__(*args, **kwargs)
 
     async def launch(self, embed):
@@ -81,6 +96,9 @@ class TweakMenuButtons(MenuButtons):
                 discord.ui.Button(label='View Depiction', emoji="🔎",
                                   url=self.ctx.depiction, style=discord.ButtonStyle.url),
             )
+        
+        self.jump_button = JumpButton(self.ctx.bot, len(self.pages), self)
+        self.extra_buttons.append(self.jump_button)
         await super().launch(embed)
 
     async def on_timeout(self):
@@ -95,7 +113,7 @@ class TweakMenuButtons(MenuButtons):
 
         # Recursively disable all buttons
         for child in self.children:
-            if child not in self.extra_buttons:
+            if child not in self.extra_buttons or child == self.jump_button:
                 child.disabled = True
 
         # If we aren't in an interaction, just edit the current message
@@ -107,6 +125,34 @@ class TweakMenuButtons(MenuButtons):
                 await self.ctx.respond_or_edit(embed=self.embed, view=self, ephemeral=True)
             else:
                 await self.ctx.respond_or_edit(embed=self.embed, view=self)
+
+
+class JumpButton(discord.ui.Button):
+    def __init__(self, bot, max_page: int, tmb):
+        super().__init__(disabled=max_page < 2, style=discord.ButtonStyle.primary, emoji="⤴️")
+        self.max_page = max_page
+        self.bot = bot
+        self.tmb = tmb
+        self.row = 1
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user != self.tmb.ctx.author:
+            return
+
+        ctx = await self.bot.get_application_context(interaction, cls=BlooContext)
+
+        await interaction.response.defer(ephemeral=True)
+        prompt = PromptData(
+            value_name="page",
+            description="What page do you want to jump to?",
+            convertor=int)
+        res = await ctx.prompt(prompt)
+        if res < 0 or res > self.max_page:
+            await interaction.response.edit(content="Invalid page number!")
+            return
+
+        await self.tmb.jump_to_page(res)
+        await ctx.send_success(f"Jumped to Page {res}!")
 
 
 @cached(ttl=3600)

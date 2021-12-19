@@ -120,7 +120,7 @@ class Tags(commands.Cog):
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Display a tag", permissions=slash_perms.genius_or_submod_and_up())
-    async def rawtag(self, ctx: BlooContext, name: Option(str, description="Tag name", autocomplete=tags_autocomplete)):
+    async def rawtag(self, ctx: BlooContext, name: Option(str, description="Tag name", autocomplete=tags_autocomplete), mobile_friendly: Option(bool, description="Whether to display the tag in a mobile friendly format")):
         """Post raw body of a tag
 
         Example usage
@@ -145,7 +145,7 @@ class Tags(commands.Cog):
             file = discord.File(BytesIO(
                 file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
 
-        response = discord.utils.escape_markdown(tag.content)
+        response = discord.utils.escape_markdown(tag.content) if not mobile_friendly else tag.content
         parts = [response[i:i+2000] for i in range(0, len(response), 2000)]
 
         for i, part in enumerate(parts):

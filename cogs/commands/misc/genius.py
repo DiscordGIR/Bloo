@@ -96,7 +96,7 @@ class Genius(commands.Cog):
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Post raw body of an embed", permissions=slash_perms.genius_or_submod_and_up())
-    async def rawembed(self, ctx: BlooContext, *, channel: Option(discord.TextChannel, description="Channel the embed is in"), message_id: Option(str, description="ID of the message with the embed")):
+    async def rawembed(self, ctx: BlooContext, *, channel: Option(discord.TextChannel, description="Channel the embed is in"), message_id: Option(str, description="ID of the message with the embed"), mobile_friendly: Option(bool, description="Whether to display the tag in a mobile friendly format")):
         try:
             message_id = int(message_id)
         except:
@@ -112,14 +112,19 @@ class Genius(commands.Cog):
         
         if len(message.embeds) == 0:
             raise commands.BadArgument("Message does not have an embed!")
+        
+        _file = message.embeds[0].image
+        response = discord.utils.escape_markdown(message.embeds[0].description) if not mobile_friendly else message.embeds[0].description
+        parts = [response[i:i+2000] for i in range(0, len(response), 2000)]
 
-        if message.embeds[0].image:
-            if len(message.embeds[0].description) + len(message.embeds[0].image.url) > 2000:
-                await ctx.respond(f"{message.embeds[0].description[:1990-len(message.embeds[0].image.url)]}...\n\n{message.embeds[0].image.url}",  allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
+        for i, part in enumerate(parts):
+            if i == 0:
+                await ctx.respond(part, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
             else:
-                await ctx.respond(f"{message.embeds[0].description}\n\n{message.embeds[0].image.url}",  allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
-        else:
-            await ctx.respond(message.embeds[0].description[:1997] + "..." if len(message.embeds[0].description) > 2000 else "", allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
+                await ctx.send(part, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
+
+        if _file:
+            await ctx.send(_file.url, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
 
     async def prepare_issues_embed(self, title, description, message):
         embed = discord.Embed(title=title)

@@ -136,7 +136,7 @@ class Canister(commands.Cog):
             result = list(await search(search_term))
 
         if not result:
-            await ctx.send_error("That repository isn't registered with Canister's database.")
+            raise commands.BadArgument("That package wasn't found in Canister's database.")
             return
 
         view = discord.ui.View(timeout=30) # timeout is optional, it can be defined in seconds
@@ -172,7 +172,7 @@ class Canister(commands.Cog):
         result = list(await search(query))
 
         if not result:
-            raise commands.BadArgument("That repository isn't registered with Canister's database.")
+            raise commands.BadArgument("That package wasn't found in Canister's database.")
 
         view = discord.ui.View(timeout=30) # timeout is optional, it can be defined in seconds
         td = TweakDropdown(ctx.author, result, interaction=True, should_whisper=should_whisper)

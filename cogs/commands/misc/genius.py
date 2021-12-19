@@ -9,7 +9,7 @@ from data.services.guild_service import guild_service
 from utils.config import cfg
 from utils.logger import logger
 from utils.context import BlooContext, PromptData
-from utils.permissions.checks import (PermissionsFailure, genius_or_submod_and_up)
+from utils.permissions.checks import (PermissionsFailure, always_whisper, genius_or_submod_and_up)
 from utils.permissions.slash_perms import slash_perms
 
 class Genius(commands.Cog):
@@ -93,6 +93,54 @@ class Genius(commands.Cog):
 
         embed, f = await self.prepare_issues_embed(title, description, response)
         await channel.send(embed=embed, file=f)
+
+    @genius_or_submod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Repost common-issues table of contents", permissions=slash_perms.genius_or_submod_and_up())
+    async def reindexissues(self, ctx: BlooContext):
+        # get #common-issues channel
+        channel: discord.TextChannel = ctx.guild.get_channel(
+            guild_service.get_guild().channel_common_issues)
+        if not channel:
+            raise commands.BadArgument("common issues channel not found")
+
+        await ctx.defer(ephemeral=True)
+        contents = {}
+        async for message in channel.history(limit=None):
+            if message.author != ctx.me:
+                continue
+
+            if not message.embeds:
+                continue
+
+            embed = message.embeds[0]
+            if not embed.footer.text:
+                continue
+            
+            if embed.footer.text.startswith("Submitted by"):
+                contents[f"{embed.title}"] = message
+            elif embed.footer.text.startswith("Table of Contents"):
+                await message.delete()
+            else:
+                continue
+
+        page = 1
+        count = 1
+        toc_embed = discord.Embed(title="Table of Contents", description="Click on a link to jump to the issue!\n", color=discord.Color.gold())
+        toc_embed.set_footer(text=f"Table of Contents • Page {page}")
+        for title, message in contents.items():
+            this_line = f"\n{count}. [{title}]({message.jump_url})"
+            count += 1
+            if len(toc_embed.description) + len(this_line) < 4096:
+                toc_embed.description += this_line
+            else:
+                await channel.send(embed=toc_embed)
+                page += 1
+                toc_embed.description = ""
+                toc_embed.title = ""
+                toc_embed.set_footer(text=f"Table of Contents • Page {page}")
+
+        await channel.send(embed=toc_embed)
+        await ctx.send_success(f"Indexed {count} issues and posted {page} Table of Contents embeds!")
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Post raw body of an embed", permissions=slash_perms.genius_or_submod_and_up())

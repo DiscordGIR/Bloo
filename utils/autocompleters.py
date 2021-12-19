@@ -214,7 +214,7 @@ async def filterwords_autocomplete(ctx: AutocompleteContext):
 
 async def issue_autocomplete(ctx: AutocompleteContext):
     issue_titles = [issue for issue in ctx.bot.issue_cache.cache]
-    issue_titles.sort()
+    issue_titles.sort(key=lambda issue: issue.lower())
 
     return [issue_title for issue_title in issue_titles if ctx.value.lower() in issue_title.lower()][:25]
 

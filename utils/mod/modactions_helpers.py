@@ -1,47 +1,13 @@
 import discord
 
-import asyncio
 from typing import Union
 from data.model.case import Case
 from data.model.guild import Guild
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
-from utils.config import cfg
 from utils.context import BlooContext
 from utils.mod.mod_logs import prepare_ban_log, prepare_kick_log
 
-class BanCache:
-    def __init__(self, bot):
-        self.bot = bot
-        self.cache = set()
-        self.fetch_ban_cache()
-
-    def fetch_ban_cache(self):
-        asyncio.ensure_future(fetch_ban_cache(self.bot, self))
-
-    def is_banned(self, user_id):
-        return user_id in self.cache
-
-    def ban(self, user_id):
-        self.cache.add(user_id)
-
-    def unban(self, user_id):
-        self.cache.discard(user_id)
-
-async def fetch_ban_cache(bot, ban_cache: BanCache):
-    """Fetches ban cache
-    
-    Parameters
-    ----------
-    bot
-        "Bot object"
-    ban_cache : BanCahce
-        "Ban cache"
-        
-    """
-    guild = bot.get_guild(cfg.guild_id)
-    the_list = await guild.bans()
-    ban_cache.cache = {entry.user.id for entry in the_list}
 
 async def add_kick_case(ctx: BlooContext, user, reason, db_guild):
     """Adds kick case to user

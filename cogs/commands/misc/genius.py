@@ -6,15 +6,18 @@ from discord.ext import commands
 import datetime
 import traceback
 from data.services.guild_service import guild_service
+from utils.autocompleters import issue_autocomplete
 from utils.config import cfg
 from utils.logger import logger
 from utils.context import BlooContext, PromptData
-from utils.permissions.checks import (PermissionsFailure, always_whisper, genius_or_submod_and_up)
+from utils.permissions.checks import (PermissionsFailure, always_whisper, genius_or_submod_and_up, whisper_in_general)
 from utils.permissions.slash_perms import slash_perms
+
 
 class Genius(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.cache = []
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Submit a new common issue", permissions=slash_perms.genius_or_submod_and_up())
@@ -56,7 +59,8 @@ class Genius(commands.Cog):
         embed, f = await self.prepare_issues_embed(title, description, response)
         await channel.send(embed=embed, file=f)
         await ctx.send_success("Common issue posted!", delete_after=5)
-    
+        await self.do_reindex(channel)
+
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Post an embed", permissions=slash_perms.genius_or_submod_and_up())
     async def postembed(self, ctx: BlooContext, *, title: str):
@@ -104,9 +108,18 @@ class Genius(commands.Cog):
             raise commands.BadArgument("common issues channel not found")
 
         await ctx.defer(ephemeral=True)
+        res = await self.do_reindex(channel)
+
+        if res is None:
+            raise commands.BadArgument("Something unexpected occured")
+
+        count, page = res
+        await ctx.send_success(f"Indexed {count} issues and posted {page} Table of Contents embeds!")
+
+    async def do_reindex(self, channel):
         contents = {}
         async for message in channel.history(limit=None, oldest_first=True):
-            if message.author != ctx.me:
+            if message.author.id != self.bot.user.id:
                 continue
 
             if not message.embeds:
@@ -139,8 +152,9 @@ class Genius(commands.Cog):
                 toc_embed.title = ""
                 toc_embed.set_footer(text=f"Table of Contents • Page {page}")
 
+        self.bot.issue_cache.cache = contents
         await channel.send(embed=toc_embed)
-        await ctx.send_success(f"Indexed {count} issues and posted {page} Table of Contents embeds!")
+        return count, page
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Post raw body of an embed", permissions=slash_perms.genius_or_submod_and_up())
@@ -195,6 +209,17 @@ class Genius(commands.Cog):
         embed.timestamp = datetime.datetime.now()
         return embed, f
 
+    @whisper_in_general()
+    @slash_command(guild_ids=[cfg.guild_id], description="Post the embed for one of the common issues")
+    async def issue(self, ctx: BlooContext, title: Option(str, autocomplete=issue_autocomplete)):
+        if title not in self.bot.issue_cache.cache:
+            raise commands.BadArgument("Issue not found! Title must match one of the embeds exactly, use autocomplete to help!")
+
+        message = self.bot.issue_cache.cache[title]
+        embed = message.embeds[0]
+        await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
+
+    @issue.error
     @rawembed.error
     @postembed.error
     @commonissue.error

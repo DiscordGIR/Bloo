@@ -1,13 +1,16 @@
+
 import discord
 from discord.ext import commands
 
 import os
+
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import db
 from utils.logger import logger
+from utils.misc import IssueCache
 from utils.mod.filter import find_triggered_filters
-from utils.mod.modactions_helpers import BanCache
+from utils.misc import BanCache
 from utils.permissions.permissions import permissions
 from utils.tasks import Tasks
 
@@ -91,11 +94,13 @@ class Bot(commands.Bot):
 
         return await super().process_application_commands(interaction)
 
+
 bot = Bot(intents=intents, allowed_mentions=mentions)
 
 @bot.event
 async def on_ready():
     bot.ban_cache = BanCache(bot)
+    bot.issue_cache = IssueCache(bot)
     print("""
             88          88                          
             88          88                          

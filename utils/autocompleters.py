@@ -212,6 +212,13 @@ async def filterwords_autocomplete(ctx: AutocompleteContext):
     return [word for word in words if str(word).startswith(str(ctx.value))][:25]
 
 
+async def issue_autocomplete(ctx: AutocompleteContext):
+    issue_titles = [issue for issue in ctx.bot.issue_cache.cache]
+    issue_titles.sort()
+
+    return [issue_title for issue_title in issue_titles if ctx.value.lower() in issue_title.lower()][:25]
+
+
 @cached(ttl=3600)
 async def fetch_repos():
     async with aiohttp.ClientSession() as client:

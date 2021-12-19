@@ -164,7 +164,7 @@ class JumpButton(discord.ui.Button):
             return
 
         if res < 0 or res > self.max_page:
-            await interaction.response.edit(content="Invalid page number!")
+            await ctx.send_warning("Invalid page number!")
             return
 
         await self.tmb.jump_to_page(res)

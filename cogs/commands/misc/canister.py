@@ -136,7 +136,7 @@ class Canister(commands.Cog):
             result = list(await search(search_term))
 
         if not result:
-            raise commands.BadArgument("That package wasn't found in Canister's database.")
+            await ctx.send_error("That package wasn't found in Canister's database.")
             return
 
         view = discord.ui.View(timeout=30)

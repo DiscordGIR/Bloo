@@ -139,10 +139,11 @@ class Canister(commands.Cog):
             raise commands.BadArgument("That package wasn't found in Canister's database.")
             return
 
-        view = discord.ui.View(timeout=30) # timeout is optional, it can be defined in seconds
+        view = discord.ui.View(timeout=30)
         td = TweakDropdown(author, result, interaction=False, should_whisper=False)
         view.add_item(td)
         td.refresh_view(result[0])
+        view.on_timeout = td.on_timeout
         message = await ctx.send(embed = await td.format_tweak_page(result[0]), view=view)
         new_ctx = await self.bot.get_context(message, cls=BlooOldContext)
         td.start(new_ctx)
@@ -174,8 +175,9 @@ class Canister(commands.Cog):
         if not result:
             raise commands.BadArgument("That package wasn't found in Canister's database.")
 
-        view = discord.ui.View(timeout=30) # timeout is optional, it can be defined in seconds
+        view = discord.ui.View(timeout=30)
         td = TweakDropdown(ctx.author, result, interaction=True, should_whisper=should_whisper)
+        view.on_timeout = td.on_timeout
         view.add_item(td)
         td.refresh_view(result[0])
         await ctx.respond(embed = await td.format_tweak_page(result[0]), view=view)

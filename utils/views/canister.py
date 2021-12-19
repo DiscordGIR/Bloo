@@ -94,17 +94,12 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
 
 
 async def canister(ctx: BlooContext, interaction: bool, whisper: bool, result):
-    if not result:
-        await ctx.send_error("That package isn't registered with Canister's database.")
-        return
-
-    await TweakMenu(result, ctx.channel, format_tweak_page, interaction, ctx, whisper, no_skip=True).start(ctx.message)
+    await TweakMenu(result, ctx.channel, format_tweak_page, interaction, ctx, whisper, no_skip=True).start(ctx.message, page=25)
 
 
 class TweakDropdown(discord.ui.Select):
     def __init__(self, author, entries, interaction, should_whisper):
         self.author = author
-        self.timeout = 120
         self.interaction = interaction
         self.raw_entries = entries
         self.should_whisper = should_whisper
@@ -145,6 +140,15 @@ class TweakDropdown(discord.ui.Select):
             await self.ctx.edit(embed=await self.format_tweak_page(selected_value), view=self._view)
         else:
             await self.ctx.message.edit(embed=await self.format_tweak_page(selected_value), view=self._view)
+
+    async def on_timeout(self):
+        self.disabled = True
+        self.placeholder = "Timed out"
+
+        if self.interaction:
+            await self.ctx.edit(view=self._view)
+        else:
+            await self.ctx.message.edit(view=self._view)
 
     async def format_tweak_page(self, entry):
         titleKey = entry.get('name')

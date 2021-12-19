@@ -43,7 +43,7 @@ class TweakMenu(Menu):
         super().__init__(*args, **kwargs)
         self.tweak_menu_buttons = None
 
-    async def start(self, msg=None):
+    async def start(self, msg=None, page=1):
         """Initializes a menu"""
         def chunks(lst, n):
             """Yield successive n-sized chunks from lst."""
@@ -53,9 +53,11 @@ class TweakMenu(Menu):
         self.pages = list(chunks(self.pages, self.per_page))
 
         # Prepare inital embed
-        embed = await self.page_formatter(entries=self.pages[0], all_pages=self.pages, current_page=1, ctx=self.ctx)
+        embed = await self.page_formatter(entries=self.pages[page-1], all_pages=self.pages, current_page=page, ctx=self.ctx)
         # Initialize our menu
         self.tweak_menu_buttons = TweakMenuButtons(self.ctx, self.pages, self.page_formatter, self.channel, self.is_interaction, self.should_whisper, no_skip=self.no_skip, extra_buttons=self.extra_buttons, jump_to_page=self.jump_to_page, msg=msg)
+        self.tweak_menu_buttons.array_current_page = 24
+        self.tweak_menu_buttons.current_page = 25
         await self.tweak_menu_buttons.launch(embed)
 
     async def jump_to_page(self, page: int):

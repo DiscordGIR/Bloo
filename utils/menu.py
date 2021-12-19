@@ -149,13 +149,21 @@ class JumpButton(discord.ui.Button):
         prompt = PromptData(
             value_name="page",
             description="What page do you want to jump to?",
-            convertor=int)
-        
+            timeout=10,
+            convertor=None)
+
         res = await ctx.prompt(prompt)
         if res is None:
             await ctx.send_warning("Cancelled")
             return
-        elif res < 0 or res > self.max_page:
+
+        try:
+            res = int(res)
+        except ValueError:
+            await ctx.send_warning("Invalid page number!")
+            return
+
+        if res < 0 or res > self.max_page:
             await interaction.response.edit(content="Invalid page number!")
             return
 

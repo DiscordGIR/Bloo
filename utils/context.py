@@ -142,7 +142,7 @@ class BlooContext(discord.context.ApplicationContext):
                     if info.convertor is not None:
                         value = await info.convertor(self, response.content)
                     else:
-                        value = None
+                        value = response.content
 
                     if info.raw:
                         ret = value, response

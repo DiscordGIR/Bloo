@@ -179,3 +179,5 @@ class MenuButtons(ui.View):
                 await self.ctx.respond_or_edit(embed=self.embed, view=self, ephemeral=True)
             else:
                 await self.ctx.respond_or_edit(embed=self.embed, view=self)
+
+        self.stop()

@@ -150,6 +150,7 @@ class ModActions(commands.Cog):
             "Reason for mute, by default 'No reason.'"
 
         """
+        await ctx.defer()
         member = await mods_and_above_member_resolver(ctx, member)
 
         reason = escape_markdown(reason)

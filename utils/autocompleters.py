@@ -110,6 +110,8 @@ async def ios_on_device_autocomplete(ctx: AutocompleteContext):
     transformed_devices = transform_groups(devices)
     selected_device = ctx.options.get("device")
 
+    if selected_device is None:
+        return []
     matching_devices = [
         d for d in transformed_devices if selected_device.lower() == d.get('name').lower() or any(selected_device.lower() == x.lower() for x in d.get("devices"))]
 

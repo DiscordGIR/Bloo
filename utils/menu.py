@@ -128,6 +128,8 @@ class TweakMenuButtons(MenuButtons):
             else:
                 await self.ctx.respond_or_edit(embed=self.embed, view=self)
 
+        self.stop()
+
 
 class JumpButton(discord.ui.Button):
     def __init__(self, bot, max_page: int, tmb):
@@ -290,3 +292,5 @@ class CIJMenuButtons(MenuButtons):
                 await self.ctx.respond_or_edit(embed=self.embed, view=self, ephemeral=True)
             else:
                 await self.ctx.respond_or_edit(embed=self.embed, view=self)
+
+        self.stop()

@@ -4,7 +4,7 @@ from typing import Callable, List, Optional
 from utils.context import BlooContext
 
 class MenuButtons(ui.View):
-    def __init__(self, ctx: BlooContext, pages: list, page_formatter: Callable[[any, list, int, BlooContext], None], channel: discord.TextChannel, interaction: bool, whisper: bool, no_skip: bool = False, extra_buttons: Optional[List[discord.ui.Button]] = []):
+    def __init__(self, ctx: BlooContext, pages: list, page_formatter: Callable[[any, list, int, BlooContext], None], channel: discord.TextChannel, interaction: bool, whisper: bool, no_skip: bool = False, extra_buttons: Optional[List[discord.ui.Button]] = [], msg: Optional[discord.Message] = None):
         # Tell buttons to disable after 60 seconds
         super().__init__(timeout=60)
         # Declare variables that we need to use globally throughout the menu
@@ -16,7 +16,7 @@ class MenuButtons(ui.View):
         self.pages = pages
         self.page_formatter = page_formatter
         self.ctx = ctx
-        self.msg = None
+        self.msg = msg
         self.embed = None
         self.sent = False
         self.no_skip = no_skip

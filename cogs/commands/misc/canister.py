@@ -1,107 +1,21 @@
-import io
 import json
 import re
 import traceback
 import urllib
-from datetime import datetime
 
 import aiohttp
 import discord
-from aiocache import cached
-from colorthief import ColorThief
 from data.services.guild_service import guild_service
 from discord.commands import Option, slash_command
-from discord.commands.context import AutocompleteContext
 from discord.ext import commands
 from utils.autocompleters import fetch_repos, repo_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext, BlooOldContext
 from utils.logger import logger
 from utils.menu import TweakMenu
+from utils.views.canister import TweakDropdown, default_repos
 from utils.permissions.checks import PermissionsFailure
 from utils.permissions.permissions import permissions
-
-default_repos = [
-    "apt.bingner.com",
-    "apt.procurs.us",
-    "apt.saurik.com",
-    "apt.oldcurs.us",
-    "repo.chimera.sh",
-    "diatr.us/apt",
-    "repo.theodyssey.dev",
-]
-
-
-pattern = re.compile(
-    r"((http|https)\:\/\/)[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*")
-
-
-async def format_tweak_page(entries, all_pages, current_page, ctx):
-    """Formats the page for the tweak embed.
-
-    Parameters
-    ----------
-    entries : List[dict]
-        "The list of dictionaries for each tweak"
-    all_pages : list
-        "All entries that we will eventually iterate through"
-    current_page : number
-        "The number of the page that we are currently on"
-
-    Returns
-    -------
-    discord.Embed
-        "The embed that we will send"
-
-    """
-    entry = entries[0]
-    ctx.repo = entry.get('repository').get('uri')
-    ctx.depiction = entry.get('depiction')
-
-    for repo in default_repos:
-        if repo in entry.get('repository').get('uri'):
-            ctx.repo = None
-            break
-
-    titleKey = entry.get('name')
-
-    if entry.get('name') is None:
-        titleKey = entry.get('identifier')
-    embed = discord.Embed(title=titleKey, color=discord.Color.blue())
-    embed.description = discord.utils.escape_markdown(
-        entry.get('description')) or "No description"
-
-    if entry.get('author') is not None:
-        embed.add_field(name="Author", value=discord.utils.escape_markdown(
-            entry.get('author').split("<")[0]), inline=True)
-    else:
-        embed.add_field(name="Author", value=discord.utils.escape_markdown(
-            entry.get('maintainer').split("<")[0]), inline=True)
-
-    embed.add_field(name="Version", value=discord.utils.escape_markdown(
-        entry.get('latestVersion') or "No Version"), inline=True)
-    embed.add_field(name="Price", value=entry.get(
-        "price") or "Free", inline=True)
-    embed.add_field(
-        name="Repo", value=f"[{entry.get('repository').get('name')}]({entry.get('repository').get('uri')})" or "No Repo", inline=True)
-    embed.add_field(name="Bundle ID", value=entry.get("identifier") or "Not found", inline=True)
-    if entry.get('tintColor') is None and entry.get('packageIcon') is not None and pattern.match(entry.get('packageIcon')):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(entry.get('packageIcon')) as icon:
-                if icon.status == 200:
-                    color = ColorThief(io.BytesIO(await icon.read())).get_color(quality=1000)
-                    embed.color = discord.Color.from_rgb(
-                        color[0], color[1], color[2])
-                else:
-                    embed.color = discord.Color.blue()
-    elif entry.get('tintColor') is not None:
-        embed.color = int(entry.get('tintColor').replace('#', '0x'), 0)
-
-    if entry.get('packageIcon') is not None and pattern.match(entry.get('packageIcon')):
-        embed.set_thumbnail(url=entry.get('packageIcon'))
-    embed.set_footer(icon_url=f"{'https://assets.stkc.win/bigboss-sileo.png' if 'http://apt.thebigboss.org/repofiles/cydia/CydiaIcon.png' in entry.get('repository').get('uri')+'/CydiaIcon.png' else entry.get('repository').get('uri')+'/CydiaIcon.png'}", text=f"Powered by Canister • Page {current_page}/{len(all_pages)}" or "No Package")
-    embed.timestamp = datetime.now()
-    return embed
 
 
 async def format_repo_page(entries, all_pages, current_page, ctx):
@@ -142,7 +56,7 @@ async def search(query):
 
     """
     async with aiohttp.ClientSession() as client:
-        async with client.get(f'https://api.canister.me/v1/community/packages/search?query={urllib.parse.quote(query)}&searchFields=identifier,name&responseFields=identifier,header,tintColor,name,price,description,packageIcon,repository.uri,repository.name,author,maintainer,latestVersion,nativeDepiction,depiction') as resp:
+        async with client.get(f'https://api.canister.me/v1/community/packages/search?query={urllib.parse.quote(query)}&searchFields=name,author,maintainer,description&responseFields=identifier,header,tintColor,name,price,description,packageIcon,repository.uri,repository.name,author,maintainer,latestVersion,nativeDepiction,depiction') as resp:
             if resp.status == 200:
                 response = json.loads(await resp.text())
                 if response.get('status') == "Successful":
@@ -177,14 +91,6 @@ async def search_repo(query):
                     return None
             else:
                 return None
-
-
-async def canister(ctx: BlooContext, interaction: bool, whisper: bool, result):
-    if not result:
-        await ctx.send_error("That package isn't registered with Canister's database.")
-        return
-
-    await TweakMenu(result, ctx.channel, format_tweak_page, interaction, ctx, whisper, no_skip=True).start()
 
 
 async def canister_repo(ctx: BlooContext, interaction: bool, whisper: bool, result):
@@ -225,12 +131,21 @@ class Canister(commands.Cog):
             return
 
         ctx = await self.bot.get_context(message, cls=BlooOldContext)
-        
+
         async with ctx.typing():
             result = list(await search(search_term))
-        
-        if result:
-            await canister(ctx, False, False, result)
+
+        if not result:
+            await ctx.send_error("That repository isn't registered with Canister's database.")
+            return
+
+        view = discord.ui.View(timeout=30) # timeout is optional, it can be defined in seconds
+        td = TweakDropdown(author, result, interaction=False, should_whisper=False)
+        view.add_item(td)
+        td.refresh_view(result[0])
+        message = await ctx.send(embed = await td.format_tweak_page(result[0]), view=view)
+        new_ctx = await self.bot.get_context(message, cls=BlooOldContext)
+        td.start(new_ctx)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Search for a package")
     async def package(self, ctx: BlooContext, query: Option(str, description="Name of the package to search for.")) -> None:
@@ -256,8 +171,15 @@ class Canister(commands.Cog):
         await ctx.defer(ephemeral=should_whisper)
         result = list(await search(query))
 
-        if result:
-            await canister(ctx, True, should_whisper, result)
+        if not result:
+            raise commands.BadArgument("That repository isn't registered with Canister's database.")
+
+        view = discord.ui.View(timeout=30) # timeout is optional, it can be defined in seconds
+        td = TweakDropdown(ctx.author, result, interaction=True, should_whisper=should_whisper)
+        view.add_item(td)
+        td.refresh_view(result[0])
+        await ctx.respond(embed = await td.format_tweak_page(result[0]), view=view)
+        td.start(ctx)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Search for a repository")
     async def repo(self, ctx: BlooContext, query: Option(str, description="Name of the repository to search for.", autocomplete=repo_autocomplete)) -> None:

@@ -99,7 +99,7 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
 
     if entry.get('packageIcon') is not None and pattern.match(entry.get('packageIcon')):
         embed.set_thumbnail(url=entry.get('packageIcon'))
-    embed.set_footer(icon_url=f"{entry.get('repository').get('uri')}/CydiaIcon.png", text=f"Powered by Canister • Page {current_page}/{len(all_pages)}" or "No Package")
+    embed.set_footer(icon_url=f"{'https://assets.stkc.win/bigboss-sileo.png' if 'http://apt.thebigboss.org/repofiles/cydia/CydiaIcon.png' in entry.get('repository').get('uri')+'/CydiaIcon.png' else entry.get('repository').get('uri')+'/CydiaIcon.png'}", text=f"Powered by Canister • Page {current_page}/{len(all_pages)}" or "No Package")
     embed.timestamp = datetime.now()
     return embed
 

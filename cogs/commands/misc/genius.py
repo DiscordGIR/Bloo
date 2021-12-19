@@ -105,7 +105,7 @@ class Genius(commands.Cog):
 
         await ctx.defer(ephemeral=True)
         contents = {}
-        async for message in channel.history(limit=None):
+        async for message in channel.history(limit=None, oldest_first=True):
             if message.author != ctx.me:
                 continue
 

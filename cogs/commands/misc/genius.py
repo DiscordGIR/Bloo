@@ -211,13 +211,19 @@ class Genius(commands.Cog):
 
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Post the embed for one of the common issues")
-    async def issue(self, ctx: BlooContext, title: Option(str, autocomplete=issue_autocomplete)):
+    async def issue(self, ctx: BlooContext, title: Option(str, autocomplete=issue_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
         if title not in self.bot.issue_cache.cache:
             raise commands.BadArgument("Issue not found! Title must match one of the embeds exactly, use autocomplete to help!")
 
         message = self.bot.issue_cache.cache[title]
         embed = message.embeds[0]
-        await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
+
+        if user_to_mention is not None:
+            title = f"Hey {user_to_mention.mention}, have a look at this!"
+        else:
+            title = None
+
+        await ctx.respond_or_edit(content=title, embed=embed, ephemeral=ctx.whisper)
 
     @issue.error
     @rawembed.error

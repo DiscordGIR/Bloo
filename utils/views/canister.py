@@ -6,7 +6,7 @@ from typing import IO
 import aiohttp
 import discord
 from colorthief import ColorThief
-from utils.context import BlooContext
+from utils.context import BlooContext, BlooOldContext
 from utils.menu import TweakMenu
 
 pattern = re.compile(
@@ -23,7 +23,7 @@ default_repos = [
 ]
 
 
-async def format_tweak_page(entries, all_pages, current_page, ctx):
+async def format_tweak_page(ctx, entries, current_page, all_pages):
     """Formats the page for the tweak embed.
 
     Parameters
@@ -94,8 +94,7 @@ async def format_tweak_page(entries, all_pages, current_page, ctx):
 
 
 async def canister(ctx: BlooContext, interaction: bool, whisper: bool, result):
-    await TweakMenu(result, ctx.channel, format_tweak_page, interaction, ctx, whisper, no_skip=True).start(ctx.message, page=25)
-
+    await TweakMenu(ctx, result, per_page=1, page_formatter=format_tweak_page, whisper=whisper, start_page=25, show_skip_buttons=False, non_interaction_message=ctx.message).start()
 
 class TweakDropdown(discord.ui.Select):
     def __init__(self, author, entries, interaction, should_whisper):

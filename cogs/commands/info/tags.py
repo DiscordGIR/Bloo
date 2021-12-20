@@ -14,7 +14,7 @@ from utils.autocompleters import tags_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
 from utils.logger import logger
-from utils.menu import Menu
+from utils.views.menu import Menu
 from utils.message_cooldown import MessageTextBucket
 from utils.permissions.checks import (PermissionsFailure,
                                       genius_or_submod_and_up, whisper)
@@ -22,7 +22,7 @@ from utils.permissions.permissions import permissions
 from utils.permissions.slash_perms import slash_perms
 
 
-async def format_tag_page(entries, all_pages, current_page, ctx):
+def format_tag_page(_, entries, current_page, all_pages):
     embed = discord.Embed(
         title=f'All tags', color=discord.Color.blurple())
     for tag in entries:
@@ -165,9 +165,7 @@ class Tags(commands.Cog):
         if len(_tags) == 0:
             raise commands.BadArgument("There are no tags defined.")
 
-        menu = Menu(_tags, ctx.channel, per_page=12,
-                    format_page=format_tag_page, interaction=True, ctx=ctx, whisper=ctx.whisper)
-
+        menu = Menu(ctx, _tags, per_page=12, page_formatter=format_tag_page, whisper=ctx.whisper)
         await menu.start()
 
     tags = discord.SlashCommandGroup("tags", "Interact with tags", guild_ids=[cfg.guild_id], permissions=slash_perms.genius_or_submod_and_up())

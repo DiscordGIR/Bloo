@@ -18,7 +18,7 @@ from utils.permissions.checks import PermissionsFailure
 from utils.permissions.permissions import permissions
 
 
-async def format_repo_page(entries, all_pages, current_page, ctx):
+def format_repo_page(ctx, entries, _, __):
     repo_data = entries[0]
 
     ctx.repo = repo_data.get('uri')
@@ -98,8 +98,8 @@ async def canister_repo(ctx: BlooContext, interaction: bool, whisper: bool, resu
         await ctx.send_error("That repository isn't registered with Canister's database.")
         return
     ctx.repo = result[0].get('uri')
-    await TweakMenu(result, ctx.channel, format_repo_page, interaction, ctx, whisper, no_skip=True).start()
 
+    await TweakMenu(ctx, result, per_page=1, page_formatter=format_repo_page, whisper=whisper).start()
 
 class Canister(commands.Cog):
     def __init__(self, bot):

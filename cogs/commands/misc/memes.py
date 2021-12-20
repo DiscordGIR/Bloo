@@ -13,14 +13,14 @@ from utils.autocompleters import memes_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
 from utils.logger import logger
-from utils.menu import Menu
+from utils.views.menu import Menu
 from utils.message_cooldown import MessageTextBucket
 from utils.permissions.checks import PermissionsFailure, mod_and_up, whisper
 from utils.permissions.permissions import permissions
 from utils.permissions.slash_perms import slash_perms
 
 
-async def format_meme_page(entries, all_pages, current_page, ctx):
+def format_meme_page(_, entries, current_page, all_pages):
     embed = discord.Embed(
         title=f'All memes', color=discord.Color.blurple())
     for meme in entries:
@@ -91,9 +91,7 @@ class Memes(commands.Cog):
         if len(memes) == 0:
             raise commands.BadArgument("There are no memes defined.")
 
-        menu = Menu(memes, ctx.channel, per_page=12,
-                    format_page=format_meme_page, interaction=True, ctx=ctx, whisper=ctx.whisper)
-
+        menu = Menu(ctx, memes, per_page=12, page_formatter=format_meme_page, whisper=ctx.whisper)
         await menu.start()
 
     memes = discord.SlashCommandGroup("memes", "Interact with memes", guild_ids=[

@@ -15,15 +15,18 @@ from utils.autocompleters import (device_autocomplete, device_autocomplete_jb,
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
-from utils.menu import CIJMenu
+from utils.menu import CIJMenu, get_signed_status, iterate_apps
 from utils.permissions.checks import PermissionsFailure, whisper, whisper_in_general
 
 
-async def format_jailbreak_page(entries, all_pages, current_page, ctx):
+async def format_jailbreak_page(ctx, entries, current_page, all_pages):
     jb = entries[0]
     info = jb.get('info')
     info['name'] = jb.get('name')
     ctx.jb_info = info
+    
+    ctx.jba = await iterate_apps(ctx.jb_info.get("name"))
+    ctx.signed = await get_signed_status()
 
     color = info.get("color")
     if color is not None:
@@ -487,9 +490,8 @@ class iOSCFW(commands.Cog):
                 found_jbs.sort(key=lambda x: str(
                     x.get("priority")) or x.get("name"))
 
-            menu = CIJMenu(pages=found_jbs, channel=ctx.channel,
-                           format_page=format_jailbreak_page, interaction=True, ctx=ctx, no_skip=True, whisper=ctx.whisper)
-
+            # menu = CIJMenu(ctx, found_jbs, format_jailbreak_page, interaction=True, ctx=ctx, no_skip=True, whisper=ctx.whisper)
+            menu = CIJMenu(ctx, found_jbs, per_page=1, page_formatter=format_jailbreak_page, show_skip_buttons=False, whisper=ctx.whisper)
             await menu.start()
 
     @canijailbreak.error

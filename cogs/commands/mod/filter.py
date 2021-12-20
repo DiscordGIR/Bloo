@@ -9,7 +9,7 @@ from discord.ext import commands
 from utils.autocompleters import filterwords_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.menu import Menu
+from utils.views.menu import Menu
 from utils.logger import logger
 from utils.permissions.checks import (PermissionsFailure, admin_and_up, always_whisper,
                                       mod_and_up)
@@ -17,7 +17,7 @@ from utils.permissions.permissions import permissions
 from utils.permissions.slash_perms import slash_perms
 
 
-async def format_filter_page(entries, all_pages, current_page, ctx):
+def format_filter_page(_, entries, current_page, all_pages):
     """Formats the page for the filtered words embed
     
     Parameters
@@ -139,9 +139,7 @@ class Filters(commands.Cog):
         
         filters = sorted(filters, key=lambda word: word.word.lower())
 
-        menu = Menu(filters, ctx.channel, per_page=12,
-                    format_page=format_filter_page, interaction=True, ctx=ctx, whisper=False)
-
+        menu = Menu(ctx, filters, per_page=12, page_formatter=format_filter_page, whisper=False)
         await menu.start()
 
     @mod_and_up()

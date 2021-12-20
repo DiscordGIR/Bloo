@@ -91,7 +91,7 @@ class JumpButton(discord.ui.Button):
             await ctx.send_warning("Invalid page number!")
             return
 
-        self.tmb.current_page = 1
+        self.tmb.current_page = res
         await self.tmb.refresh_response_message()
         await ctx.send_success(f"Jumped to page {res}!")
 

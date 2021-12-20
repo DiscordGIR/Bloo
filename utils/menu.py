@@ -26,7 +26,7 @@ class TweakMenu(Menu):
             extra_buttons = [
                 discord.ui.Button(label='Cannot add default repo', emoji="<:sileo:679466569407004684>",
                                   url=f'https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={self.ctx.repo}', disabled=True, style=discord.ButtonStyle.url, row=1),
-                discord.ui.Button(label='Cannot add default repo', emoji="🦓",
+                discord.ui.Button(label='Cannot add default repo', emoji="<:zebra:911433583032422420>",
                                   url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={self.ctx.repo}', disabled=True, style=discord.ButtonStyle.url, row=1)
             ]
         if self.ctx.depiction:

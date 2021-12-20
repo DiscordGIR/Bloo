@@ -212,7 +212,7 @@ class TweakDropdown(discord.ui.Select):
             extra_buttons = [
                 discord.ui.Button(label='Cannot add default repo', emoji="<:sileo:679466569407004684>",
                                   url=f'https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={repo}', disabled=True, style=discord.ButtonStyle.url),
-                discord.ui.Button(label='Cannot add default repo', emoji="🦓",
+                discord.ui.Button(label='Cannot add default repo', emoji="<:zebra:911433583032422420>",
                                   url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={repo}', disabled=True, style=discord.ButtonStyle.url)
             ]
         if depiction is not None:

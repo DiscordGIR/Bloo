@@ -5,7 +5,7 @@ from typing import IO
 
 import aiohttp
 import discord
-from colorthief import ColorThief
+# from colorthief import ColorThief
 from utils.context import BlooContext, BlooOldContext
 from utils.menu import TweakMenu
 
@@ -74,14 +74,14 @@ async def format_tweak_page(ctx, entries, current_page, all_pages):
     embed.add_field(name="Bundle ID", value=entry.get(
         "identifier") or "Not found", inline=True)
     if entry.get('tintColor') is None and entry.get('packageIcon') is not None and pattern.match(entry.get('packageIcon')):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(entry.get('packageIcon')) as icon:
-                if icon.status == 200:
-                    color = ColorThief(IO.BytesIO(await icon.read())).get_color(quality=1000)
-                    embed.color = discord.Color.from_rgb(
-                        color[0], color[1], color[2])
-                else:
-                    embed.color = discord.Color.blue()
+        # async with aiohttp.ClientSession() as session:
+        #     async with session.get(entry.get('packageIcon')) as icon:
+        #         if icon.status == 200:
+        #             color = ColorThief(IO.BytesIO(await icon.read())).get_color(quality=1000)
+        #             embed.color = discord.Color.from_rgb(
+        #                 color[0], color[1], color[2])
+        #         else:
+        embed.color = discord.Color.blue()
     elif entry.get('tintColor') is not None:
         embed.color = int(entry.get('tintColor').replace('#', '0x'), 0)
 
@@ -174,14 +174,14 @@ class TweakDropdown(discord.ui.Select):
         embed.add_field(name="Bundle ID", value=entry.get(
             "identifier") or "Not found", inline=True)
         if entry.get('tintColor') is None and entry.get('packageIcon') is not None and pattern.match(entry.get('packageIcon')):
-            async with aiohttp.ClientSession() as session:
-                async with session.get(entry.get('packageIcon')) as icon:
-                    if icon.status == 200:
-                        color = ColorThief(io.BytesIO(await icon.read())).get_color(quality=1000)
-                        embed.color = discord.Color.from_rgb(
-                            color[0], color[1], color[2])
-                    else:
-                        embed.color = discord.Color.blue()
+            # async with aiohttp.ClientSession() as session:
+            #     async with session.get(entry.get('packageIcon')) as icon:
+            #         if icon.status == 200:
+            #             color = ColorThief(io.BytesIO(await icon.read())).get_color(quality=1000)
+            #             embed.color = discord.Color.from_rgb(
+            #                 color[0], color[1], color[2])
+            #         else:
+            embed.color = discord.Color.blue()
         elif entry.get('tintColor') is not None:
             embed.color = int(entry.get('tintColor').replace('#', '0x'), 0)
 

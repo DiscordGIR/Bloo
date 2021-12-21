@@ -46,18 +46,20 @@ async def mute(ctx, member, dur_seconds = None, reason = "No reason."):
             case.until = time
             case.punishment = humanize.naturaldelta(
                 time - now, minimum_unit="seconds")
-            ctx.bot.tasks.schedule_unmute(member.id, time)
+            await member.timeout(until=time, reason=reason)
+            ctx.bot.tasks.schedule_untimeout(member.id, time)
         except Exception:
             return
     else:
         case.punishment = "PERMANENT"
+        u = user_service.get_user(id=member.id)
+        u.is_muted = True
+        u.save()
+        await member.add_roles(mute_role)
 
     guild_service.inc_caseid()
     user_service.add_case(member.id, case)
-    u = user_service.get_user(id=member.id)
-    u.is_muted = True
-    u.save()
-    await member.add_roles(mute_role)
+
 
     log = prepare_mute_log(ctx.author, member, case)
     await ctx.send(embed=log, delete_after=10)
@@ -95,6 +97,7 @@ async def unmute(ctx, member, reason: str = "No reason.") -> None:
 
     try:
         ctx.tasks.cancel_unmute(member.id)
+        await member.remove_timeout()
     except Exception:
         pass
 

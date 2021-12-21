@@ -7,7 +7,7 @@ from discord.utils import escape_markdown, escape_mentions
 import traceback
 import humanize
 import pytimeparse
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from data.model.case import Case
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
@@ -133,7 +133,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Mute a user", permissions=slash_perms.mod_and_up())
-    async def mute(self, ctx: BlooContext, member: Option(discord.Member, description="User to mute"), dur: Option(str, description="Duration for mute", required=False) = "", reason: Option(str, description="Reason for mute", required=False) = "No reason.") -> None:
+    async def mute(self, ctx: BlooContext, member: Option(discord.Member, description="User to mute"), duration: Option(str, description="Duration for mute") = "", reason: Option(str, description="Reason for mute") = "No reason.") -> None:
         """Mutes a user (mod only)
 
         Example usage
@@ -151,26 +151,21 @@ class ModActions(commands.Cog):
 
         """
         await ctx.defer()
-        member = await mods_and_above_member_resolver(ctx, member)
+        member: discord.Member = await mods_and_above_member_resolver(ctx, member)
 
         reason = escape_markdown(reason)
         reason = escape_mentions(reason)
 
-        now = datetime.now()
-        delta = pytimeparse.parse(dur)
+        now = datetime.now(tz=timezone.utc)
+        delta = pytimeparse.parse(duration)
 
         if delta is None:
-            if reason == "No reason." and dur == "":
-                reason = "No reason."
-            elif reason == "No reason.":
-                reason = dur
-            else:
-                reason = f"{dur} {reason}"
+            raise commands.BadArgument("Please input a valid duration!")
 
         mute_role = guild_service.get_guild().role_mute
         mute_role = ctx.guild.get_role(mute_role)
 
-        if mute_role in member.roles:
+        if member.communication_disabled_until is not None and member.communication_disabled_until > now:
             raise commands.BadArgument("This user is already muted.")
 
         db_guild = guild_service.get_guild()
@@ -183,26 +178,20 @@ class ModActions(commands.Cog):
             reason=reason,
         )
 
-        if delta:
-            try:
-                time = now + timedelta(seconds=delta)
-                case.until = time
-                case.punishment = humanize.naturaldelta(
-                    time - now, minimum_unit="seconds")
-                ctx.tasks.schedule_unmute(member.id, time)
-            except Exception:
-                raise commands.BadArgument(
-                    "An error occured, this user is probably already muted")
-        else:
-            case.punishment = "PERMANENT"
+        try:
+            time = now + timedelta(seconds=delta)
+            case.until = time
+            case.punishment = humanize.naturaldelta(
+                time - now, minimum_unit="seconds")
+            await member.timeout(until=time, reason=reason)
+            ctx.tasks.schedule_untimeout(member.id, time)
+        except Exception as e:
+            print(e)
+            raise commands.BadArgument(
+                "An error occured, this user is probably already muted")
 
         guild_service.inc_caseid()
         user_service.add_case(member.id, case)
-        u = user_service.get_user(id=member.id)
-        u.is_muted = True
-        u.save()
-
-        await member.add_roles(mute_role)
 
         log = prepare_mute_log(ctx.author, member, case)
         await ctx.respond(embed=log, delete_after=10)
@@ -243,6 +232,7 @@ class ModActions(commands.Cog):
         u.save()
 
         try:
+            await member.remove_timeout()
             ctx.tasks.cancel_unmute(member.id)
         except Exception:
             pass

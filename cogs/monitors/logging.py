@@ -341,13 +341,16 @@ class Logging(commands.Cog):
         await channel.send(embed=embed)
 
     @commands.Cog.listener()
-    async def on_member_update(self, before: discord.Message, after: discord.Message):
+    async def on_member_update(self, before: discord.Member, after: discord.Member):
         if after.guild.id != cfg.guild_id:
             return
         if not before or not after:
             return
         if before.display_name != after.display_name:
             await self.member_nick_update(before, after)
+            return
+        if before.communication_disabled_until != after.communication_disabled_until:
+            await self.member_timeout_update(before, after)
             return
 
         new_roles = [role.mention
@@ -406,6 +409,28 @@ class Logging(commands.Cog):
         if private:
             await private.send(embed=embed)
 
+    async def member_timeout_update(self, before: discord.Member, after: discord.Member):
+        embed = discord.Embed()
+        if before.communication_disabled_until is not None and after.communication_disabled_until is None:
+            embed.title = "Member Timeout Removed"
+            embed.color = discord.Color.dark_blue()
+        elif (before.communication_disabled_until is None and after.communication_disabled_until is not None) or (before.communication_disabled_until < after.communication_disabled_until):
+            embed.title = "Member Timed Out"
+            embed.color = discord.Color.greyple()
+        else:
+            embed.title = "Member Timeout Removed"
+            embed.color = discord.Color.dark_blue()
+
+        member = after
+        embed.set_thumbnail(url=member.display_avatar)
+        embed.add_field(
+            name="Member", value=f'{member} ({member.mention})', inline=True)
+        embed.timestamp = datetime.now()
+        embed.set_footer(text=member.id)
+        db_guild = guild_service.get_guild()
+        private = member.guild.get_channel(db_guild.channel_private)
+        if private:
+            await private.send(embed=embed)
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):

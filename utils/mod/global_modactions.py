@@ -41,13 +41,21 @@ async def mute(ctx, member, dur_seconds = None, reason = "No reason."):
     )
 
     if dur_seconds:
+        time = now + timedelta(seconds=dur_seconds)
+        case.until = time
+        case.punishment = humanize.naturaldelta(
+            time - now, minimum_unit="seconds")
         try:
-            time = now + timedelta(seconds=dur_seconds)
-            case.until = time
-            case.punishment = humanize.naturaldelta(
-                time - now, minimum_unit="seconds")
-            await member.timeout(until=time, reason=reason)
-            ctx.bot.tasks.schedule_untimeout(member.id, time)
+            if time <= now + timedelta(days=14):
+                await member.timeout(until=time, reason=reason)
+                ctx.bot.tasks.schedule_untimeout(member.id, time)
+            else:
+                ctx.bot.tasks.schedule_unmute(member.id, time)
+                u = user_service.get_user(id=member.id)
+                u.is_muted = True
+                u.save()
+
+                await member.add_roles(mute_role)
         except Exception:
             return
     else:

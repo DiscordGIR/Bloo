@@ -69,6 +69,21 @@ class Tasks():
         self.tasks.add_job(unmute_callback, 'date', id=str(
             id), next_run_time=date, args=[id], misfire_grace_time=3600)
 
+    def schedule_untimeout(self, id: int, date: datetime) -> None:
+        """Create a task to unmute user given by ID `id`, at time `date`
+
+        Parameters
+        ----------
+        id : int
+            User to unmute
+        date : datetime.datetime
+            When to unmute
+            
+        """
+
+        self.tasks.add_job(untimeout_callback, 'date', id=str(
+            id), next_run_time=date, args=[id], misfire_grace_time=3600)
+
     def schedule_remove_bday(self, id: int, date: datetime) -> None:
         """Create a task to remove birthday role from user given by ID `id`, at time `date`
 
@@ -83,6 +98,18 @@ class Tasks():
 
         self.tasks.add_job(remove_bday_callback, 'date', id=str(
             id+1), next_run_time=date, args=[id], misfire_grace_time=3600)
+
+    def cancel_unmute(self, id: int) -> None:
+        """When we manually unmute a user given by ID `id`, stop the task to unmute them.
+
+        Parameters
+        ----------
+        id : int
+            User whose unmute task we want to cancel
+            
+        """
+
+        self.tasks.remove_job(str(id), 'default')
 
     def cancel_unmute(self, id: int) -> None:
         """When we manually unmute a user given by ID `id`, stop the task to unmute them.
@@ -156,6 +183,19 @@ def unmute_callback(id: int) -> None:
 
     BOT_GLOBAL.loop.create_task(remove_mute(id))
 
+def untimeout_callback(id: int) -> None:
+    """Callback function for actually unmuting. Creates asyncio task
+    to do the actual unmute.
+
+    Parameters
+    ----------
+    id : int
+        User who we want to unmute
+        
+    """
+
+    BOT_GLOBAL.loop.create_task(remove_timeout(id))
+
 
 async def remove_mute(id: int) -> None:
     """Remove the mute role of the user given by ID `id`
@@ -220,6 +260,63 @@ async def remove_mute(id: int) -> None:
                 u = guild_service.get_user(id=id)
                 u.is_muted = False
                 u.save()
+
+
+async def remove_timeout(id: int) -> None:
+    """Remove the mute role of the user given by ID `id`
+
+    Parameters
+    ----------
+    id : int
+        User to unmute
+        
+    """
+
+    db_guild = guild_service.get_guild()
+    guild = BOT_GLOBAL.get_guild(cfg.guild_id)
+    if db_guild is not None:
+        mute_role = db_guild.role_mute
+        mute_role = guild.get_role(mute_role)
+        if mute_role is not None:
+            user: discord.Member = guild.get_member(id)
+            if user is not None:
+                await user.remove_timeout()
+                case = Case(
+                    _id=db_guild.case_id,
+                    _type="UNMUTE",
+                    mod_id=BOT_GLOBAL.user.id,
+                    mod_tag=str(BOT_GLOBAL.user),
+                    reason="Temporary mute expired.",
+                )
+                guild_service.inc_caseid()
+                user_service.add_case(user.id, case)
+
+                log = prepare_unmute_log(BOT_GLOBAL.user, user, case)
+
+                log.remove_author()
+                log.set_thumbnail(url=user.display_avatar)
+
+                public_chan = guild.get_channel(
+                    db_guild.channel_public)
+
+                dmed = True
+                try:
+                    await user.send(embed=log)
+                except Exception:
+                    dmed = False
+
+                await public_chan.send(user.mention if not dmed else "", embed=log)
+
+            else:
+                case = Case(
+                    _id=db_guild.case_id,
+                    _type="UNMUTE",
+                    mod_id=BOT_GLOBAL.user.id,
+                    mod_tag=str(BOT_GLOBAL.user),
+                    reason="Temporary mute expired.",
+                )
+                guild_service.inc_caseid()
+                user_service.add_case(id, case)
 
 
 def reminder_callback(id: int, reminder: str):

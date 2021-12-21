@@ -1,6 +1,8 @@
+from apscheduler.jobstores.base import ConflictingIdError
 import discord
 from discord.commands import Option, slash_command
 from discord.commands.commands import message_command, user_command
+from discord.errors import HTTPException
 from discord.ext import commands
 from discord.utils import escape_markdown, escape_mentions
 
@@ -165,7 +167,7 @@ class ModActions(commands.Cog):
         mute_role = guild_service.get_guild().role_mute
         mute_role = ctx.guild.get_role(mute_role)
 
-        if member.communication_disabled_until is not None and member.communication_disabled_until > now:
+        if (member.communication_disabled_until is not None and member.communication_disabled_until > now) or mute_role in member.roles:
             raise commands.BadArgument("This user is already muted.")
 
         db_guild = guild_service.get_guild()
@@ -178,17 +180,27 @@ class ModActions(commands.Cog):
             reason=reason,
         )
 
+        time = now + timedelta(seconds=delta)
+
+        case.until = time
+        case.punishment = humanize.naturaldelta(
+            time - now, minimum_unit="seconds")
+
         try:
-            time = now + timedelta(seconds=delta)
-            case.until = time
-            case.punishment = humanize.naturaldelta(
-                time - now, minimum_unit="seconds")
-            await member.timeout(until=time, reason=reason)
-            ctx.tasks.schedule_untimeout(member.id, time)
-        except Exception as e:
-            print(e)
-            raise commands.BadArgument(
-                "An error occured, this user is probably already muted")
+            if time <= now + timedelta(days=14):
+                await member.timeout(until=time, reason=reason)
+                ctx.tasks.schedule_untimeout(member.id, time)
+            else:
+                ctx.tasks.schedule_unmute(member.id, time)
+                u = user_service.get_user(id=member.id)
+                u.is_muted = True
+                u.save()
+
+                await member.add_roles(mute_role)
+        except ConflictingIdError:
+            raise commands.BadArgument("The database thinks this user is already muted.")
+
+        
 
         guild_service.inc_caseid()
         user_service.add_case(member.id, case)
@@ -600,6 +612,7 @@ class ModActions(commands.Cog):
             or isinstance(error, commands.MissingPermissions)
             or isinstance(error, commands.BotMissingPermissions)
             or isinstance(error, commands.MaxConcurrencyReached)
+            or isinstance(error, HTTPException)
                 or isinstance(error, commands.NoPrivateMessage)):
             await ctx.send_error(error)
         else:

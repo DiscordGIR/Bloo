@@ -196,8 +196,8 @@ class TweakDropdown(discord.ui.Select):
         repo = entry.get('repository').get('uri')
         depiction = entry.get('depiction')
 
-        for repo in default_repos:
-            if repo in entry.get('repository').get('uri'):
+        for r in default_repos:
+            if r in entry.get('repository').get('uri'):
                 repo = None
                 break
 

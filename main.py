@@ -34,7 +34,6 @@ initial_extensions = [
         "cogs.commands.misc.canister",
         "cogs.commands.misc.memes",
         "cogs.commands.misc.misc",
-        # "cogs.commands.misc.parcility",
         "cogs.commands.misc.subnews",
         "cogs.commands.mod.antiraid",
         "cogs.commands.mod.filter",

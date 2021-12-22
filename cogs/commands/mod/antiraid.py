@@ -18,7 +18,7 @@ class AntiRaid(commands.Cog):
         self.bot = bot
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Add a phrase to the raid filter.", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Add a phrase to the raid filter.", permissions=slash_perms.mod_and_up())
     async def raid(self, ctx: BlooContext, phrase: Option(str, description="Phrase to add")) -> None:
         """Adds a phrase to the raid filter.
 
@@ -42,7 +42,7 @@ class AntiRaid(commands.Cog):
             await ctx.send_success(description=f"Added `{phrase}` to the raid phrase list!", delete_after=5)
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Add a list of (newline-separated) phrases to the raid filter.", permissions=slash_perms.admin_and_up())
+    @slash_command(description="Add a list of (newline-separated) phrases to the raid filter.", permissions=slash_perms.admin_and_up())
     async def batchraid(self, ctx: BlooContext) -> None:
         """Add a list of (newline-separated) phrases to the raid filter.
 
@@ -107,7 +107,7 @@ class AntiRaid(commands.Cog):
             await ctx.send_warning("Cancelled.")
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Remove a phrase from the raid filter.", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Remove a phrase from the raid filter.", permissions=slash_perms.mod_and_up())
     async def removeraid(self, ctx: BlooContext, phrase: Option(str, description="Phrase to remove")) -> None:
         """Removes a phrase from the raid filter.
 
@@ -134,7 +134,7 @@ class AntiRaid(commands.Cog):
             raise commands.BadArgument("That word is not a raid phrase.")
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Toggle banning of *today's* new accounts in join spam detector.", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Toggle banning of *today's* new accounts in join spam detector.", permissions=slash_perms.mod_and_up())
     async def spammode(self, ctx: BlooContext, mode: Option(bool, description="True if you don't want to ban, False otherwise", required=False) = None) -> None:
         """Toggles banning of *today's* new accounts in join spam detector.
 
@@ -156,7 +156,7 @@ class AntiRaid(commands.Cog):
         await ctx.send_success(description=f"We {'**will ban**' if mode else 'will **not ban**'} accounts created today in join spam filter.")
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Verify a user so they won't be banned by antiraid filters.", permissions=slash_perms.admin_and_up())
+    @slash_command(description="Verify a user so they won't be banned by antiraid filters.", permissions=slash_perms.admin_and_up())
     async def verify(self, ctx: BlooContext, user: Option(discord.Member, description="User to verify"), mode: Option(bool, required=False) = None) -> None:
         """Verifies a user so they won't be banned by antiraid filters.
 
@@ -184,7 +184,7 @@ class AntiRaid(commands.Cog):
         await ctx.send_success(description=f"{'**Verified**' if profile.raid_verified else '**Unverified**'} user {user.mention}.")
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Lock a channel.", permissions=slash_perms.admin_and_up())
+    @slash_command(description="Lock a channel.", permissions=slash_perms.admin_and_up())
     async def lock(self,  ctx: BlooContext, channel: Option(discord.TextChannel, description="Channel to lock", required=False) = None):
         """Lock a channel (admin only)
 
@@ -208,7 +208,7 @@ class AntiRaid(commands.Cog):
             raise commands.BadArgument(f"{channel.mention} already locked or my permissions are wrong.")
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Unlock a channel.", permissions=slash_perms.admin_and_up())
+    @slash_command(description="Unlock a channel.", permissions=slash_perms.admin_and_up())
     async def unlock(self,  ctx: BlooContext, channel: Option(discord.TextChannel, description="Channel to unlock", required=False)  = None):
         """Unlock a channel (admin only)
 
@@ -232,7 +232,7 @@ class AntiRaid(commands.Cog):
             raise commands.BadArgument(f"{channel.mention} already unlocked or my permissions are wrong.")
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Mark a channel as automatically freezable during a raid", permissions=slash_perms.admin_and_up())
+    @slash_command(description="Mark a channel as automatically freezable during a raid", permissions=slash_perms.admin_and_up())
     async def freezeable(self,  ctx: BlooContext, channel: Option(discord.TextChannel, description="Channel to mark freezeable", required=False) = None):
         """Mark a channel as automatically freezable during a raid (admin only)
 
@@ -250,7 +250,7 @@ class AntiRaid(commands.Cog):
         await ctx.send_success(f"Added {channel.mention} as lockable channel!")
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Mark a channel as automatically not freezable during a raid", permissions=slash_perms.admin_and_up())
+    @slash_command(description="Mark a channel as automatically not freezable during a raid", permissions=slash_perms.admin_and_up())
     async def unfreezeable(self,  ctx: BlooContext, channel: Option(discord.TextChannel, description="Channel to mark as not freezeable", required=False) = None):
         channel = channel or ctx.channel
         if channel.id not in guild_service.get_locked_channels():
@@ -260,7 +260,7 @@ class AntiRaid(commands.Cog):
         await ctx.send_success(f"Removed {channel.mention} as lockable channel!")
             
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Freeze all channels", permissions=slash_perms.admin_and_up())
+    @slash_command(description="Freeze all channels", permissions=slash_perms.admin_and_up())
     async def freeze(self, ctx):
         """Freeze all channels (admin only)
 
@@ -288,7 +288,7 @@ class AntiRaid(commands.Cog):
         
     
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Unfreeze all channels", permissions=slash_perms.admin_and_up())
+    @slash_command(description="Unfreeze all channels", permissions=slash_perms.admin_and_up())
     async def unfreeze(self, ctx):
         """Unreeze all channels (admin only)
 

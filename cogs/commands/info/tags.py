@@ -44,7 +44,7 @@ class Tags(commands.Cog):
         self.support_tags = [tag.name for tag in guild_service.get_guild(
         ).tags if tag.name in ["support", "support2", "support3"]]
 
-    @slash_command(guild_ids=[cfg.guild_id], description="Display a tag")
+    @slash_command(description="Display a tag")
     async def tag(self, ctx: BlooContext, name: Option(str, description="Tag name", autocomplete=tags_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
         """Displays a tag.
 
@@ -84,11 +84,11 @@ class Tags(commands.Cog):
 
         await ctx.respond(content=title, embed=await self.prepare_tag_embed(tag), file=file)
 
-    @user_command(guild_ids=[cfg.guild_id], name="Support tag")
+    @user_command(name="Support tag")
     async def support_tag_rc(self, ctx: BlooContext, user: discord.Member) -> None:
         await self.handle_support_tag(ctx, user)
 
-    @message_command(guild_ids=[cfg.guild_id], name="Support tag")
+    @message_command(name="Support tag")
     async def support_tag_msg(self, ctx: BlooContext, message: discord.Message) -> None:
         await self.handle_support_tag(ctx, message.author)
 
@@ -119,7 +119,7 @@ class Tags(commands.Cog):
         await ctx.respond(content=title, embed=await self.prepare_tag_embed(tag), file=file)
 
     @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Display a tag", permissions=slash_perms.genius_or_submod_and_up())
+    @slash_command(description="Display a tag", permissions=slash_perms.genius_or_submod_and_up())
     async def rawtag(self, ctx: BlooContext, name: Option(str, description="Tag name", autocomplete=tags_autocomplete), mobile_friendly: Option(bool, description="Whether to display the tag in a mobile friendly format")):
         """Post raw body of a tag
 
@@ -155,7 +155,7 @@ class Tags(commands.Cog):
                 await ctx.send(part, file=file if i == len(parts) - 1 else discord.utils.MISSING, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="List all tags")
+    @slash_command(description="List all tags")
     async def taglist(self, ctx: BlooContext):
         """List all tags
         """
@@ -168,10 +168,10 @@ class Tags(commands.Cog):
         menu = Menu(ctx, _tags, per_page=12, page_formatter=format_tag_page, whisper=ctx.whisper)
         await menu.start()
 
-    tags = discord.SlashCommandGroup("tags", "Interact with tags", guild_ids=[cfg.guild_id], permissions=slash_perms.genius_or_submod_and_up())
+    tags = discord.SlashCommandGroup("tags", "Interact with tags", permissions=slash_perms.genius_or_submod_and_up())
 
     @genius_or_submod_and_up()
-    @tags.command(guild_ids=[cfg.guild_id], description="Add a new tag")
+    @tags.command(description="Add a new tag")
     async def add(self, ctx: BlooContext, name: str) -> None:
         """Add a tag. Optionally attach an image. (Genius only)
 
@@ -239,7 +239,7 @@ class Tags(commands.Cog):
         await ctx.respond(f"Added new tag!", file=_file or discord.utils.MISSING, embed=await self.prepare_tag_embed(tag))
 
     @genius_or_submod_and_up()
-    @tags.command(guild_ids=[cfg.guild_id], description="Edit an existing tag")
+    @tags.command(description="Edit an existing tag")
     async def edit(self, ctx: BlooContext, name: Option(str, autocomplete=tags_autocomplete)) -> None:
         """Edit a tag's body, optionally attach an image.
 
@@ -300,7 +300,7 @@ class Tags(commands.Cog):
         await ctx.respond(f"Tag edited!", file=_file or discord.utils.MISSING, embed=await self.prepare_tag_embed(tag))
 
     @genius_or_submod_and_up()
-    @tags.command(guild_ids=[cfg.guild_id], description="Delete a tag")
+    @tags.command(description="Delete a tag")
     async def delete(self, ctx: BlooContext, name: Option(str, description="Name of tag to delete", autocomplete=tags_autocomplete)):
         """Delete tag (geniuses only)
 

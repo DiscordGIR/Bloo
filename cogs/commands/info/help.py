@@ -37,7 +37,7 @@ class Utilities(commands.Cog):
         self.mod_only = ["ModActions", "ModUtils", "Filters", "BoosterEmojis", "RoleAssignButtons", "Giveaway", "Admin", "AntiRaid", "Trivia"]
         self.genius_only = ["Genius"]
 
-    @slash_command(guild_ids=[cfg.guild_id], description="View all my cogs and commands.")
+    @slash_command(description="View all my cogs and commands.")
     async def help(self, ctx: BlooContext, *, commandname: Option(str, autocomplete=commands_list, required=False)):
         """Gets all my cogs and commands."""
 
@@ -122,7 +122,7 @@ class Utilities(commands.Cog):
 
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="View usage of a command")
+    @slash_command(description="View usage of a command")
     async def usage(self, ctx: BlooContext, command_arg: Option(str, autocomplete=commands_list)):
         """Show usage of one command
         

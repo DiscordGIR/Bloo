@@ -20,7 +20,7 @@ class Genius(commands.Cog):
         self.cache = []
 
     @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Submit a new common issue", permissions=slash_perms.genius_or_submod_and_up())
+    @slash_command(description="Submit a new common issue", permissions=slash_perms.genius_or_submod_and_up())
     async def commonissue(self, ctx: BlooContext, *, title: str):
         """Submit a new common issue (Geniuses only)
         
@@ -62,7 +62,7 @@ class Genius(commands.Cog):
         await self.do_reindex(channel)
 
     @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Post an embed", permissions=slash_perms.genius_or_submod_and_up())
+    @slash_command(description="Post an embed", permissions=slash_perms.genius_or_submod_and_up())
     async def postembed(self, ctx: BlooContext, *, title: str):
         """Post an embed in the current channel (Geniuses only)
 
@@ -99,7 +99,7 @@ class Genius(commands.Cog):
         await channel.send(embed=embed, file=f)
 
     @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Repost common-issues table of contents", permissions=slash_perms.genius_or_submod_and_up())
+    @slash_command(description="Repost common-issues table of contents", permissions=slash_perms.genius_or_submod_and_up())
     async def reindexissues(self, ctx: BlooContext):
         # get #common-issues channel
         channel: discord.TextChannel = ctx.guild.get_channel(
@@ -157,7 +157,7 @@ class Genius(commands.Cog):
         return count, page
 
     @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Post raw body of an embed", permissions=slash_perms.genius_or_submod_and_up())
+    @slash_command(description="Post raw body of an embed", permissions=slash_perms.genius_or_submod_and_up())
     async def rawembed(self, ctx: BlooContext, *, channel: Option(discord.TextChannel, description="Channel the embed is in"), message_id: Option(str, description="ID of the message with the embed"), mobile_friendly: Option(bool, description="Whether to display the tag in a mobile friendly format")):
         try:
             message_id = int(message_id)
@@ -210,7 +210,7 @@ class Genius(commands.Cog):
         return embed, f
 
     @whisper_in_general()
-    @slash_command(guild_ids=[cfg.guild_id], description="Post the embed for one of the common issues")
+    @slash_command(description="Post the embed for one of the common issues")
     async def issue(self, ctx: BlooContext, title: Option(str, autocomplete=issue_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
         if title not in self.bot.issue_cache.cache:
             raise commands.BadArgument("Issue not found! Title must match one of the embeds exactly, use autocomplete to help!")

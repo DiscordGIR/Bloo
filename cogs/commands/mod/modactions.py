@@ -30,7 +30,7 @@ class ModActions(commands.Cog):
         self.bot = bot
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Warn a user", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Warn a user", permissions=slash_perms.mod_and_up())
     async def warn(self, ctx: BlooContext, user: Option(discord.Member, description="User to warn"), points: Option(int, description="Amount of points to warn for", min_value=1, max_value=600), reason: Option(str, description="Reason for warn")):
         """Warns a user (mod only)
 
@@ -57,7 +57,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @always_whisper()
-    @user_command(guild_ids=[cfg.guild_id], name="Warn 50 points")
+    @user_command(name="Warn 50 points")
     async def warn_rc(self, ctx: BlooContext, member: discord.Member) -> None:
         member = await mods_and_above_external_resolver(ctx, member)
         view = WarnView(ctx, member)
@@ -65,14 +65,14 @@ class ModActions(commands.Cog):
     
     @mod_and_up()
     @always_whisper()
-    @message_command(guild_ids=[cfg.guild_id], name="Warn 50 points")
+    @message_command(name="Warn 50 points")
     async def warn_msg(self, ctx: BlooContext, message: discord.Message) -> None:
         member = await mods_and_above_external_resolver(ctx, message.author)
         view = WarnView(ctx, message.author)
         await ctx.respond(embed=discord.Embed(description=f"Choose a warn reason for {member.mention}.", color=discord.Color.blurple()), view=view, ephemeral=True)
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Kick a user", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Kick a user", permissions=slash_perms.mod_and_up())
     async def kick(self, ctx: BlooContext, member: Option(discord.Member, description="User to kick"), *, reason: Option(str, description="Reason for kick")) -> None:
         """Kicks a user (mod only)
 
@@ -105,7 +105,7 @@ class ModActions(commands.Cog):
         await submit_public_log(ctx, db_guild, member, log)
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Kick a user", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Kick a user", permissions=slash_perms.mod_and_up())
     async def roblox(self, ctx: BlooContext, member: Option(discord.Member, description="User to kick")) -> None:
         """Kicks a user and refers to the Roblox Jailbreak game server (mod only)
 
@@ -134,7 +134,7 @@ class ModActions(commands.Cog):
         await submit_public_log(ctx, db_guild, member, log)
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Mute a user", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Mute a user", permissions=slash_perms.mod_and_up())
     async def mute(self, ctx: BlooContext, member: Option(discord.Member, description="User to mute"), duration: Option(str, description="Duration for mute") = "", reason: Option(str, description="Reason for mute") = "No reason.") -> None:
         """Mutes a user (mod only)
 
@@ -215,7 +215,7 @@ class ModActions(commands.Cog):
         await submit_public_log(ctx, db_guild, member, log, dmed)
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Unmute a user", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Unmute a user", permissions=slash_perms.mod_and_up())
     async def unmute(self, ctx: BlooContext, member: Option(discord.Member, description="User to mute"), reason: Option(str, description="Reason for mute")) -> None:
         """Unmutes a user (mod only)
 
@@ -267,7 +267,7 @@ class ModActions(commands.Cog):
         await submit_public_log(ctx, db_guild, member, log, dmed)
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Ban a user", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Ban a user", permissions=slash_perms.mod_and_up())
     async def ban(self, ctx: BlooContext, user: Option(discord.Member, description="User to ban"), reason: Option(str, description="Reason for ban")):
         """Bans a user (mod only)
 
@@ -312,7 +312,7 @@ class ModActions(commands.Cog):
         await submit_public_log(ctx, db_guild, user, log)
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Unban a user", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Unban a user", permissions=slash_perms.mod_and_up())
     async def unban(self, ctx: BlooContext, user: Option(discord.Member, description="User to unban"), reason: Option(str, description="Reason for unban")) -> None:
         """Unbans a user (must use ID) (mod only)
 
@@ -364,7 +364,7 @@ class ModActions(commands.Cog):
         await submit_public_log(ctx, db_guild, user, log)
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Purge channel messages", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Purge channel messages", permissions=slash_perms.mod_and_up())
     async def purge(self, ctx: BlooContext, limit: Option(int, description="Number of messages to remove", min_value=1, max_value=100)) -> None:
         """Purges messages from current channel (mod only)
 
@@ -391,7 +391,7 @@ class ModActions(commands.Cog):
         await ctx.respond(f'Purged {len(msgs)} messages.', delete_after=10)
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Lift a warn", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Lift a warn", permissions=slash_perms.mod_and_up())
     async def liftwarn(self, ctx: BlooContext, user: Option(discord.Member, description="User to lift warn of"), case_id: Option(int, autocomplete=liftwarn_autocomplete), reason: Option(str)) -> None:
         """Marks a warn as lifted and remove points. (mod only)
 
@@ -454,7 +454,7 @@ class ModActions(commands.Cog):
         await submit_public_log(ctx, guild_service.get_guild(), user, log, dmed)
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Edit case reason", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Edit case reason", permissions=slash_perms.mod_and_up())
     async def editreason(self, ctx: BlooContext, user: Option(discord.Member), case_id: Option(int, autocomplete=liftwarn_autocomplete), new_reason: Option(str)) -> None:
         """Edits a case's reason and the embed in #public-mod-logs. (mod only)
 
@@ -530,7 +530,7 @@ class ModActions(commands.Cog):
             await public_chan.send(user.mention if not dmed else "", embed=log)
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Edit case reason", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Edit case reason", permissions=slash_perms.mod_and_up())
     async def removepoints(self, ctx: BlooContext, user: Option(discord.Member), points: Option(int), reason: Option(str)) -> None:
         """Removes warnpoints from a user. (mod only)
 

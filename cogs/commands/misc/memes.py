@@ -39,7 +39,7 @@ class Memes(commands.Cog):
         self.meme_cooldown = CooldownMapping.from_cooldown(
             1, 5, MessageTextBucket.custom)
 
-    @slash_command(guild_ids=[cfg.guild_id], description="Display a meme")
+    @slash_command(description="Display a meme")
     async def meme(self, ctx: BlooContext, name: Option(str, description="Meme name", autocomplete=memes_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
         """Displays a meme.
 
@@ -80,7 +80,7 @@ class Memes(commands.Cog):
         await ctx.respond(content=title, embed=await self.prepare_meme_embed(meme), file=file)
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="List all memes")
+    @slash_command(description="List all memes")
     async def memelist(self, ctx: BlooContext):
         """List all meemes
         """
@@ -94,8 +94,7 @@ class Memes(commands.Cog):
         menu = Menu(ctx, memes, per_page=12, page_formatter=format_meme_page, whisper=ctx.whisper)
         await menu.start()
 
-    memes = discord.SlashCommandGroup("memes", "Interact with memes", guild_ids=[
-                                      cfg.guild_id], permissions=slash_perms.mod_and_up())
+    memes = discord.SlashCommandGroup("memes", "Interact with memes", permissions=slash_perms.mod_and_up())
 
     @mod_and_up()
     @memes.command(description="Add a new meme")
@@ -280,7 +279,7 @@ class Memes(commands.Cog):
         return embed
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Ooo magic", name="8ball")
+    @slash_command(description="Ooo magic", name="8ball")
     async def _8ball(self, ctx: BlooContext, question: Option(str, description="Question")) -> None:
         responses = ["As I see it, yes.", "Ask again later.", "Better not tell you now.", "Cannot predict now.", "Concentrate and ask again.",
                      "Don’t count on it.", "It is certain.", "It is decidedly so.", "Most likely.", "My reply is no.", "My sources say no.",

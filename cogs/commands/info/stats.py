@@ -23,7 +23,7 @@ class Stats(commands.Cog):
         self.start_time = datetime.now()
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Test server latency by measuring how long it takes to edit a message")
+    @slash_command(description="Test server latency by measuring how long it takes to edit a message")
     async def ping(self, ctx: BlooContext) -> None:
         """Tests server latency by measuring how long it takes to edit a message.
 
@@ -49,7 +49,7 @@ class Stats(commands.Cog):
         await ctx.edit(embed=embed)
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Get number of users of a role")
+    @slash_command(description="Get number of users of a role")
     async def roleinfo(self, ctx: BlooContext, role: Option(discord.Role, description="Role to view info of")) -> None:
         """Displays information about a specific role.
 
@@ -70,7 +70,7 @@ class Stats(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Statistics about the bot")
+    @slash_command(description="Statistics about the bot")
     async def stats(self, ctx: BlooContext) -> None:
         """Displays statistics about the bot.
 
@@ -94,7 +94,7 @@ class Stats(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Displays info about the server")
+    @slash_command(description="Displays info about the server")
     async def serverinfo(self, ctx: BlooContext):
         """Displays info about the server.
 
@@ -121,7 +121,7 @@ class Stats(commands.Cog):
         await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Present statistics on who has been banned for raids.")
+    @slash_command(description="Present statistics on who has been banned for raids.")
     async def raidstats(self, ctx: BlooContext) -> None:
         """Present statistics on who has been banned for raids.
         """
@@ -140,7 +140,7 @@ class Stats(commands.Cog):
         await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Present statistics on cases by each mod.", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Present statistics on cases by each mod.", permissions=slash_perms.mod_and_up())
     async def casestats(self, ctx: BlooContext, mod: Option(discord.Member, required=False) = None) -> None:
         """Present statistics on cases by each mod.
         """

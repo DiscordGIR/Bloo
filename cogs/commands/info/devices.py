@@ -18,7 +18,7 @@ class Devices(commands.Cog):
         self.devices_test = re.compile(r'^.+ \[.+\,.+\]$')
         self.devices_remove_re = re.compile(r'\[.+\,.+\]$')
 
-    device = discord.SlashCommandGroup("device", "Manage devices in your nickname", guild_ids=[cfg.guild_id])
+    device = discord.SlashCommandGroup("device", "Manage devices in your nickname")
 
     @ensure_invokee_role_lower_than_bot()
     @always_whisper()

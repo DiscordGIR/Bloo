@@ -15,7 +15,7 @@ class SubNews(commands.Cog):
         self.bot = bot
 
     @submod_or_admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Post a new subreddit news post", permissions=slash_perms.submod_or_admin_and_up())
+    @slash_command(description="Post a new subreddit news post", permissions=slash_perms.submod_or_admin_and_up())
     async def subnews(self, ctx: BlooContext):
         """Posts a new subreddit news post
         

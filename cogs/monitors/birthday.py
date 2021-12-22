@@ -59,7 +59,7 @@ class Birthday(commands.Cog):
             await give_user_birthday_role(self.bot, db_guild, user, guild)
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Set your birthday. The birthday role will be given to you on that day.")
+    @slash_command(description="Set your birthday. The birthday role will be given to you on that day.")
     async def mybirthday(self, ctx: BlooContext, month: Option(str, choices=list(MONTH_MAPPING.keys())), date: Option(int, autocomplete=date_autocompleter)) -> None:
         """Set your birthday. The birthday role will be given to you on that day. THIS COMMAND IS ONE TIME USE ONLY!
 

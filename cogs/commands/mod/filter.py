@@ -60,7 +60,7 @@ class Filters(commands.Cog):
 
     @always_whisper()
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Toggles bot pinging for reports when offline.", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Toggles bot pinging for reports when offline.", permissions=slash_perms.mod_and_up())
     async def offlineping(self, ctx: BlooContext, val: Option(bool, required=False) = None):
         """Toggles bot pinging for reports when offline
 
@@ -88,7 +88,7 @@ class Filters(commands.Cog):
         else:
             await ctx.send_warning("You will no longer be pinged for reports when offline")
 
-    _filter = discord.SlashCommandGroup("filter", "Interact with filter", guild_ids=[cfg.guild_id], permissions=slash_perms.mod_and_up())
+    _filter = discord.SlashCommandGroup("filter", "Interact with filter", permissions=slash_perms.mod_and_up())
 
     @mod_and_up()
     @_filter.command(description="Add a word to filter")
@@ -143,7 +143,7 @@ class Filters(commands.Cog):
         await menu.start()
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Mark a word as piracy, will be ignored in #dev", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Mark a word as piracy, will be ignored in #dev", permissions=slash_perms.mod_and_up())
     async def piracy(self, ctx: BlooContext, *, word: Option(str, autocomplete=filterwords_autocomplete)):
         """Marks a word as piracy, will be ignored in #dev (admin only)
 
@@ -199,7 +199,7 @@ class Filters(commands.Cog):
             await ctx.send_warning("That word is not filtered.", delete_after=5)            
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Whitelist a guild from invite filter", permissions=slash_perms.admin_and_up())
+    @slash_command(description="Whitelist a guild from invite filter", permissions=slash_perms.admin_and_up())
     async def whitelist(self, ctx: BlooContext, id: str):
         """Whitelists a guild from invite filter (admin only)
 
@@ -225,7 +225,7 @@ class Filters(commands.Cog):
             await ctx.send_warning("That server is already whitelisted.", delete_after=5)
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Blacklist a guild from invite filter ", permissions=slash_perms.admin_and_up())
+    @slash_command(description="Blacklist a guild from invite filter ", permissions=slash_perms.admin_and_up())
     async def blacklist(self, ctx: BlooContext, id: str):
         """Blacklists a guild from invite filter (admin only)
 
@@ -251,7 +251,7 @@ class Filters(commands.Cog):
             await ctx.send_warning("That server is already blacklisted.", delete_after=5)
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Ignore channel in filter", permissions=slash_perms.admin_and_up())
+    @slash_command(description="Ignore channel in filter", permissions=slash_perms.admin_and_up())
     async def ignorechannel(self, ctx: BlooContext, channel: discord.TextChannel) -> None:
         """Ignores channel in filter (admin only)
 
@@ -272,7 +272,7 @@ class Filters(commands.Cog):
             await ctx.send_warning("That channel is already ignored.", delete_after=5)
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Unignore channel in filter", permissions=slash_perms.admin_and_up())
+    @slash_command(description="Unignore channel in filter", permissions=slash_perms.admin_and_up())
     async def unignorechannel(self, ctx: BlooContext, channel: discord.TextChannel) -> None:
         """Unignores channel in filter (admin only)
 
@@ -293,7 +293,7 @@ class Filters(commands.Cog):
             await ctx.send_warning("That channel is not already ignored.", delete_after=5)
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Disabling enhanced filter checks on a word", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Disabling enhanced filter checks on a word", permissions=slash_perms.mod_and_up())
     async def falsepositive(self, ctx: BlooContext, *, word: str):
         """Disabling enhanced filter checks on a word (admin only)
 

@@ -14,7 +14,7 @@ class Admin(commands.Cog):
         self.bot = bot
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Change bot's profile picture", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Change bot's profile picture", permissions=slash_perms.mod_and_up())
     async def setpfp(self, ctx: BlooContext):
         """Set the bot's profile picture (admin only)
         

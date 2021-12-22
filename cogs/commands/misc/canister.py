@@ -148,7 +148,7 @@ class Canister(commands.Cog):
         new_ctx = await self.bot.get_context(message, cls=BlooOldContext)
         td.start(new_ctx)
 
-    @slash_command(guild_ids=[cfg.guild_id], description="Search for a package")
+    @slash_command(description="Search for a package")
     async def package(self, ctx: BlooContext, query: Option(str, description="Name of the package to search for.")) -> None:
         """Search for a package.
 
@@ -183,7 +183,7 @@ class Canister(commands.Cog):
         await ctx.respond(embed = await td.format_tweak_page(result[0]), view=view)
         td.start(ctx)
 
-    @slash_command(guild_ids=[cfg.guild_id], description="Search for a repository")
+    @slash_command(description="Search for a repository")
     async def repo(self, ctx: BlooContext, query: Option(str, description="Name of the repository to search for.", autocomplete=repo_autocomplete)) -> None:
         """Search for a repo.
 

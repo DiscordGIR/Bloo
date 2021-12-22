@@ -133,7 +133,7 @@ class UserInfo(commands.Cog):
         self.start_time = datetime.now()
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Get info of another user or yourself.")
+    @slash_command(description="Get info of another user or yourself.")
     async def userinfo(self, ctx: BlooContext, user: Option(discord.Member, description="User to get info of", required=False)) -> None:
         """Gets info of another user or yourself.
 
@@ -150,12 +150,12 @@ class UserInfo(commands.Cog):
         await self.handle_userinfo(ctx, user)
 
     @whisper()
-    @user_command(guild_ids=[cfg.guild_id], name="Userinfo")
+    @user_command(name="Userinfo")
     async def userinfo_rc(self, ctx: BlooContext, user: discord.Member) -> None:
         await self.handle_userinfo(ctx, user)
 
     @whisper()
-    @message_command(guild_ids=[cfg.guild_id], name="Userinfo")
+    @message_command(name="Userinfo")
     async def userinfo_msg(self, ctx: BlooContext, message: discord.Message) -> None:
         await self.handle_userinfo(ctx, message.author)
 
@@ -209,7 +209,7 @@ class UserInfo(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's XP")
+    @slash_command(description="Show your or another user's XP")
     async def xp(self, ctx: BlooContext, user: Option(discord.Member, description="Member to show xp of", required=False)):
         """Show your or another user's XP
 
@@ -243,7 +243,7 @@ class UserInfo(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's warnpoints")
+    @slash_command(description="Show your or another user's warnpoints")
     async def warnpoints(self, ctx: BlooContext, user: Option(discord.Member, description="Member to show warnpoints of", required=False)):
         """Show a user's warnpoints (mod only)
 
@@ -281,7 +281,7 @@ class UserInfo(commands.Cog):
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Show the XP leaderboard.")
+    @slash_command(description="Show the XP leaderboard.")
     async def xptop(self, ctx: BlooContext):
         """Show XP leaderboard for top 100, ranked highest to lowest.
 
@@ -299,7 +299,7 @@ class UserInfo(commands.Cog):
         await menu.start()
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Show your or another user's cases")
+    @slash_command(description="Show your or another user's cases")
     async def cases(self, ctx: BlooContext, user: Option(discord.Member, description="Member to show cases of", required=False)):
         """Show list of cases of a user (mod only)
 

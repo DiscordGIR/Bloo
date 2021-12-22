@@ -27,7 +27,7 @@ class Giveaway(commands.Cog):
         self.bot = bot
         self.giveaway_messages = {}
 
-    giveaway = discord.SlashCommandGroup("giveaway", "Interact with giveaways", guild_ids=[cfg.guild_id], permissions=slash_perms.admin_and_up())
+    giveaway = discord.SlashCommandGroup("giveaway", "Interact with giveaways", permissions=slash_perms.admin_and_up())
 
     @admin_and_up()
     @giveaway.command(description="Start a giveaway.")

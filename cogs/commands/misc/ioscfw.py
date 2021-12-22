@@ -127,7 +127,7 @@ class iOSCFW(commands.Cog):
         self.bot = bot
 
     @whisper_in_general()
-    @slash_command(guild_ids=[cfg.guild_id], description="Get info about a jailbreak.")
+    @slash_command(description="Get info about a jailbreak.")
     async def jailbreak(self, ctx: BlooContext, name: Option(str, description="Name of the jailbreak", autocomplete=jb_autocomplete, required=True), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)) -> None:
         """Fetches info of jailbreak
 
@@ -220,7 +220,7 @@ class iOSCFW(commands.Cog):
         await ctx.respond_or_edit(content=title, embed=embed, ephemeral=ctx.whisper, view=view)
 
     @whisper_in_general()
-    @slash_command(guild_ids=[cfg.guild_id], description="Get info about an iOS version.")
+    @slash_command(description="Get info about an iOS version.")
     async def firmware(self, ctx: BlooContext, version: Option(str, description="Version of the firmware", autocomplete=ios_version_autocomplete, required=True)) -> None:
         """Fetches info of an iOS version
 
@@ -249,7 +249,7 @@ class iOSCFW(commands.Cog):
         await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
 
     @whisper_in_general()
-    @slash_command(guild_ids=[cfg.guild_id], description="Get info about a beta iOS version.")
+    @slash_command(description="Get info about a beta iOS version.")
     async def betafirmware(self, ctx: BlooContext, version: Option(str, description="Version of the beta firmware", autocomplete=ios_beta_version_autocomplete, required=True)) -> None:
         """Fetches info of a beta iOS version
 
@@ -356,7 +356,7 @@ class iOSCFW(commands.Cog):
                 return []
 
     @whisper_in_general()
-    @slash_command(guild_ids=[cfg.guild_id], description="Get info about an Apple device.")
+    @slash_command(description="Get info about an Apple device.")
     async def deviceinfo(self, ctx: BlooContext, device: Option(str, description="Name or board identifier", autocomplete=device_autocomplete, required=True)) -> None:
         """Fetches info of an Apple device
 
@@ -423,7 +423,7 @@ class iOSCFW(commands.Cog):
         await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Find out if you can jailbreak your device!")
+    @slash_command(description="Find out if you can jailbreak your device!")
     async def canijailbreak(self, ctx: BlooContext, device: Option(str, autocomplete=device_autocomplete_jb, description="Name or board identifier of the device"), version: Option(str, autocomplete=ios_on_device_autocomplete, description="Device OS version")) -> None:
         """Find out if you can jailbreak your device!
 

@@ -26,12 +26,12 @@ class ModUtils(commands.Cog):
 
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Get information about a user (join/creation date, xp, etc.)", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Get information about a user (join/creation date, xp, etc.)", permissions=slash_perms.mod_and_up())
     async def rundown(self, ctx: BlooContext, user: discord.Member):
         await ctx.respond(embed = await self.prepare_rundown_embed(ctx, user))
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Transfer all data in the database between users", permissions=slash_perms.admin_and_up())
+    @slash_command(description="Transfer all data in the database between users", permissions=slash_perms.admin_and_up())
     async def transferprofile(self, ctx: BlooContext, oldmember: discord.Member, newmember: discord.Member):
         if isinstance(oldmember, int):
             try:
@@ -65,7 +65,7 @@ class ModUtils(commands.Cog):
             pass
 
     @guild_owner_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Sets user's XP and Level to 0, freezes XP, sets warn points to 599", permissions=slash_perms.guild_owner_and_up())
+    @slash_command(description="Sets user's XP and Level to 0, freezes XP, sets warn points to 599", permissions=slash_perms.guild_owner_and_up())
     async def clem(self, ctx: BlooContext, user: discord.Member):
         if user.id == ctx.author.id:
             await ctx.send_error("You can't call that on yourself.")
@@ -97,7 +97,7 @@ class ModUtils(commands.Cog):
         await ctx.send_success(f"{user.mention} was put on clem.")
 
     @admin_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Freeze a user's XP", permissions=slash_perms.admin_and_up())
+    @slash_command(description="Freeze a user's XP", permissions=slash_perms.admin_and_up())
     async def freezexp(self, ctx: BlooContext, user: discord.Member):
         results = user_service.get_user(user.id)
         results.is_xp_frozen = not results.is_xp_frozen
@@ -106,7 +106,7 @@ class ModUtils(commands.Cog):
         await ctx.send_success(f"{user.mention}'s xp was {'frozen' if results.is_xp_frozen else 'unfrozen'}.")
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Ban a user from birthdays", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Ban a user from birthdays", permissions=slash_perms.mod_and_up())
     async def birthdayexclude(self, ctx: BlooContext, user: discord.Member):
         if user.id == self.bot.user.id:
             await ctx.send_error("You can't call that on me :(")
@@ -127,7 +127,7 @@ class ModUtils(commands.Cog):
         await ctx.send_success(f"{user.mention} was banned from birthdays.")
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Remove a user's birthday", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Remove a user's birthday", permissions=slash_perms.mod_and_up())
     async def removebirthday(self, ctx: BlooContext, user: discord.Member):
         if user.id == self.bot.user.id:
             await ctx.send_error("You can't call that on me :(")
@@ -152,7 +152,7 @@ class ModUtils(commands.Cog):
         await ctx.send_success(f"{user.mention}'s birthday was removed.")
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Override a user's birthday", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Override a user's birthday", permissions=slash_perms.mod_and_up())
     async def setbirthday(self, ctx: BlooContext, user: discord.Member, month: Option(str, choices=list(MONTH_MAPPING.keys())), date: Option(int, autocomplete=date_autocompleter)):
         month = MONTH_MAPPING.get(month)
         if month is None:
@@ -201,7 +201,7 @@ class ModUtils(commands.Cog):
             await user.send(f"According to my calculations, today is your birthday! We've hiven you the {birthday_role} role for 24 hours.")
 
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Sayyyy", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Sayyyy", permissions=slash_perms.mod_and_up())
     async def say(self, ctx: BlooContext, message: str, channel: Option(discord.TextChannel, required=False, description="Where to post the message") = None):
         if channel is None:
             channel = ctx.channel

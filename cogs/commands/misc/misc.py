@@ -77,7 +77,7 @@ class Misc(commands.Cog):
                 "Could not find emojis.json. Make sure to run scrape_emojis.py")
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Send yourself a reminder after a given time gap")
+    @slash_command(description="Send yourself a reminder after a given time gap")
     async def remindme(self, ctx: BlooContext, reminder: Option(str, description="What do you want to be reminded?"), duration: Option(str, description="When do we remind you? (i.e 1m, 1h, 1d)")):
         """Sends you a reminder after a given time gap
         
@@ -111,7 +111,7 @@ class Misc(commands.Cog):
         ), description=f"We'll remind you {discord.utils.format_dt(time, style='R')}")
         await ctx.respond(embed=embed, ephemeral=ctx.whisper, delete_after=5)
 
-    @slash_command(guild_ids=[cfg.guild_id], description="Post large version of a given emoji")
+    @slash_command(description="Post large version of a given emoji")
     async def jumbo(self, ctx: BlooContext, emoji: str):
         """Posts large version of a given emoji
         
@@ -154,7 +154,7 @@ class Misc(commands.Cog):
             await ctx.respond(em.url)
 
     @whisper()
-    @slash_command(guild_ids=[cfg.guild_id], description="Get avatar of another user or yourself.")
+    @slash_command(description="Get avatar of another user or yourself.")
     async def avatar(self, ctx: BlooContext, member: Option(discord.Member, description="User to get avatar of", required=False)) -> None:
         """Posts large version of a given emoji
         
@@ -174,12 +174,12 @@ class Misc(commands.Cog):
         await self.handle_avatar(ctx, member)
     
     @whisper()
-    @user_command(guild_ids=[cfg.guild_id], name="View avatar")
+    @user_command(name="View avatar")
     async def avatar_rc(self, ctx: BlooContext, member: discord.Member):
         await self.handle_avatar(ctx, member)
     
     @whisper()
-    @message_command(guild_ids=[cfg.guild_id], name="View avatar")
+    @message_command(name="View avatar")
     async def avatar_msg(self, ctx: BlooContext, message: discord.Message):
         await self.handle_avatar(ctx, message.author)
     

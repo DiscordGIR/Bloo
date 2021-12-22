@@ -29,7 +29,7 @@ class RoleAssignButtons(commands.Cog):
 
             self.bot.add_view(view)
 
-    buttons = discord.SlashCommandGroup("buttons", "Interact with role buttons", guild_ids=[cfg.guild_id], permissions=slash_perms.admin_and_up())
+    buttons = discord.SlashCommandGroup("buttons", "Interact with role buttons", permissions=slash_perms.admin_and_up())
 
     @admin_and_up()
     @buttons.command(description="Post the button role assignment message")

@@ -21,7 +21,7 @@ class CogName(commands.Cog):
 
     @whisper()
     @mod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Make bot say something", permissions=slash_perms.mod_and_up())
+    @slash_command(description="Make bot say something", permissions=slash_perms.mod_and_up())
     async def say(self, ctx: BlooContext, *, message: Option(str, description="Message to send")):
         await ctx.respond(message, ephemeral=ctx.whisper)
 

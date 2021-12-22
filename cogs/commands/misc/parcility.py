@@ -220,7 +220,7 @@ class Parcility(commands.Cog):
         await menu.start()
 
     @whisper_in_general()
-    @slash_command(guild_ids=[cfg.guild_id], description="Search for a package")
+    @slash_command(description="Search for a package")
     async def package(self,  ctx: BlooContext, *, search_term: Option(str, description="Name of the package to search for")):
         async with ctx.typing():
             response = await search_request(search_term)
@@ -235,7 +235,7 @@ class Parcility(commands.Cog):
         await menu.start()
 
     @whisper_in_general()
-    @slash_command(guild_ids=[cfg.guild_id], description="Search for a repo")
+    @slash_command(description="Search for a repo")
     async def repo(self,  ctx: BlooContext, *, repo: Option(str, description="Name of the repo to search for", autocomplete=repo_autocomplete)):
         async with ctx.typing():
             data = await self.repo_request(repo)

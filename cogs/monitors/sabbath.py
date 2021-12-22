@@ -45,7 +45,7 @@ class Sabbath(commands.Cog):
         await message.channel.send(f"<@{cfg.aaron_id}> is away on Sabbath, he will get back to you as soon as possible!", allowed_mentions=discord.AllowedMentions(users=False))
 
     @guild_owner_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Make bot say something", permissions=slash_perms.guild_owner_and_up())
+    @slash_command(description="Make bot say something", permissions=slash_perms.guild_owner_and_up())
     async def sabbath(self, ctx: BlooContext, mode: Option(bool, description="Set mode on or off", required=False) = None):
         g = guild_service.get_guild()
         g.sabbath_mode = mode if mode is not None else not g.sabbath_mode

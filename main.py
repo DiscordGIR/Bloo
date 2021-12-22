@@ -95,7 +95,7 @@ class Bot(commands.Bot):
         return await super().process_application_commands(interaction)
 
 
-bot = Bot(intents=intents, allowed_mentions=mentions)
+bot = Bot(intents=intents, allowed_mentions=mentions, debug_guild=cfg.guild_id)
 
 @bot.event
 async def on_ready():

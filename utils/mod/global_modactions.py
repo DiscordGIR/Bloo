@@ -84,17 +84,10 @@ async def unmute(ctx, member, reason: str = "No reason.") -> None:
     """
 
     db_guild = guild_service.get_guild()
-    mute_role = db_guild.role_mute
-    mute_role = ctx.guild.get_role(mute_role)
-    await member.remove_roles(mute_role)
-
-    u = user_service.get_user(id=member.id)
-    u.is_muted = False
-    u.save()
 
     try:
-        ctx.tasks.cancel_unmute(member.id)
         await member.remove_timeout()
+        ctx.tasks.cancel_unmute(member.id)
     except Exception:
         pass
 
@@ -105,6 +98,7 @@ async def unmute(ctx, member, reason: str = "No reason.") -> None:
         mod_tag=str(ctx.author),
         reason=reason,
     )
+
     guild_service.inc_caseid()
     user_service.add_case(member.id, case)
 

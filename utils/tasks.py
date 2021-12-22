@@ -54,21 +54,6 @@ class Tasks():
             jobstores=jobstores, executors=executors, job_defaults=job_defaults, event_loop=bot.loop, timezone=utc)
         self.tasks.start()
 
-    def schedule_unmute(self, id: int, date: datetime) -> None:
-        """Create a task to unmute user given by ID `id`, at time `date`
-
-        Parameters
-        ----------
-        id : int
-            User to unmute
-        date : datetime.datetime
-            When to unmute
-            
-        """
-
-        self.tasks.add_job(unmute_callback, 'date', id=str(
-            id), next_run_time=date, args=[id], misfire_grace_time=3600)
-
     def schedule_untimeout(self, id: int, date: datetime) -> None:
         """Create a task to unmute user given by ID `id`, at time `date`
 
@@ -169,20 +154,6 @@ class Tasks():
         self.tasks.add_job(reminder_callback, 'date', id=str(
             id+random.randint(5, 100)), next_run_time=date, args=[id, reminder], misfire_grace_time=3600)
 
-
-def unmute_callback(id: int) -> None:
-    """Callback function for actually unmuting. Creates asyncio task
-    to do the actual unmute.
-
-    Parameters
-    ----------
-    id : int
-        User who we want to unmute
-        
-    """
-
-    BOT_GLOBAL.loop.create_task(remove_mute(id))
-
 def untimeout_callback(id: int) -> None:
     """Callback function for actually unmuting. Creates asyncio task
     to do the actual unmute.
@@ -197,71 +168,6 @@ def untimeout_callback(id: int) -> None:
     BOT_GLOBAL.loop.create_task(remove_timeout(id))
 
 
-async def remove_mute(id: int) -> None:
-    """Remove the mute role of the user given by ID `id`
-
-    Parameters
-    ----------
-    id : int
-        User to unmute
-        
-    """
-
-    db_guild = guild_service.get_guild()
-    guild = BOT_GLOBAL.get_guild(cfg.guild_id)
-    if db_guild is not None:
-        mute_role = db_guild.role_mute
-        mute_role = guild.get_role(mute_role)
-        if mute_role is not None:
-            user = guild.get_member(id)
-            if user is not None:
-                await user.remove_roles(mute_role)
-                case = Case(
-                    _id=db_guild.case_id,
-                    _type="UNMUTE",
-                    mod_id=BOT_GLOBAL.user.id,
-                    mod_tag=str(BOT_GLOBAL.user),
-                    reason="Temporary mute expired.",
-                )
-                guild_service.inc_caseid()
-                user_service.add_case(user.id, case)
-
-                u = user_service.get_user(id=user.id)
-                u.is_muted = False
-                u.save()
-
-                log = prepare_unmute_log(BOT_GLOBAL.user, user, case)
-
-                log.remove_author()
-                log.set_thumbnail(url=user.display_avatar)
-
-                public_chan = guild.get_channel(
-                    db_guild.channel_public)
-
-                dmed = True
-                try:
-                    await user.send(embed=log)
-                except Exception:
-                    dmed = False
-
-                await public_chan.send(user.mention if not dmed else "", embed=log)
-
-            else:
-                case = Case(
-                    _id=db_guild.case_id,
-                    _type="UNMUTE",
-                    mod_id=BOT_GLOBAL.user.id,
-                    mod_tag=str(BOT_GLOBAL.user),
-                    reason="Temporary mute expired.",
-                )
-                guild_service.inc_caseid()
-                user_service.add_case(id, case)
-
-                u = guild_service.get_user(id=id)
-                u.is_muted = False
-                u.save()
-
-
 async def remove_timeout(id: int) -> None:
     """Remove the mute role of the user given by ID `id`
 
@@ -274,49 +180,37 @@ async def remove_timeout(id: int) -> None:
 
     db_guild = guild_service.get_guild()
     guild = BOT_GLOBAL.get_guild(cfg.guild_id)
-    if db_guild is not None:
-        mute_role = db_guild.role_mute
-        mute_role = guild.get_role(mute_role)
-        if mute_role is not None:
-            user: discord.Member = guild.get_member(id)
-            if user is not None:
-                await user.remove_timeout()
-                case = Case(
-                    _id=db_guild.case_id,
-                    _type="UNMUTE",
-                    mod_id=BOT_GLOBAL.user.id,
-                    mod_tag=str(BOT_GLOBAL.user),
-                    reason="Temporary mute expired.",
-                )
-                guild_service.inc_caseid()
-                user_service.add_case(user.id, case)
+    user: discord.Member = guild.get_member(id)
 
-                log = prepare_unmute_log(BOT_GLOBAL.user, user, case)
+    case = Case(
+        _id=db_guild.case_id,
+        _type="UNMUTE",
+        mod_id=BOT_GLOBAL.user.id,
+        mod_tag=str(BOT_GLOBAL.user),
+        reason="Temporary mute expired.",
+    )
+    guild_service.inc_caseid()
+    user_service.add_case(user.id, case)
 
-                log.remove_author()
-                log.set_thumbnail(url=user.display_avatar)
+    if user is None:
+        return
 
-                public_chan = guild.get_channel(
-                    db_guild.channel_public)
+    await user.remove_timeout()
 
-                dmed = True
-                try:
-                    await user.send(embed=log)
-                except Exception:
-                    dmed = False
+    log = prepare_unmute_log(BOT_GLOBAL.user, user, case)
+    log.remove_author()
+    log.set_thumbnail(url=user.display_avatar)
 
-                await public_chan.send(user.mention if not dmed else "", embed=log)
+    public_chan = guild.get_channel(
+        db_guild.channel_public)
 
-            else:
-                case = Case(
-                    _id=db_guild.case_id,
-                    _type="UNMUTE",
-                    mod_id=BOT_GLOBAL.user.id,
-                    mod_tag=str(BOT_GLOBAL.user),
-                    reason="Temporary mute expired.",
-                )
-                guild_service.inc_caseid()
-                user_service.add_case(id, case)
+    dmed = True
+    try:
+        await user.send(embed=log)
+    except Exception:
+        dmed = False
+
+    await public_chan.send(user.mention if not dmed else "", embed=log)
 
 
 def reminder_callback(id: int, reminder: str):

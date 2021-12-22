@@ -49,11 +49,6 @@ class Logging(commands.Cog):
 
         await channel.send(embed=embed)
 
-        if db_user.is_muted:
-            mute_role = db_guild.role_mute
-            mute_role = member.guild.get_role(mute_role)
-            await member.add_roles(mute_role)
-
     @commands.Cog.listener()
     async def on_member_remove(self, member: discord.Member) -> None:
         """Log member leaves in #server-logs

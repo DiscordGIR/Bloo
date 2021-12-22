@@ -224,16 +224,13 @@ class ModActions(commands.Cog):
         member = await mods_and_above_member_resolver(ctx, member)
 
         db_guild = guild_service.get_guild()
-        mute_role = db_guild.role_mute
-        mute_role = ctx.guild.get_role(mute_role)
-        await member.remove_roles(mute_role)
 
-        u = user_service.get_user(id=member.id)
-        u.is_muted = False
-        u.save()
+        if not member.timed_out:
+            raise commands.BadArgument("This user is not muted.")
+
+        await member.remove_timeout()
 
         try:
-            await member.remove_timeout()
             ctx.tasks.cancel_unmute(member.id)
         except Exception:
             pass

@@ -25,10 +25,15 @@ async def mute(ctx, member, dur_seconds = None, reason = "No reason."):
         "Reason for mute"
     
     """
-    mute_role = guild_service.get_guild().role_mute
-    mute_role = ctx.guild.get_role(mute_role)
 
     now = datetime.now()
+
+    if dur_seconds is not None:
+        time = now + timedelta(seconds=dur_seconds)
+        if time > now + timedelta(days=14):
+            time = now + timedelta(days=14)
+    else:
+        time = now + timedelta(days=14)
 
     db_guild = guild_service.get_guild()
     case = Case(
@@ -40,34 +45,18 @@ async def mute(ctx, member, dur_seconds = None, reason = "No reason."):
         reason=reason,
     )
 
-    if dur_seconds:
-        time = now + timedelta(seconds=dur_seconds)
-        case.until = time
-        case.punishment = humanize.naturaldelta(
-            time - now, minimum_unit="seconds")
-        try:
-            if time <= now + timedelta(days=14):
-                await member.timeout(until=time, reason=reason)
-                ctx.bot.tasks.schedule_untimeout(member.id, time)
-            else:
-                ctx.bot.tasks.schedule_unmute(member.id, time)
-                u = user_service.get_user(id=member.id)
-                u.is_muted = True
-                u.save()
+    case.until = time
+    case.punishment = humanize.naturaldelta(
+        time - now, minimum_unit="seconds")
+    try:
+        await member.timeout(until=time, reason=reason)
+        ctx.bot.tasks.schedule_untimeout(member.id, time)
 
-                await member.add_roles(mute_role)
-        except Exception:
-            return
-    else:
-        case.punishment = "PERMANENT"
-        u = user_service.get_user(id=member.id)
-        u.is_muted = True
-        u.save()
-        await member.add_roles(mute_role)
+    except Exception:
+        return
 
     guild_service.inc_caseid()
     user_service.add_case(member.id, case)
-
 
     log = prepare_mute_log(ctx.author, member, case)
     await ctx.send(embed=log, delete_after=10)

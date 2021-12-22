@@ -164,11 +164,12 @@ class ModActions(commands.Cog):
         if delta is None:
             raise commands.BadArgument("Please input a valid duration!")
 
-        mute_role = guild_service.get_guild().role_mute
-        mute_role = ctx.guild.get_role(mute_role)
-
-        if (member.communication_disabled_until is not None and member.communication_disabled_until > now) or mute_role in member.roles:
+        if member.timed_out:
             raise commands.BadArgument("This user is already muted.")
+
+        time = now + timedelta(seconds=delta)
+        if time > now + timedelta(days=14):
+            raise commands.BadArgument("Mutes can't be longer than 14 days!")
 
         db_guild = guild_service.get_guild()
         case = Case(
@@ -180,27 +181,15 @@ class ModActions(commands.Cog):
             reason=reason,
         )
 
-        time = now + timedelta(seconds=delta)
-
         case.until = time
         case.punishment = humanize.naturaldelta(
             time - now, minimum_unit="seconds")
 
         try:
-            if time <= now + timedelta(days=14):
-                await member.timeout(until=time, reason=reason)
-                ctx.tasks.schedule_untimeout(member.id, time)
-            else:
-                ctx.tasks.schedule_unmute(member.id, time)
-                u = user_service.get_user(id=member.id)
-                u.is_muted = True
-                u.save()
-
-                await member.add_roles(mute_role)
+            await member.timeout(until=time, reason=reason)
+            ctx.tasks.schedule_untimeout(member.id, time)
         except ConflictingIdError:
             raise commands.BadArgument("The database thinks this user is already muted.")
-
-        
 
         guild_service.inc_caseid()
         user_service.add_case(member.id, case)

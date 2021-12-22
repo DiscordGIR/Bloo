@@ -176,5 +176,7 @@ class SpamReportActions(ui.View):
         await interaction.response.defer()
         self.ctx.author = interaction.user
         duration = await self.ctx.prompt(prompt_data)
+        await self.target_member.remove_timeout()
+        self.ctx.bot.tasks.cancel_unmute(self.target_member.id)
         await mute(self.ctx, self.target_member, duration, reason="A moderator has reviewed your spam report.")
         await self.ctx.message.delete()

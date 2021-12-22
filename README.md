@@ -59,7 +59,7 @@ DEV=True
 # this is optional if you want logging to be sent to a Discord webhook
 LOGGING_WEBHOOK_URL=""
 
-# this is optional, for /sabbath commmand
+# this is optional, for /sabbath command
 AARON_ROLE=123
 
 # used for automatically uploading tweak lists to paste.ee

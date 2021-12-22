@@ -318,7 +318,12 @@ class Memes(commands.Cog):
             value_name="image",
             description="Please attach an image.",
             raw=True)
-        _, response = await ctx.prompt(prompt)
+        
+        something = await ctx.prompt(prompt)
+        if something is None:
+            await ctx.send_warning("Cancelled.")
+
+        _, response = something
 
         if not response.attachments or response.attachments[0].content_type not in ["image/png", "image/jpeg", "image/webp"]:
             raise commands.BadArgument(

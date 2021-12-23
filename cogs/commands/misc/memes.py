@@ -361,7 +361,7 @@ class Memes(commands.Cog):
                         else:
                             embed.color = discord.Color.green()
 
-                        await ctx.respond(embed=embed, ephemeral=False, file=discord.File(BytesIO(contents_before), filename="image.png"))
+                        await ctx.send(embed=embed, file=discord.File(BytesIO(contents_before), filename="image.png"))
                     else:
                         raise commands.BadArgument("An error occurred classifying that image.")
 
@@ -422,7 +422,7 @@ class Memes(commands.Cog):
                         embed.set_image(url="attachment://image.png")
                         embed.color = discord.Color.random()
 
-                        await ctx.respond(embed=embed, ephemeral=False, file=discord.File(BytesIO(resp), filename="image.png"))
+                        await ctx.send(embed=embed, file=discord.File(BytesIO(resp), filename="image.png"))
                     else:
                         raise commands.BadArgument("An error occurred classifying that image.")
 

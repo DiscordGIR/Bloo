@@ -349,7 +349,7 @@ class Memes(commands.Cog):
                         confidence = j.get('confidence')
                         confidence_percent = f"{confidence*100:.1f}%"
                         embed.description = f"image prediction: {j.get('classification')}\nconfidence: {confidence_percent}"
-                        embed.set_footer(text=f"Requested by {ctx.author} • /neuralnet")
+                        embed.set_footer(text=f"Requested by {ctx.author} • /neuralnet • Processed in {j.get('process_time')}s")
                         embed.set_image(url="attachment://image.png")
 
                         if confidence < 0.25:

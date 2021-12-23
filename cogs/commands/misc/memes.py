@@ -318,16 +318,20 @@ class Memes(commands.Cog):
             value_name="image",
             description="Please attach an image.",
             raw=True)
-        
+
         something = await ctx.prompt(prompt)
         if something is None:
             await ctx.send_warning("Cancelled.")
+            return
 
         _, response = something
 
         if not response.attachments or response.attachments[0].content_type not in ["image/png", "image/jpeg", "image/webp"]:
             raise commands.BadArgument(
                 "Attached file was not an image.")
+
+        if response.attachments[0].size > 8_000_000:
+            raise commands.BadArgument("That image is too large to be processed.")
 
         async with ctx.typing():
             contents_before = await response.attachments[0].read()

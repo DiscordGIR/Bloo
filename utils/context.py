@@ -112,7 +112,10 @@ class BlooContext(discord.context.ApplicationContext):
         except asyncio.TimeoutError:
             await self.send_warning("Timed out.", delete_after=5)
         else:
-            await response.delete()
+            try:
+                await response.delete()
+            except:
+                pass
             if response.content.lower() == "cancel":
                 return
             elif not response.content and info.convertor is not None:

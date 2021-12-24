@@ -17,7 +17,7 @@ from utils.context import BlooContext, PromptData
 from utils.logger import logger
 from utils.views.menu import Menu
 from utils.message_cooldown import MessageTextBucket
-from utils.permissions.checks import PermissionsFailure, mod_and_up, whisper
+from utils.permissions.checks import PermissionsFailure, memed_and_up, mempro_and_up, mod_and_up, whisper
 from utils.permissions.permissions import permissions
 from utils.permissions.slash_perms import slash_perms
 
@@ -41,9 +41,9 @@ class Memes(commands.Cog):
         self.meme_cooldown = CooldownMapping.from_cooldown(
             1, 5, MessageTextBucket.custom)
         self.res_cooldown = CooldownMapping.from_cooldown(
-            1, 15, MessageTextBucket.custom)
+            1, 20, MessageTextBucket.custom)
         self.memegen_cooldown = CooldownMapping.from_cooldown(
-            1, 15, MessageTextBucket.custom)
+            1, 20, MessageTextBucket.custom)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Display a meme")
     async def meme(self, ctx: BlooContext, name: Option(str, description="Meme name", autocomplete=memes_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
@@ -299,7 +299,8 @@ class Memes(commands.Cog):
         embed.add_field(name="Answer", value=response, inline=False)
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
-    @slash_command(guild_ids=[cfg.guild_id], description="Ooo magic (image version)")
+    @mempro_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Ooo magic (image version)", permissions=slash_perms.mempro_and_up())
     async def neuralnet(self, ctx: BlooContext) -> None:
         if cfg.resnext_token is None:
             raise commands.BadArgument("ResNext token is not set up!")
@@ -365,7 +366,8 @@ class Memes(commands.Cog):
                     else:
                         raise commands.BadArgument("An error occurred classifying that image.")
 
-    @slash_command(guild_ids=[cfg.guild_id], description="Ooo magic (image version)")
+    @memed_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Ooo magic (image version)", permissions=slash_perms.memed_and_up())
     async def memegen(self, ctx: BlooContext, top_text: str, bottom_text: str) -> None:
         if cfg.resnext_token is None:
             raise commands.BadArgument("ResNext token is not set up!")

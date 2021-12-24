@@ -480,7 +480,7 @@ class Memes(commands.Cog):
             async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
                 form = aiohttp.FormData()
                 form.add_field("file", contents, content_type=response.attachments[0].content_type)
-                async with client.post(f'http://host.docker.internal:8000/demotivational-meme?top_text={top_text}&bottom_text={bottom_text}', data=form) as resp:
+                async with client.post(f'https://resnext.slim.rocks/demotivational-meme?top_text={top_text}&bottom_text={bottom_text}', data=form) as resp:
                     if resp.status == 200:
                         resp = await resp.read()
                         embed = discord.Embed()

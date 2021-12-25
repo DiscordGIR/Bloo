@@ -1,14 +1,21 @@
-import discord
-from discord.ext import commands
-
 import re
+import traceback
 from datetime import timezone
+
+import discord
 from data.services.guild_service import guild_service
+from discord.commands.commands import message_command, user_command
+from discord.ext import commands
 from utils.config import cfg
+from utils.context import BlooContext
+from utils.logger import logger
 from utils.mod.filter import find_triggered_filters
 from utils.mod.global_modactions import mute
-from utils.mod.report import report
+from utils.mod.report import manual_report, report
+from utils.permissions.checks import (PermissionsFailure, always_whisper,
+                                      mod_and_up)
 from utils.permissions.permissions import permissions
+
 
 class Filter(commands.Cog):
     def __init__(self, bot):
@@ -17,6 +24,51 @@ class Filter(commands.Cog):
         self.spoiler_filter = r'\|\|(.*?)\|\|'
         self.spam_cooldown = commands.CooldownMapping.from_cooldown(
             2, 10.0, commands.BucketType.member)
+
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction: discord.Reaction, reacter: discord.Member):
+        """Generate a report when a moderator reacts the stop sign emoji on a message
+
+        Parameters
+        ----------
+        reaction : discord.Reaction
+            [description]
+        reacter : discord.Member
+            [description]
+        """
+        if reaction.message.guild is None:
+            return
+        if reaction.message.guild.id != cfg.guild_id:
+            return
+        if reaction.message.author.bot:
+            return
+        if reaction.emoji != '🛑':
+            return
+        if not permissions.has(reacter.guild, reacter, 5):
+            return
+        if reacter.top_role <= reaction.message.author.top_role:
+            return
+
+        await reaction.message.remove_reaction(reaction.emoji, reacter)
+        await manual_report(self.bot, reacter, reaction.message)
+
+    @mod_and_up()
+    @always_whisper()
+    @user_command(guild_ids=[cfg.guild_id], name="Generate report")
+    async def generate_report_rc(self, ctx: BlooContext, member: discord.Member) -> None:
+        if ctx.author.top_role <= member.top_role:
+            raise commands.BadArgument("Target user must have a lower role than yourself.")
+        await manual_report(self.bot, ctx.author, member)
+        await ctx.send_success("Generated report!")
+
+    @mod_and_up()
+    @always_whisper()
+    @message_command(guild_ids=[cfg.guild_id], name="Generate report")
+    async def generate_report_msg(self, ctx: BlooContext, message: discord.Message) -> None:
+        if ctx.author.top_role <= message.author.top_role:
+            raise commands.BadArgument("Target user must have a lower role than yourself.")
+        await manual_report(self.bot, ctx.author, message)
+        await ctx.send_success("Generated report!")
 
     @commands.Cog.listener()
     async def on_message(self, message):
@@ -58,12 +110,13 @@ class Filter(commands.Cog):
     async def nick_filter(self, member):
         triggered_words = find_triggered_filters(
             member.display_name, member)
-        
+
         if not triggered_words:
             return
-        
+
         await member.edit(nick="change name pls")
-        embed = discord.Embed(title="Nickname changed", color=discord.Color.orange())
+        embed = discord.Embed(title="Nickname changed",
+                              color=discord.Color.orange())
         embed.description = f"Your nickname contained the word **{triggered_words[0].word}** which is a filtered word. Please change your nickname or ask a Moderator to do it for you."
         try:
             await member.send(embed=embed)
@@ -77,7 +130,7 @@ class Filter(commands.Cog):
             return
 
         dev_role = message.guild.get_role(db_guild.role_dev)
-        
+
         triggered = False
         for word in triggered_words:
             if word.piracy:
@@ -151,7 +204,7 @@ class Filter(commands.Cog):
             if a.is_spoiler():
                 await self.delete(message)
                 return True
-        
+
         """
         NEWLINE FILTER
         """
@@ -193,11 +246,14 @@ class Filter(commands.Cog):
 
         log_embed = discord.Embed(title="Filter Triggered")
         log_embed.color = discord.Color.red()
-        log_embed.add_field(name="Member", value=f"{member} ({member.mention})")
+        log_embed.add_field(
+            name="Member", value=f"{member} ({member.mention})")
         log_embed.add_field(name="Word", value=word)
-        log_embed.add_field(name="Message", value=message.content, inline=False)
+        log_embed.add_field(
+            name="Message", value=message.content, inline=False)
 
-        log_channel = message.guild.get_channel(guild_service.get_guild().channel_private)
+        log_channel = message.guild.get_channel(
+            guild_service.get_guild().channel_private)
         if log_channel is not None:
             await log_channel.send(embed=log_embed)
 
@@ -206,6 +262,25 @@ class Filter(commands.Cog):
             await message.delete()
         except Exception:
             pass
+
+    @generate_report_msg.error
+    @generate_report_rc.error
+    async def info_error(self,  ctx: BlooContext, error):
+        if isinstance(error, discord.ApplicationCommandInvokeError):
+            error = error.original
+
+        if (isinstance(error, commands.MissingRequiredArgument)
+            or isinstance(error, PermissionsFailure)
+            or isinstance(error, commands.BadArgument)
+            or isinstance(error, commands.BadUnionArgument)
+            or isinstance(error, commands.MissingPermissions)
+            or isinstance(error, commands.BotMissingPermissions)
+            or isinstance(error, commands.MaxConcurrencyReached)
+                or isinstance(error, commands.NoPrivateMessage)):
+            await ctx.send_error(error)
+        else:
+            await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
+            logger.error(traceback.format_exc())
 
 
 def setup(bot):

@@ -1,3 +1,4 @@
+from typing import Union
 import discord
 from data.services import user_service
 from data.services.guild_service import guild_service
@@ -36,6 +37,34 @@ async def report(bot: discord.Client, message: discord.Message, word: str, invit
     else:
         embed = prepare_embed(message, word)
         report_msg = await channel.send(ping_string, embed=embed, view=view)
+
+    ctx = await bot.get_context(report_msg)
+    await view.start(ctx)
+
+async def manual_report(bot: discord.Client, mod: discord.Member, target: Union[discord.Message, discord.Member] = None):
+    """Deals with a report
+
+    Parameters
+    ----------
+    bot : discord.Client
+        "Bot object"
+    message : discord.Message
+        "Filtered message"
+    mod : discord.Member
+        "The moderator that started this report
+
+    """
+    db_guild = guild_service.get_guild()
+    channel = target.guild.get_channel(db_guild.channel_reports)
+
+    ping_string = f"{mod.mention} reported a member"
+    if isinstance(target, discord.Message):
+        view = ReportActions(target.author)
+    else:
+        view = ReportActions(target)
+
+    embed = prepare_embed(target, title="A moderator reported a member")
+    report_msg = await channel.send(ping_string, embed=embed, view=view)
 
     ctx = await bot.get_context(report_msg)
     await view.start(ctx)
@@ -123,7 +152,7 @@ def prepare_ping_string(db_guild, message):
     return ping_string
 
 
-def prepare_embed(message: discord.Message, word: str = None, title="Word filter"):
+def prepare_embed(target: Union[discord.Message, discord.Member], word: str = None, title="Word filter"):
     """Prepares embed
 
     Parameters
@@ -136,7 +165,11 @@ def prepare_embed(message: discord.Message, word: str = None, title="Word filter
         "Embed title"
 
     """
-    member = message.author
+    if isinstance(target, discord.Message):
+        member = target.author
+    else:
+        member = target
+
     user_info = user_service.get_user(member.id)
     rd = user_service.rundown(member.id)
     rd_text = ""
@@ -150,17 +183,19 @@ def prepare_embed(message: discord.Message, word: str = None, title="Word filter
 
     embed.set_thumbnail(url=member.display_avatar)
     embed.add_field(name="Member", value=f"{member} ({member.mention})")
-    embed.add_field(name="Channel", value=message.channel.mention)
+    if isinstance(target, discord.Message):
+        embed.add_field(name="Channel", value=target.channel.mention)
 
-    if len(message.content) > 400:
-        message.content = message.content[0:400] + "..."
+        if len(target.content) > 400:
+            target.content = target.content[0:400] + "..."
 
     if word is not None:
         embed.add_field(name="Message", value=discord.utils.escape_markdown(
-            message.content) + f"\n\n[Link to message]({message.jump_url}) | Filtered word: **{word}**", inline=False)
+            target.content) + f"\n\n[Link to message]({target.jump_url}) | Filtered word: **{word}**", inline=False)
     else:
-        embed.add_field(name="Message", value=discord.utils.escape_markdown(
-            message.content) + f"\n\n[Link to message]({message.jump_url})", inline=False)
+        if isinstance(target, discord.Message):
+            embed.add_field(name="Message", value=discord.utils.escape_markdown(
+                target.content) + f"\n\n[Link to message]({target.jump_url})", inline=False)
     embed.add_field(
         name="Join date", value=f"{format_dt(member.joined_at, style='F')} ({format_dt(member.joined_at, style='R')})", inline=True)
     embed.add_field(name="Created",

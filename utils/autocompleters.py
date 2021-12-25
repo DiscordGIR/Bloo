@@ -188,13 +188,13 @@ async def date_autocompleter(ctx: AutocompleteContext) -> list:
 async def tags_autocomplete(ctx: AutocompleteContext):
     tags = [tag.name.lower() for tag in guild_service.get_guild().tags]
     tags.sort()
-    return [tag for tag in tags if tag.lower().startswith(ctx.value.lower())][:25]
+    return [tag for tag in tags if ctx.value.lower() in tag.lower()][:25]
 
 
 async def memes_autocomplete(ctx: AutocompleteContext):
     memes = [meme.name.lower() for meme in guild_service.get_guild().memes]
     memes.sort()
-    return [meme for meme in memes if meme.lower().startswith(ctx.value.lower())][:25]
+    return [meme for meme in memes if ctx.value.lower() in meme.lower()][:25]
 
 
 async def liftwarn_autocomplete(ctx: AutocompleteContext):

@@ -277,10 +277,10 @@ class Misc(commands.Cog):
                     embed.add_field(name="Published", value=response.get('Published'), inline=True)
                     embed.add_field(name="Last Modified", value=response.get('Modified'), inline=True)
                     embed.add_field(name="Complexity", value=response.get('access').get('complexity').title(), inline=False)
-                    embed.timestamp = datetime.now()
                     embed.set_footer(text="Powered by https://cve.circl.lu")
                     await ctx.respond(embed=embed, ephemeral=ctx.whisper)
-        except:
+        except Exception as e:
+            print(e)
             raise commands.BadArgument("Could not find CVE.")
 
     @whisper_in_general()
@@ -298,7 +298,7 @@ class Misc(commands.Cog):
                         raise commands.BadArgument("An error occured finding the app.")
 
                 if data.get("status") == "Not Found":
-                    raise commands.BadArgument("The API does not recongize that app or there are no bypasses available.")
+                    raise commands.BadArgument("The API does not recognize that app or there are no bypasses available.")
 
                 if len(data.get("data")) > 1:
                     view = discord.ui.View(timeout=30)

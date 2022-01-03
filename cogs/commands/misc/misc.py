@@ -16,7 +16,7 @@ from data.services.guild_service import guild_service
 from utils.logger import logger
 from utils.config import cfg
 from utils.context import BlooContext
-from utils.permissions.checks import PermissionsFailure, whisper
+from utils.permissions.checks import PermissionsFailure, whisper, whisper_in_general
 from utils.permissions.permissions import permissions
 
 
@@ -208,6 +208,7 @@ class Misc(commands.Cog):
 
         view.message = await ctx.respond(embed=embed, ephemeral=ctx.whisper, view=view)
 
+    @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="View information about a CVE")
     async def cve(self, ctx: BlooContext, id: str):
         """View information about a CVE
@@ -225,15 +226,15 @@ class Misc(commands.Cog):
         try:
             async with aiohttp.ClientSession() as client:
                 async with client.get(URL(f'https://cve.circl.lu/api/cve/{id}', encoded=True)) as resp:
-                        response = json.loads(await resp.text())
-                        embed = discord.Embed(title=response.get('id'), color=discord.Color.random())
-                        embed.description = response.get('summary')
-                        embed.add_field(name="Published", value=response.get('Published'), inline=True)
-                        embed.add_field(name="Last Modified", value=response.get('Modified'), inline=True)
-                        embed.add_field(name="Complexity", value=response.get('access').get('complexity').title(), inline=False)
-                        embed.timestamp = datetime.now()
-                        embed.set_footer(text="Powered by https://cve.circl.lu")
-                        await ctx.respond(embed=embed)
+                    response = json.loads(await resp.text())
+                    embed = discord.Embed(title=response.get('id'), color=discord.Color.random())
+                    embed.description = response.get('summary')
+                    embed.add_field(name="Published", value=response.get('Published'), inline=True)
+                    embed.add_field(name="Last Modified", value=response.get('Modified'), inline=True)
+                    embed.add_field(name="Complexity", value=response.get('access').get('complexity').title(), inline=False)
+                    embed.timestamp = datetime.now()
+                    embed.set_footer(text="Powered by https://cve.circl.lu")
+                    await ctx.respond(embed=embed, ephemeral=ctx.whisper)
         except:
             await ctx.send_error("Could not find CVE.")
 

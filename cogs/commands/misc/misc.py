@@ -284,7 +284,7 @@ class Misc(commands.Cog):
             raise commands.BadArgument("Could not find CVE.")
 
     @whisper_in_general()
-    @slash_command(guild_ids=[cfg.guild_id], description="View what bypass you can use for an application")
+    @slash_command(guild_ids=[cfg.guild_id], description="View what jailbreak detection bypasses are available for an app")
     async def bypass(self, ctx: BlooContext, app: Option(str, description="Name of the app")):
         async with aiohttp.ClientSession() as client:
             async with client.get(f"https://beerpsi.me/api/v1/app?search={app}") as resp:

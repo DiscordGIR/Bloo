@@ -70,6 +70,7 @@ class Devices(commands.Cog):
         board = devices[0].get("devices")[0]
 
         ios = response.get("ios")
+        version = version.replace("iOS ", "")
         firmware = [v for v in ios if board in v.get(
             'devices') and version == v.get('version')]
 

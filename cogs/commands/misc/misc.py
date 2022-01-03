@@ -286,6 +286,7 @@ class Misc(commands.Cog):
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="View what jailbreak detection bypasses are available for an app")
     async def bypass(self, ctx: BlooContext, app: Option(str, description="Name of the app")):
+        await ctx.defer(ephemeral=ctx.whisper)
         async with aiohttp.ClientSession() as client:
             async with client.get(f"https://beerpsi.me/api/v1/app?search={app}") as resp:
                 try:

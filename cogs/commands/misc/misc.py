@@ -78,6 +78,10 @@ class BypassDropdown(discord.ui.Select):
         super().__init__(placeholder='Pick an app...', min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction):
+        if interaction.user != self.ctx.author:
+            return
+
+        self.view.stop()
         app = self.apps.get(self.values[0])
         self.ctx.app = app
         if not app.get("bypasses"):
@@ -296,7 +300,7 @@ class Misc(commands.Cog):
                     raise commands.BadArgument("The API does not recongize that app or there are no bypasses available.")
 
                 if len(data.get("data")) > 1:
-                    view = discord.ui.View()
+                    view = discord.ui.View(timeout=30)
                     apps = data.get("data")[:25]
                     apps.sort(key=lambda x: x.get("name"))
                     menu = BypassDropdown(ctx, apps)

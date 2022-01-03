@@ -38,7 +38,7 @@ class Sileo(commands.Cog):
                 view.add_item(discord.ui.Button(label='Add Repo to Sileo', emoji="<:sileo:679466569407004684>",
                               url=f"https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={response.get('data')['repo']['url']}", style=discord.ButtonStyle.url))
                 try:
-                    view.add_item(discord.ui.Button(label='View Depiction', url=response.get(
+                    view.add_item(discord.ui.Button(label='View Depiction', emoji="🔎", url=response.get(
                         'data')['Depiction'], style=discord.ButtonStyle.url))
                 except:
                     view.add_item(discord.ui.Button(

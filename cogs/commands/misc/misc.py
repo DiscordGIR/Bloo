@@ -1,3 +1,4 @@
+from typing import final
 import discord
 from discord.commands import Option, slash_command
 from discord.commands.commands import message_command, user_command
@@ -16,8 +17,10 @@ from data.services.guild_service import guild_service
 from utils.logger import logger
 from utils.config import cfg
 from utils.context import BlooContext
+from utils.menu import BypassMenu
 from utils.permissions.checks import PermissionsFailure, whisper, whisper_in_general
 from utils.permissions.permissions import permissions
+from utils.views.menu import Menu
 
 
 class PFPView(discord.ui.View):
@@ -64,6 +67,44 @@ class PFPButton(discord.ui.Button):
 
         await interaction.response.edit_message(embed=embed)
 
+
+class BypassDropdown(discord.ui.Select):
+    def __init__(self, ctx, apps):
+        self.ctx = ctx
+        self.apps = {app.get("bundleId"): app for app in apps}
+        options = [
+            discord.SelectOption(label=app.get("name"), value=app.get("bundleId"), description="Bypasses found" if app.get("bypasses") else "No bypasses found", emoji='<:appstore:392027597648822281>') for app in apps
+        ]
+        super().__init__(placeholder='Pick an app...', min_values=1, max_values=1, options=options)
+
+    async def callback(self, interaction):
+        app = self.apps.get(self.values[0])
+        self.ctx.app = app
+        if not app.get("bypasses"):
+            await self.ctx.send_error("No bypasses found for this app!")
+            return
+
+        menu = BypassMenu(self.ctx, app.get("bypasses"), per_page=1, page_formatter=format_bypass_page, whisper=self.ctx.whisper)
+        await menu.start()
+
+    async def on_timeout(self):
+        self.disabled = True
+        self.placeholder = "Timed out"
+
+        await self.ctx.edit(view=self._view)
+
+def format_bypass_page(ctx, entries, current_page, all_pages):
+    ctx.current_bypass = entries[0]
+    embed = discord.Embed(title=ctx.app.get("name"), color=discord.Color.blue())
+    embed.set_thumbnail(url=ctx.app.get("icon"))
+
+    embed.description = f"You can use **{ctx.current_bypass.get('name')}**!"
+    if ctx.current_bypass.get("notes") is not None:
+        embed.add_field(name="Note", value=ctx.current_bypass.get('notes'))
+        embed.color = discord.Color.orange()
+
+    embed.set_footer(text=f"Bypass {current_page} of {len(all_pages)}")
+    return embed
 
 class Misc(commands.Cog):
     def __init__(self, bot):
@@ -236,8 +277,43 @@ class Misc(commands.Cog):
                     embed.set_footer(text="Powered by https://cve.circl.lu")
                     await ctx.respond(embed=embed, ephemeral=ctx.whisper)
         except:
-            await ctx.send_error("Could not find CVE.")
+            raise commands.BadArgument("Could not find CVE.")
 
+    @whisper_in_general()
+    @slash_command(guild_ids=[cfg.guild_id], description="View what bypass you can use for an application")
+    async def bypass(self, ctx: BlooContext, app: Option(str, description="Name of the app")):
+        async with aiohttp.ClientSession() as client:
+            async with client.get(f"https://beerpsi.me/api/v1/app?search={app}") as resp:
+                try:
+                    data = await resp.json()
+                except:
+                    raise commands.BadArgument("An error occured finding the app.")
+                finally:
+                    if resp.status != 200:
+                        raise commands.BadArgument("An error occured finding the app.")
+
+                if data.get("status") == "Not Found":
+                    raise commands.BadArgument("The API does not recongize that app or there are no bypasses available.")
+
+                if len(data.get("data")) > 1:
+                    view = discord.ui.View()
+                    apps = data.get("data")[:25]
+                    apps.sort(key=lambda x: x.get("name"))
+                    menu = BypassDropdown(ctx, apps)
+                    view.add_item(menu)
+                    view.on_timeout = menu.on_timeout
+                    embed = discord.Embed(description="Which app would you like to view bypasses for?", color=discord.Color.blurple())
+                    await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
+                else:
+                    ctx.app = data.get("data")[0]
+                    bypasses = ctx.app.get("bypasses")
+                    if not bypasses or bypasses is None:
+                        raise commands.BadArgument(f"{ctx.app.get('name')} has no bypasses.")
+
+                    menu = BypassMenu(ctx, ctx.app.get("bypasses"), per_page=1, page_formatter=format_bypass_page, whisper=ctx.whisper)
+                    await menu.start()
+
+    @bypass.error
     @cve.error
     @remindme.error
     @jumbo.error

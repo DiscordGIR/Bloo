@@ -201,7 +201,7 @@ class Canister(commands.Cog):
             should_whisper = True
 
         await ctx.defer(ephemeral=should_whisper)
-        result = list(await search_repo(query))
+        result = list(await search_repo(query))[:1]
 
         if result:
             await canister_repo(ctx, True, should_whisper, result)

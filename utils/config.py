@@ -31,6 +31,8 @@ class Config:
         else:
             logger.info("Discord webhook logging is DISABLED!")
 
+        self.resnext_token = os.environ.get("RESNEXT_TOKEN")
+
         self.dev = os.environ.get("DEV") is not None
 
         logger.info(f"Bloo will be running in: {self.guild_id} in \033[1m{'DEVELOPMENT' if self.dev else 'PRODUCTION'}\033[0m mode")

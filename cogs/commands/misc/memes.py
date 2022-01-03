@@ -1,7 +1,9 @@
 import random
+import re
 import traceback
 from datetime import datetime
 from io import BytesIO
+import aiohttp
 
 import discord
 from data.model.tag import Tag
@@ -15,7 +17,7 @@ from utils.context import BlooContext, PromptData
 from utils.logger import logger
 from utils.views.menu import Menu
 from utils.message_cooldown import MessageTextBucket
-from utils.permissions.checks import PermissionsFailure, mod_and_up, whisper
+from utils.permissions.checks import PermissionsFailure, memed_and_up, mempro_and_up, mod_and_up, whisper
 from utils.permissions.permissions import permissions
 from utils.permissions.slash_perms import slash_perms
 
@@ -38,6 +40,10 @@ class Memes(commands.Cog):
         self.bot = bot
         self.meme_cooldown = CooldownMapping.from_cooldown(
             1, 5, MessageTextBucket.custom)
+        self.res_cooldown = CooldownMapping.from_cooldown(
+            1, 25, MessageTextBucket.custom)
+        self.memegen_cooldown = CooldownMapping.from_cooldown(
+            1, 25, MessageTextBucket.custom)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Display a meme")
     async def meme(self, ctx: BlooContext, name: Option(str, description="Meme name", autocomplete=memes_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
@@ -293,7 +299,203 @@ class Memes(commands.Cog):
         embed.add_field(name="Answer", value=response, inline=False)
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
+    @mempro_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Ooo magic (image version)", permissions=slash_perms.mempro_and_up())
+    async def neuralnet(self, ctx: BlooContext) -> None:
+        if cfg.resnext_token is None:
+            raise commands.BadArgument("ResNext token is not set up!")
+
+        db_guild = guild_service.get_guild()
+        is_mod = permissions.has(ctx.guild, ctx.author, 5)
+        if ctx.channel.id not in [db_guild.channel_general, db_guild.channel_botspam] and not is_mod:
+            raise commands.BadArgument(f"This command can't be used here.")
+
+        if not is_mod:
+            bucket = self.res_cooldown.get_bucket(ctx.guild.name)
+            current = datetime.now().timestamp()
+            # ratelimit only if the invoker is not a moderator
+            if bucket.update_rate_limit(current):
+                raise commands.BadArgument("That command is on cooldown.")
+
+        await ctx.defer(ephemeral=True)
+        prompt = PromptData(
+            value_name="image",
+            description="Please attach an image.",
+            raw=True)
+
+        something = await ctx.prompt(prompt)
+        if something is None:
+            await ctx.send_warning("Cancelled.")
+            return
+
+        _, response = something
+
+        if not response.attachments or response.attachments[0].content_type not in ["image/png", "image/jpeg", "image/webp"]:
+            raise commands.BadArgument(
+                "Attached file was not an image.")
+
+        if response.attachments[0].size > 8_000_000:
+            raise commands.BadArgument("That image is too large to be processed.")
+
+        async with ctx.typing():
+            contents_before = await response.attachments[0].read()
+            contents = BytesIO(contents_before)
+            async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
+                form = aiohttp.FormData()
+                form.add_field("file", contents, content_type=response.attachments[0].content_type)
+                async with client.post('https://resnext.slim.rocks/', data=form) as resp:
+                    if resp.status == 200:
+                        j = await resp.json()
+                        embed = discord.Embed()
+                        confidence = j.get('confidence')
+                        confidence_percent = f"{confidence*100:.1f}%"
+                        embed.description = f"image prediction: {j.get('classification')}\nconfidence: {confidence_percent}"
+                        embed.set_footer(text=f"Requested by {ctx.author} • /neuralnet • Processed in {j.get('process_time')}s")
+                        embed.set_image(url="attachment://image.png")
+
+                        if confidence < 0.25:
+                            embed.color = discord.Color.red()
+                        elif confidence < 0.5:
+                            embed.color = discord.Color.yellow()
+                        elif confidence < 0.75:
+                            embed.color = discord.Color.orange()
+                        else:
+                            embed.color = discord.Color.green()
+
+                        await ctx.send(embed=embed, file=discord.File(BytesIO(contents_before), filename="image.png"))
+                    else:
+                        raise commands.BadArgument("An error occurred classifying that image.")
+
+    memegen = discord.SlashCommandGroup("memegen", "Generate memes", guild_ids=[cfg.guild_id], permissions=slash_perms.memed_and_up())
+
+    @memed_and_up()
+    @memegen.command(description="Meme generator")
+    async def regular(self, ctx: BlooContext, top_text: str, bottom_text: str) -> None:
+        if cfg.resnext_token is None:
+            raise commands.BadArgument("ResNext token is not set up!")
+
+        # ensure text is english characters only with regex
+        if not re.match(r'^[\x20-\x7E]*$', top_text):
+            raise commands.BadArgument("Top text can't have weird characters.")
+        if not re.match(r'^[\x20-\x7E]*$', bottom_text):
+            raise commands.BadArgument("Bottom text can't have weird characters.")
+        
+        db_guild = guild_service.get_guild()
+        is_mod = permissions.has(ctx.guild, ctx.author, 5)
+        if ctx.channel.id not in [db_guild.channel_general, db_guild.channel_botspam] and not is_mod:
+            raise commands.BadArgument(f"This command can't be used here.")
+
+        if not is_mod:
+            bucket = self.memegen_cooldown.get_bucket(ctx.guild.name)
+            current = datetime.now().timestamp()
+            # ratelimit only if the invoker is not a moderator
+            if bucket.update_rate_limit(current):
+                raise commands.BadArgument("That command is on cooldown.")
+
+        await ctx.defer(ephemeral=True)
+        prompt = PromptData(
+            value_name="image",
+            description="Please attach an image.",
+            raw=True)
+
+        something = await ctx.prompt(prompt)
+        if something is None:
+            await ctx.send_warning("Cancelled.")
+            return
+
+        _, response = something
+
+        if not response.attachments or response.attachments[0].content_type not in ["image/png", "image/jpeg", "image/webp"]:
+            raise commands.BadArgument(
+                "Attached file was not an image.")
+
+        if response.attachments[0].size > 8_000_000:
+            raise commands.BadArgument("That image is too large to be processed.")
+
+        async with ctx.typing():
+            contents_before = await response.attachments[0].read()
+            contents = BytesIO(contents_before)
+            async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
+                form = aiohttp.FormData()
+                form.add_field("file", contents, content_type=response.attachments[0].content_type)
+                async with client.post(f'https://resnext.slim.rocks/meme?top_text={top_text}&bottom_text={bottom_text}', data=form) as resp:
+                    if resp.status == 200:
+                        resp = await resp.read()
+                        embed = discord.Embed()
+                        embed.set_footer(text=f"Requested by {ctx.author} • /memegen")
+                        embed.set_image(url="attachment://image.png")
+                        embed.color = discord.Color.random()
+
+                        await ctx.send(embed=embed, file=discord.File(BytesIO(resp), filename="image.png"))
+                    else:
+                        raise commands.BadArgument("An error occurred generating that meme.")
+
+    @memed_and_up()
+    @memegen.command(description="Motivational poster)")
+    async def motivate(self, ctx: BlooContext, top_text: str, bottom_text: str) -> None:
+        if cfg.resnext_token is None:
+            raise commands.BadArgument("ResNext token is not set up!")
+
+        # ensure text is english characters only with regex
+        if not re.match(r'^[\x20-\x7E]*$', top_text):
+            raise commands.BadArgument("Top text can't have weird characters.")
+        if not re.match(r'^[\x20-\x7E]*$', bottom_text):
+            raise commands.BadArgument("Bottom text can't have weird characters.")
+        
+        db_guild = guild_service.get_guild()
+        is_mod = permissions.has(ctx.guild, ctx.author, 5)
+        if ctx.channel.id not in [db_guild.channel_general, db_guild.channel_botspam] and not is_mod:
+            raise commands.BadArgument(f"This command can't be used here.")
+
+        if not is_mod:
+            bucket = self.memegen_cooldown.get_bucket(ctx.guild.name)
+            current = datetime.now().timestamp()
+            # ratelimit only if the invoker is not a moderator
+            if bucket.update_rate_limit(current):
+                raise commands.BadArgument("That command is on cooldown.")
+
+        await ctx.defer(ephemeral=True)
+        prompt = PromptData(
+            value_name="image",
+            description="Please attach an image.",
+            raw=True)
+
+        something = await ctx.prompt(prompt)
+        if something is None:
+            await ctx.send_warning("Cancelled.")
+            return
+
+        _, response = something
+
+        if not response.attachments or response.attachments[0].content_type not in ["image/png", "image/jpeg", "image/webp"]:
+            raise commands.BadArgument(
+                "Attached file was not an image.")
+
+        if response.attachments[0].size > 8_000_000:
+            raise commands.BadArgument("That image is too large to be processed.")
+
+        async with ctx.typing():
+            contents_before = await response.attachments[0].read()
+            contents = BytesIO(contents_before)
+            async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
+                form = aiohttp.FormData()
+                form.add_field("file", contents, content_type=response.attachments[0].content_type)
+                async with client.post(f'https://resnext.slim.rocks/demotivational-meme?top_text={top_text}&bottom_text={bottom_text}', data=form) as resp:
+                    if resp.status == 200:
+                        resp = await resp.read()
+                        embed = discord.Embed()
+                        embed.set_footer(text=f"Requested by {ctx.author} • /memegen")
+                        embed.set_image(url="attachment://image.png")
+                        embed.color = discord.Color.random()
+
+                        await ctx.send(embed=embed, file=discord.File(BytesIO(resp), filename="image.png"))
+                    else:
+                        raise commands.BadArgument("An error occurred generating that meme.")
+
     @_8ball.error
+    @regular.error
+    @motivate.error
+    @neuralnet.error
     @edit.error
     @meme.error
     @memelist.error

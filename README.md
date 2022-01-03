@@ -64,6 +64,9 @@ AARON_ROLE=123
 
 # used for automatically uploading tweak lists to paste.ee
 PASTEE_TOKEN="your API key here"
+
+# optional, for /neural_net meme command
+RESNEXT_TOKEN="your token here"
 ```
 
 ## Contributors

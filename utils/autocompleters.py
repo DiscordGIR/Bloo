@@ -46,7 +46,7 @@ def resolve_os_version(version):
             os_version = "iOS"
     else:
         os_version = "iOS"
-    
+
     return os_version
 
 
@@ -67,6 +67,31 @@ async def get_ios_cfw():
 
     return data
 
+
+@cached(ttl=3600)
+async def get_bypasses():
+    """Gets all apps supported by the bypass API
+
+    Returns
+    -------
+    dict
+        "ios, jailbreaks, devices"
+    """
+
+    try:
+        async with aiohttp.ClientSession() as client:
+            async with client.get(f"https://beerpsi.me/api/v1/app") as resp:
+                data = await resp.json()
+                if resp.status != 200:
+                    return []
+                return data.get("data")
+    except:
+        return []
+
+async def bypass_autocomplete(ctx: AutocompleteContext):
+    apps = await get_bypasses()
+    apps.sort(key=lambda x: x.lower())
+    return [app for app in apps if ctx.value.lower() in app.lower()][:25]
 
 async def jb_autocomplete(ctx: AutocompleteContext):
     apps = await get_ios_cfw()

@@ -14,6 +14,7 @@ import traceback
 import pytimeparse
 from PIL import Image
 from data.services.guild_service import guild_service
+from utils.autocompleters import bypass_autocomplete
 from utils.logger import logger
 from utils.config import cfg
 from utils.context import BlooContext
@@ -279,13 +280,12 @@ class Misc(commands.Cog):
                     embed.add_field(name="Complexity", value=response.get('access').get('complexity').title(), inline=False)
                     embed.set_footer(text="Powered by https://cve.circl.lu")
                     await ctx.respond(embed=embed, ephemeral=ctx.whisper)
-        except Exception as e:
-            print(e)
+        except Exception:
             raise commands.BadArgument("Could not find CVE.")
 
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="View what jailbreak detection bypasses are available for an app")
-    async def bypass(self, ctx: BlooContext, app: Option(str, description="Name of the app")):
+    async def bypass(self, ctx: BlooContext, app: Option(str, description="Name of the app", autocomplete=bypass_autocomplete)):
         await ctx.defer(ephemeral=ctx.whisper)
         async with aiohttp.ClientSession() as client:
             async with client.get(f"https://beerpsi.me/api/v1/app?search={app}") as resp:

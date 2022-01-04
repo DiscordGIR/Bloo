@@ -108,7 +108,7 @@ def format_bypass_page(ctx, entries, current_page, all_pages):
         embed.add_field(name="Note", value=ctx.current_bypass.get('notes'))
         embed.color = discord.Color.orange()
     if ctx.current_bypass.get("version") is not None:
-        embed.add_field(name="Supported by", value=f"iOS {ctx.current_bypass.get('version')}")
+        embed.add_field(name="Supported versions", value=f"This bypass works on versions {ctx.current_bypass.get('version')} of the app")
 
     embed.set_footer(text=f"Bypass {current_page} of {len(all_pages)}")
     return embed

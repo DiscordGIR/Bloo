@@ -117,6 +117,7 @@ class BlooContext(discord.context.ApplicationContext):
             except:
                 pass
             if response.content.lower() == "cancel":
+                await self.send_warning("Cancelled.", delete_after=5)
                 return
             elif not response.content and info.convertor is not None:
                 info.reprompt = True

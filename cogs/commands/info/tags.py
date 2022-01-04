@@ -205,7 +205,6 @@ class Tags(commands.Cog):
         res = await ctx.prompt(prompt)
 
         if res is None:
-            await ctx.send_warning("Cancelled.")
             return
 
         description, response = res
@@ -269,7 +268,12 @@ class Tags(commands.Cog):
             description="Please enter the content of this tag, and optionally attach an image.",
             convertor=str,
             raw=True)
-        description, response = await ctx.prompt(prompt)
+
+        response = await ctx.prompt(prompt)
+        if response is None:
+            return
+
+        description, response = response
         tag.content = description
 
         if len(response.attachments) > 0:

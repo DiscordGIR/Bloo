@@ -29,7 +29,12 @@ class Admin(commands.Cog):
             value_name="image",
             description="Please attach an image.",
             raw=True)
-        _, response = await ctx.prompt(prompt)
+
+        response = await ctx.prompt(prompt)
+        if response is None:
+            return
+
+        _, response = response
 
         if len(response.attachments) < 1:
             raise commands.BadArgument(

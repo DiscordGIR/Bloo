@@ -138,7 +138,6 @@ class Memes(commands.Cog):
         res = await ctx.prompt(prompt)
 
         if res is None:
-            await ctx.send_warning("Cancelled.")
             return
 
         description, response = res
@@ -202,7 +201,12 @@ class Memes(commands.Cog):
             description="Please enter the content of this meme, and optionally attach an image.",
             convertor=str,
             raw=True)
-        description, response = await ctx.prompt(prompt)
+
+        response = await ctx.prompt(prompt)
+        if response is None:
+            return
+
+        description, response = response
         meme.content = description
 
         if len(response.attachments) > 0:
@@ -325,7 +329,6 @@ class Memes(commands.Cog):
 
         something = await ctx.prompt(prompt)
         if something is None:
-            await ctx.send_warning("Cancelled.")
             return
 
         _, response = something
@@ -400,7 +403,6 @@ class Memes(commands.Cog):
 
         something = await ctx.prompt(prompt)
         if something is None:
-            await ctx.send_warning("Cancelled.")
             return
 
         _, response = something
@@ -462,7 +464,6 @@ class Memes(commands.Cog):
 
         something = await ctx.prompt(prompt)
         if something is None:
-            await ctx.send_warning("Cancelled.")
             return
 
         _, response = something

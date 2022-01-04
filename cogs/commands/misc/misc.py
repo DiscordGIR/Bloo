@@ -110,7 +110,7 @@ def format_bypass_page(ctx, entries, current_page, all_pages):
     if ctx.current_bypass.get("version") is not None:
         embed.add_field(name="Supported versions", value=f"This bypass works on versions {ctx.current_bypass.get('version')} of the app")
 
-    embed.set_footer(text=f"Bypass {current_page} of {len(all_pages)}")
+    embed.set_footer(text=f"Powered by beerpsi.me • Bypass {current_page} of {len(all_pages)}")
     return embed
 
 class Misc(commands.Cog):

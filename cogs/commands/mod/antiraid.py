@@ -65,7 +65,6 @@ class AntiRaid(commands.Cog):
         phrases = await ctx.prompt(prompt)
 
         if phrases is None:
-            await ctx.send_warning("Cancelled.")
             return
 
         async with ctx.typing():

@@ -378,7 +378,7 @@ class ModActions(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Lift a warn", permissions=slash_perms.mod_and_up())
-    async def liftwarn(self, ctx: BlooContext, user: Option(discord.Member, description="User to lift warn of"), case_id: Option(int, autocomplete=liftwarn_autocomplete), reason: Option(str)) -> None:
+    async def liftwarn(self, ctx: BlooContext, user: Option(discord.Member, description="User to lift warn of"), case_id: Option(str, autocomplete=liftwarn_autocomplete), reason: Option(str)) -> None:
         """Marks a warn as lifted and remove points. (mod only)
 
         Example usage

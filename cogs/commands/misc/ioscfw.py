@@ -465,16 +465,24 @@ class iOSCFW(commands.Cog):
         matching_ios = ios[0]
 
         found_jbs = []
-
         jailbreaks = response.get("jailbreak")
         for jb in jailbreaks:
             if jb.get("compatibility") is None:
                 continue
 
+            potential_version = None
             for jb_version in jb.get("compatibility"):
                 if matching_device.get("identifier") in jb_version.get("devices") and matching_ios.get("build") in jb_version.get("firmwares"):
-                    found_jbs.append(jb)
-                    break
+                    if potential_version is None:
+                        potential_version = jb_version
+                    elif potential_version.get("priority") is None and jb_version.get("priority") is not None:
+                        potential_version = jb_version
+                    elif potential_version.get("priority") is not None and jb_version.get("priority") is not None and jb_version.get("priority") < potential_version.get("priority"):
+                        potential_version = jb_version
+
+            if potential_version is not None:
+                jb["compatibility"] = [potential_version]
+                found_jbs.append(jb)
 
         if not found_jbs:
             embed = discord.Embed(
@@ -487,8 +495,15 @@ class iOSCFW(commands.Cog):
             ctx.build = matching_ios.get("build")
 
             if len(found_jbs) > 0:
-                found_jbs.sort(key=lambda x: str(
-                    x.get("priority")) or x.get("name"))
+                def sort(x):
+                    if x.get("compatibility")[0].get("priority") is not None:
+                        return x.get("compatibility")[0].get("priority")
+                    elif x.get("priority") is not None:
+                        return x.get("priority")
+                    else:
+                        return x.get("name")
+                    
+                found_jbs.sort(key=sort)
 
             # menu = CIJMenu(ctx, found_jbs, format_jailbreak_page, interaction=True, ctx=ctx, no_skip=True, whisper=ctx.whisper)
             menu = CIJMenu(ctx, found_jbs, per_page=1, page_formatter=format_jailbreak_page, show_skip_buttons=False, whisper=ctx.whisper)

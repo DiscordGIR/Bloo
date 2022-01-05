@@ -452,6 +452,7 @@ class iOSCFW(commands.Cog):
         if not devices:
             raise commands.BadArgument("No device found with that name.")
 
+        device_name = devices[0].get("name")
         device = devices[0].get("devices")[0]
         matching_device = all_devices.get(device)
 
@@ -489,7 +490,7 @@ class iOSCFW(commands.Cog):
                 description=f"Sorry, **{matching_device.get('name')}** is not jailbreakable on **{resolve_os_version(matching_ios)} {matching_ios.get('version')}**.", color=discord.Color.red())
             await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
         else:
-            ctx.device = matching_device.get("name")
+            ctx.device = device_name
             ctx.device_id = matching_device.get("identifier")
             ctx.version = f'{resolve_os_version(matching_ios)} {matching_ios.get("version")}'
             ctx.build = matching_ios.get("build")

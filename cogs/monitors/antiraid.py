@@ -179,9 +179,10 @@ class AntiRaidMonitor(commands.Cog):
             await self.report_possible_raid_phrase(message)
 
     async def detect_scam_link(self, message: discord.Message):
-       # check if message contains @everyone or @here
-        if "@everyone" not in message.content and "@here" not in message.content:
-            return False
+        # check if message contains @everyone or @here
+        if ("@everyone" not in message.content and "@here" not in message.content) and \
+            ("take it" not in message.content and "airdrop" not in message.content and "nitro" not in message.content):
+                return False
 
         # use regex to find if message contains url
         url = re.search(r'(https?://\S+)', message.content)

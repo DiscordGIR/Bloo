@@ -226,22 +226,26 @@ class Filter(commands.Cog):
             if url in message.content.lower():
                 embed = discord.Embed(title="Fake or scam jailbreak", color=discord.Color.red())
                 embed.description = f"Your message contained the link to a **fake jailbreak** ({url}).\n\nIf you installed this jailbreak, remove it from your device immediately and try to get a refund if you paid for it. Jailbreaks *never* cost money and are always free."
-                await message.reply(embed=embed)
+                await self.delete(message)
+                await self.ratelimit(message)
+                await message.channel.send(f"{message.author.mention}", embed=embed)
                 return True
 
         for url in scam_cache.scam_unlock_urls:
             if url in message.content.lower():
                 embed = discord.Embed(title="Fake or scam unlock", color=discord.Color.red())
-                embed.description = f"Your message contained the link to a **fake unlock** ({url}).\n\nIf you bought a phone second-hand and it arrived iCloud locked, contact the seller to remove it [using these instructions](https://support.apple.com/en-us/HT201351), or get a refund. If it's your own or a passed relative's device and you can prove it, contact Apple Support to remove the lock."
-                await message.reply(embed=embed)
+                embed.description = f"Your message contained the link to a **fake unlock** ({url}).\n\nIf you bought a phone second-hand and it arrived iCloud locked, contact the seller to remove it [using these instructions](https://support.apple.com/en-us/HT201351), or get a refund.\n\nIf you or a relative are the original owner of the device and you can provide the original proof of purchase, Apple Support can remove the lock.\nPlease refer to these articles: [How to remove Activation Lock](https://support.apple.com/HT201441) or [If you forgot your iPhone passcode](https://support.apple.com/HT204306)."
+                await self.delete(message)
+                await self.ratelimit(message)
+                await message.channel.send(f"{message.author.mention}", embed=embed)
                 return True
 
         return False
 
-    async def ratelimit(self, message):
+    async def ratelimit(self, message: discord.Message):
         current = message.created_at.replace(tzinfo=timezone.utc).timestamp()
         bucket = self.spam_cooldown.get_bucket(message)
-        if bucket.update_rate_limit(current):
+        if bucket.update_rate_limit(current) and not message.author.timed_out:
             try:
                 ctx = await self.bot.get_context(message)
                 ctx.author = ctx.guild.me

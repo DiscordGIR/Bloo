@@ -9,6 +9,7 @@ from discord.ext import commands
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
+from utils.misc import scam_cache
 from utils.mod.filter import find_triggered_filters
 from utils.mod.global_modactions import mute
 from utils.mod.report import manual_report, report
@@ -98,6 +99,9 @@ class Filter(commands.Cog):
 
         # run through filters
         if message.content and await self.bad_word_filter(message, db_guild):
+            return
+
+        if message.content and await self.scam_filter(message):
             return
 
         if permissions.has(message.guild, message.author, 5):
@@ -213,6 +217,23 @@ class Filter(commands.Cog):
             if not dev_role or dev_role not in message.author.roles:
                 await self.delete(message)
                 await self.ratelimit(message)
+                return True
+
+        return False
+
+    async def scam_filter(self, message: discord.Message):
+        for url in scam_cache.scam_jb_urls:
+            if url in message.content.lower():
+                embed = discord.Embed(title="Fake or scam jailbreak", color=discord.Color.red())
+                embed.description = f"Your message contained the link to a **fake jailbreak** ({url}).\n\nIf you installed this jailbreak, remove it from your device immediately and try to get a refund if you paid for it. Jailbreaks *never* cost money and are always free."
+                await message.reply(embed=embed)
+                return True
+
+        for url in scam_cache.scam_unlock_urls:
+            if url in message.content.lower():
+                embed = discord.Embed(title="Fake or scam unlock", color=discord.Color.red())
+                embed.description = f"Your message contained the link to a **fake unlock** ({url}).\n\nIf you bought a phone second-hand and it arrived iCloud locked, contact the seller to remove it [using these instructions](https://support.apple.com/en-us/HT201351), or get a refund. If it's your own or a passed relative's device and you can prove it, contact Apple Support to remove the lock."
+                await message.reply(embed=embed)
                 return True
 
         return False

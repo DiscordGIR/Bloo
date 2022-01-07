@@ -1,5 +1,7 @@
 import asyncio
+import json
 
+import aiohttp
 import discord
 from data.services.guild_service import guild_service
 
@@ -74,3 +76,30 @@ async def fetch_issue_cache(bot, cache):
             cache.cache[f"{embed.title}"] = message
         else:
             continue
+
+
+class ScamCache:
+    def __init__(self):
+        self.scam_jb_urls = []
+        self.scam_unlock_urls = []
+        self.fetch_scam_cache()
+    
+    def fetch_scam_cache(self):
+        asyncio.ensure_future(fetch_scam_cache(self))
+
+
+async def fetch_scam_cache(cache: ScamCache):
+    async with aiohttp.ClientSession() as client:
+        async with client.get("https://raw.githubusercontent.com/SlimShadyIAm/Anti-Scam-Json-List/main/antiscam.json") as resp:
+            if resp.status == 200:
+                obj = json.loads(await resp.text())
+
+                scam_jb_urls = obj.get("scamjburls")
+                if scam_jb_urls is not None:
+                    cache.scam_jb_urls = scam_jb_urls
+                
+                scam_unlock_urls = obj.get("scamideviceunlockurls")
+                if scam_unlock_urls is not None:
+                    cache.scam_unlock_urls = scam_unlock_urls
+
+scam_cache = ScamCache()

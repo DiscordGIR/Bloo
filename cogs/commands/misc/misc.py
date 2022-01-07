@@ -11,7 +11,9 @@ import datetime
 import io
 import json
 import traceback
+import os
 import pytimeparse
+import sys
 from PIL import Image
 from data.services.guild_service import guild_service
 from utils.autocompleters import bypass_autocomplete
@@ -19,7 +21,7 @@ from utils.logger import logger
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.menu import BypassMenu
-from utils.permissions.checks import PermissionsFailure, whisper, whisper_in_general
+from utils.permissions.checks import PermissionsFailure, guild_owner_and_up, whisper, whisper_in_general
 from utils.permissions.permissions import permissions
 from utils.views.menu import Menu
 
@@ -202,6 +204,21 @@ class Misc(commands.Cog):
             await ctx.respond(file=_file)
         else:
             await ctx.respond(em.url)
+
+    @guild_owner_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Restart the bot.")
+    async def restart(self, ctx: BlooContext):
+        """Restarts the bot.
+        
+        Example usage
+        -------------
+        /restart
+        
+        """
+        embed = discord.Embed(title='Restart', color=discord.Color.red(), description='Restarting...')
+        embed.set_thumbnail(url=ctx.user.avatar.url)
+        await ctx.respond_or_edit(embed=embed)
+        os.execv(sys.executable, ['python'] + sys.argv)
 
     @whisper()
     @slash_command(guild_ids=[cfg.guild_id], description="Get avatar of another user or yourself.")

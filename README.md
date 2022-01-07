@@ -82,8 +82,8 @@ RESNEXT_TOKEN="your token here"
   <tr>
     <td align="center"><a href="https://m1sta.xyz/"><img src="https://avatars.githubusercontent.com/u/37033149?v=4" width="100px;" alt=""/><br /><sub><b>m1stadev</b></sub></a></td>
     <td align="center"><a href="https://saadat.dev/"><img src="https://avatars.githubusercontent.com/u/41216857?v=4" width="100px;" alt=""/><br /><sub><b>mass1ve-err0r</b></sub></a></td>
-    <td align="center"><a href="https://saadat.dev/"><img src="https://avatars.githubusercontent.com/u/27446425?v=4" width="100px;" alt=""/><br /><sub><b>sqlstatement</b></sub></a></td>
-    <td align="center"><a href="https://saadat.dev/"><img src="https://avatars.githubusercontent.com/u/92439990?v=4" width="100px;" alt=""/><br /><sub><b>extradummythicc</b></sub></a></td>
+    <td align="center"><a href="https://github.com/sqlstatement"><img src="https://avatars.githubusercontent.com/u/27446425?v=4" width="100px;" alt=""/><br /><sub><b>sqlstatement</b></sub></a></td>
+    <td align="center"><a href="https://github.com/beerpiss"><img src="https://avatars.githubusercontent.com/u/92439990?v=4" width="100px;" alt=""/><br /><sub><b>beerpsi</b></sub></a></td>
   </tr>
   </table>
 
@@ -91,3 +91,4 @@ RESNEXT_TOKEN="your token here"
 Special thanks to the following people for ideas, testing, or help:
 - [Jack LaFond](https://www.jack.link/) --- creator of [tunes.ninja](https://tunes.ninja/), the bot that the Songs cog is inspired by
 - Cameren from r/jb, who has given a lot of ideas and helped with testing on many occasions
+- [Lillie](https://github.com/LillieWeeb001/) --- creator of the [fake jailbreak and iCloud bypass list](https://github.com/LillieWeeb001/Anti-Scam-Json-List) used by Bloo's filter

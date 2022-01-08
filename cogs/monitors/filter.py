@@ -225,7 +225,7 @@ class Filter(commands.Cog):
         for url in scam_cache.scam_jb_urls:
             if url in message.content.lower():
                 embed = discord.Embed(title="Fake or scam jailbreak", color=discord.Color.red())
-                embed.description = f"Your message contained the link to a **fake jailbreak** ({url}).\n\nIf you installed this jailbreak, remove it from your device immediately and try to get a refund if you paid for it. Jailbreaks *never* cost money and are always free."
+                embed.description = f"Your message contained the link to a **fake jailbreak** ({url}).\n\nIf you installed this jailbreak, remove it from your device immediately and try to get a refund if you paid for it. Jailbreaks *never* cost money and will not ask for any form of payment or survey to install them."
                 await self.delete(message)
                 await self.ratelimit(message)
                 await message.channel.send(f"{message.author.mention}", embed=embed)

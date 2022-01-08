@@ -247,6 +247,14 @@ async def issue_autocomplete(ctx: AutocompleteContext):
     return [issue_title for issue_title in issue_titles if ctx.value.lower() in issue_title.lower()][:25]
 
 
+async def rule_autocomplete(ctx: AutocompleteContext):
+    rule_titles = [(issue, ctx.bot.rule_cache.cache[issue].description) for issue in ctx.bot.rule_cache.cache]
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key[0])]
+    rule_titles.sort(key=alphanum_key)
+    return [OptionChoice(f"{title} - {description}"[:100], title) for title, description in rule_titles if ctx.value.lower() in title.lower() or ctx.value.lower() in description.lower()][:25]
+
+
 @cached(ttl=3600)
 async def fetch_repos():
     async with aiohttp.ClientSession() as client:

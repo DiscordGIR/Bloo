@@ -14,7 +14,7 @@ import traceback
 import pytimeparse
 from PIL import Image
 from data.services.guild_service import guild_service
-from utils.autocompleters import bypass_autocomplete
+from utils.autocompleters import bypass_autocomplete, rule_autocomplete
 from utils.logger import logger
 from utils.config import cfg
 from utils.context import BlooContext
@@ -320,6 +320,24 @@ class Misc(commands.Cog):
                     menu = BypassMenu(ctx, ctx.app.get("bypasses"), per_page=1, page_formatter=format_bypass_page, whisper=ctx.whisper)
                     await menu.start()
 
+    @slash_command(guild_ids=[cfg.guild_id], description="Post the embed for one of the rules")
+    async def rule(self, ctx: BlooContext, title: Option(str, autocomplete=rule_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
+        if title not in self.bot.rule_cache.cache:
+            try:
+                title = next(t for t in self.bot.rule_cache.cache if any([title.lower() in f"{rule} - {self.bot.rule_cache.cache[rule].description}"[:100].lower() for rule in self.bot.rule_cache.cache]))
+            except StopIteration:
+                raise commands.BadArgument("Rule not found! Title must match one of the embeds exactly, use autocomplete to help!")
+
+        embed = self.bot.rule_cache.cache[title]
+
+        if user_to_mention is not None:
+            title = f"Hey {user_to_mention.mention}, have a look at this!"
+        else:
+            title = None
+
+        await ctx.respond_or_edit(content=title, embed=embed)
+
+    @rule.error
     @bypass.error
     @cve.error
     @remindme.error

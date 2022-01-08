@@ -122,6 +122,10 @@ class ModViewReport(ui.View):
     async def ads(self, button: ui.Button, interaction: discord.Interaction):
         await self.handle_interaction(interaction, "ads")
 
+    @ui.button(label="scam", style=discord.ButtonStyle.primary)
+    async def scam(self, button: ui.Button, interaction: discord.Interaction):
+        await self.handle_interaction(interaction, "scam")
+
     @ui.button(label="troll", style=discord.ButtonStyle.primary)
     async def troll(self, button: ui.Button, interaction: discord.Interaction):
         await self.handle_interaction(interaction, "troll")

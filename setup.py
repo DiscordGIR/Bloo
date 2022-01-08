@@ -40,6 +40,7 @@ async def setup():
     guild.channel_general        = 123  # put in the channel IDs for your server here
     guild.channel_private        = 123  # put in the channel IDs for your server here
     guild.channel_public         = 123  # put in the channel IDs for your server here
+    guild.channel_rules          = 123  # put in the channel IDs for your server here
     guild.channel_reaction_roles = 123  # put in the channel IDs for your server here
     guild.channel_reports        = 123  # put in the channel IDs for your server here
     guild.channel_subnews        = 123  # put in the channel IDs for your server here

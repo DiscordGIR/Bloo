@@ -8,7 +8,7 @@ from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import db
 from utils.logger import logger
-from utils.misc import IssueCache
+from utils.misc import IssueCache, RuleCache
 from utils.mod.filter import find_triggered_filters
 from utils.misc import BanCache
 from utils.permissions.permissions import permissions
@@ -100,6 +100,7 @@ bot = Bot(intents=intents, allowed_mentions=mentions)
 async def on_ready():
     bot.ban_cache = BanCache(bot)
     bot.issue_cache = IssueCache(bot)
+    bot.rule_cache = RuleCache(bot)
     print("""
             88          88                          
             88          88                          

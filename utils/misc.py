@@ -6,7 +6,7 @@ import discord
 from data.services.guild_service import guild_service
 
 from utils.config import cfg
-
+from utils.logger import logger
 
 class BanCache:
     def __init__(self, bot):
@@ -60,6 +60,9 @@ async def fetch_issue_cache(bot, cache):
 
     channel = guild.get_channel(
         guild_service.get_guild().channel_common_issues)
+    if channel is None:
+        logger.warn("#rules-and-info channel not found! The /issue command will not work! Make sure to set `channel_common_issues` in the database if you want it.")
+        return
 
     async for message in channel.history(limit=None, oldest_first=True):
         if message.author.id != bot.user.id:
@@ -77,6 +80,33 @@ async def fetch_issue_cache(bot, cache):
         else:
             continue
 
+class RuleCache():
+    def __init__(self, bot):
+        self.bot = bot
+        self.fetch_rule_cache()
+
+    def fetch_rule_cache(self):
+        asyncio.ensure_future(fetch_rule_cache(self.bot, self))
+
+
+async def fetch_rule_cache(bot, cache):
+    cache.cache = {}
+    guild: discord.TextChannel = bot.get_guild(cfg.guild_id)
+    if not guild:
+        return
+
+    channel = guild.get_channel(
+        guild_service.get_guild().channel_rules)
+    if channel is None:
+        logger.warn("#rules-and-info channel not found! The /rule command will not work! Make sure to set `channel_rules` in the database if you want it.")
+        return
+
+    async for message in channel.history(limit=None, oldest_first=True):
+        if not message.embeds:
+            continue
+        
+        for embed in message.embeds:
+            cache.cache[f"{embed.title}"] = embed
 
 class ScamCache:
     def __init__(self):

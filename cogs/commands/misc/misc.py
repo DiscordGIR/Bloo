@@ -323,7 +323,7 @@ class Misc(commands.Cog):
     @slash_command(guild_ids=[cfg.guild_id], description="Post the embed for one of the rules")
     async def rule(self, ctx: BlooContext, title: Option(str, autocomplete=rule_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
         if title not in self.bot.rule_cache.cache:
-            potential_rules = [r for r in self.bot.rule_cache.cache if title.lower() == r.lower() or title == f"{r} - {self.bot.rule_cache.cache[r].description}"[:100]]
+            potential_rules = [r for r in self.bot.rule_cache.cache if title.lower() == r.lower() or title.strip() == f"{r} - {self.bot.rule_cache.cache[r].description}"[:100].strip()]
             if not potential_rules:
                 raise commands.BadArgument("Rule not found! Title must match one of the embeds exactly, use autocomplete to help!")
             title = potential_rules[0]

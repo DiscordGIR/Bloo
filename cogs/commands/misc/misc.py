@@ -337,6 +337,21 @@ class Misc(commands.Cog):
 
         await ctx.respond_or_edit(content=title, embed=embed)
 
+    @slash_command(guild_ids=[cfg.guild_id], description="Get the topic for a channel")
+    async def topic(self, ctx: BlooContext, channel: Option(discord.TextChannel, description="Channel to get the topic from", required=True), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
+        """get the channel's topic"""
+        if channel.topic is None:
+            raise commands.BadArgument("This channel has no topic!")
+
+        if user_to_mention is not None:
+            title = f"Hey {user_to_mention.mention}, have a look at this!"
+        else:
+            title = None
+
+        embed = discord.Embed(title=f"#{channel.name}'s topic", description=channel.topic, color=discord.Color.blue())
+        await ctx.respond_or_edit(content=title, embed=embed)
+
+    @topic.error
     @rule.error
     @bypass.error
     @cve.error

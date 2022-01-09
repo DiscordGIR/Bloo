@@ -76,7 +76,8 @@ class BypassDropdown(discord.ui.Select):
         options = [
             discord.SelectOption(label=app.get("name"), value=app.get("bundleId"), description="Bypasses found" if app.get("bypasses") else "No bypasses found", emoji='<:appstore:392027597648822281>') for app in apps
         ]
-        super().__init__(placeholder='Pick an app...', min_values=1, max_values=1, options=options)
+        super().__init__(placeholder='Pick an app...',
+                         min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction):
         if interaction.user != self.ctx.author:
@@ -89,7 +90,8 @@ class BypassDropdown(discord.ui.Select):
             await self.ctx.send_error("No bypasses found for this app!")
             return
 
-        menu = BypassMenu(self.ctx, app.get("bypasses"), per_page=1, page_formatter=format_bypass_page, whisper=self.ctx.whisper)
+        menu = BypassMenu(self.ctx, app.get("bypasses"), per_page=1,
+                          page_formatter=format_bypass_page, whisper=self.ctx.whisper)
         await menu.start()
 
     async def on_timeout(self):
@@ -98,9 +100,11 @@ class BypassDropdown(discord.ui.Select):
 
         await self.ctx.edit(view=self._view)
 
+
 def format_bypass_page(ctx, entries, current_page, all_pages):
     ctx.current_bypass = entries[0]
-    embed = discord.Embed(title=ctx.app.get("name"), color=discord.Color.blue())
+    embed = discord.Embed(title=ctx.app.get(
+        "name"), color=discord.Color.blue())
     embed.set_thumbnail(url=ctx.app.get("icon"))
 
     embed.description = f"You can use **{ctx.current_bypass.get('name')}**!"
@@ -108,10 +112,13 @@ def format_bypass_page(ctx, entries, current_page, all_pages):
         embed.add_field(name="Note", value=ctx.current_bypass.get('notes'))
         embed.color = discord.Color.orange()
     if ctx.current_bypass.get("version") is not None:
-        embed.add_field(name="Supported versions", value=f"This bypass works on versions {ctx.current_bypass.get('version')} of the app")
+        embed.add_field(name="Supported versions",
+                        value=f"This bypass works on versions {ctx.current_bypass.get('version')} of the app")
 
-    embed.set_footer(text=f"Powered by beerpsi.me • Bypass {current_page} of {len(all_pages)}")
+    embed.set_footer(
+        text=f"Powered by beerpsi.me • Bypass {current_page} of {len(all_pages)}")
     return embed
+
 
 class Misc(commands.Cog):
     def __init__(self, bot):
@@ -130,18 +137,18 @@ class Misc(commands.Cog):
     @slash_command(guild_ids=[cfg.guild_id], description="Send yourself a reminder after a given time gap")
     async def remindme(self, ctx: BlooContext, reminder: Option(str, description="What do you want to be reminded?"), duration: Option(str, description="When do we remind you? (i.e 1m, 1h, 1d)")):
         """Sends you a reminder after a given time gap
-        
+
         Example usage
         -------------
         /remindme 1h bake the cake
-        
+
         Parameters
         ----------
         dur : str
             "After when to send the reminder"
         reminder : str
             "What to remind you of"
-            
+
         """
         now = datetime.datetime.now()
         delta = pytimeparse.parse(duration)
@@ -164,16 +171,16 @@ class Misc(commands.Cog):
     @slash_command(guild_ids=[cfg.guild_id], description="Post large version of a given emoji")
     async def jumbo(self, ctx: BlooContext, emoji: str):
         """Posts large version of a given emoji
-        
+
         Example usage
         -------------
         /jumbo <emote>
-        
+
         Parameters
         ----------
         emoji : str
             "Emoji to enlarge"
-        
+
         """
         # non-mod users will be ratelimited
         bot_chan = guild_service.get_guild().channel_botspam
@@ -207,38 +214,39 @@ class Misc(commands.Cog):
     @slash_command(guild_ids=[cfg.guild_id], description="Get avatar of another user or yourself.")
     async def avatar(self, ctx: BlooContext, member: Option(discord.Member, description="User to get avatar of", required=False)) -> None:
         """Posts large version of a given emoji
-        
+
         Example usage
         -------------
         /avatar member:<member>
-        
+
         Parameters
         ----------
         member : discord.Member, optional
             "Member to get avatar of"
-        
+
         """
         if member is None:
             member = ctx.author
 
         await self.handle_avatar(ctx, member)
-    
+
     @whisper()
     @user_command(guild_ids=[cfg.guild_id], name="View avatar")
     async def avatar_rc(self, ctx: BlooContext, member: discord.Member):
         await self.handle_avatar(ctx, member)
-    
+
     @whisper()
     @message_command(guild_ids=[cfg.guild_id], name="View avatar")
     async def avatar_msg(self, ctx: BlooContext, message: discord.Message):
         await self.handle_avatar(ctx, message.author)
-    
+
     async def handle_avatar(self, ctx, member: discord.Member):
         embed = discord.Embed(title=f"{member}'s avatar")
         animated = ["gif", "png", "jpeg", "webp"]
         not_animated = ["png", "jpeg", "webp"]
 
         avatar = member.avatar or member.default_avatar
+
         def fmt(format_):
             return f"[{format_}]({avatar.replace(format=format_, size=4096)})"
 
@@ -260,26 +268,30 @@ class Misc(commands.Cog):
     @slash_command(guild_ids=[cfg.guild_id], description="View information about a CVE")
     async def cve(self, ctx: BlooContext, id: str):
         """View information about a CVE
-        
+
         Example usage
         -------------
         /cve <id>
-        
+
         Parameters
         ----------
         id : str
             "ID of CVE to lookup"
-        
+
         """
         try:
             async with aiohttp.ClientSession() as client:
                 async with client.get(URL(f'https://cve.circl.lu/api/cve/{id}', encoded=True)) as resp:
                     response = json.loads(await resp.text())
-                    embed = discord.Embed(title=response.get('id'), color=discord.Color.random())
+                    embed = discord.Embed(title=response.get(
+                        'id'), color=discord.Color.random())
                     embed.description = response.get('summary')
-                    embed.add_field(name="Published", value=response.get('Published'), inline=True)
-                    embed.add_field(name="Last Modified", value=response.get('Modified'), inline=True)
-                    embed.add_field(name="Complexity", value=response.get('access').get('complexity').title(), inline=False)
+                    embed.add_field(name="Published", value=response.get(
+                        'Published'), inline=True)
+                    embed.add_field(name="Last Modified",
+                                    value=response.get('Modified'), inline=True)
+                    embed.add_field(name="Complexity", value=response.get(
+                        'access').get('complexity').title(), inline=False)
                     embed.set_footer(text="Powered by https://cve.circl.lu")
                     await ctx.respond(embed=embed, ephemeral=ctx.whisper)
         except Exception:
@@ -294,13 +306,16 @@ class Misc(commands.Cog):
                 try:
                     data = await resp.json()
                 except:
-                    raise commands.BadArgument("An error occured finding the app.")
+                    raise commands.BadArgument(
+                        "An error occured finding the app.")
                 finally:
                     if resp.status != 200:
-                        raise commands.BadArgument("An error occured finding the app.")
+                        raise commands.BadArgument(
+                            "An error occured finding the app.")
 
                 if data.get("status") == "Not Found":
-                    raise commands.BadArgument("The API does not recognize that app or there are no bypasses available.")
+                    raise commands.BadArgument(
+                        "The API does not recognize that app or there are no bypasses available.")
 
                 if len(data.get("data")) > 1:
                     view = discord.ui.View(timeout=30)
@@ -309,23 +324,28 @@ class Misc(commands.Cog):
                     menu = BypassDropdown(ctx, apps)
                     view.add_item(menu)
                     view.on_timeout = menu.on_timeout
-                    embed = discord.Embed(description="Which app would you like to view bypasses for?", color=discord.Color.blurple())
+                    embed = discord.Embed(
+                        description="Which app would you like to view bypasses for?", color=discord.Color.blurple())
                     await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
                 else:
                     ctx.app = data.get("data")[0]
                     bypasses = ctx.app.get("bypasses")
                     if not bypasses or bypasses is None:
-                        raise commands.BadArgument(f"{ctx.app.get('name')} has no bypasses.")
+                        raise commands.BadArgument(
+                            f"{ctx.app.get('name')} has no bypasses.")
 
-                    menu = BypassMenu(ctx, ctx.app.get("bypasses"), per_page=1, page_formatter=format_bypass_page, whisper=ctx.whisper)
+                    menu = BypassMenu(ctx, ctx.app.get(
+                        "bypasses"), per_page=1, page_formatter=format_bypass_page, whisper=ctx.whisper)
                     await menu.start()
 
     @slash_command(guild_ids=[cfg.guild_id], description="Post the embed for one of the rules")
     async def rule(self, ctx: BlooContext, title: Option(str, autocomplete=rule_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
         if title not in self.bot.rule_cache.cache:
-            potential_rules = [r for r in self.bot.rule_cache.cache if title.lower() == r.lower() or title.strip() == f"{r} - {self.bot.rule_cache.cache[r].description}"[:100].strip()]
+            potential_rules = [r for r in self.bot.rule_cache.cache if title.lower() == r.lower(
+            ) or title.strip() == f"{r} - {self.bot.rule_cache.cache[r].description}"[:100].strip()]
             if not potential_rules:
-                raise commands.BadArgument("Rule not found! Title must match one of the embeds exactly, use autocomplete to help!")
+                raise commands.BadArgument(
+                    "Rule not found! Title must match one of the embeds exactly, use autocomplete to help!")
             title = potential_rules[0]
 
         embed = self.bot.rule_cache.cache[title]
@@ -338,17 +358,19 @@ class Misc(commands.Cog):
         await ctx.respond_or_edit(content=title, embed=embed)
 
     @slash_command(guild_ids=[cfg.guild_id], description="Get the topic for a channel")
-    async def topic(self, ctx: BlooContext, channel: Option(discord.TextChannel, description="Channel to get the topic from", required=True), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
+    async def topic(self, ctx: BlooContext, channel: Option(discord.TextChannel, description="Channel to get the topic from", required=False), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
         """get the channel's topic"""
+        channel = channel or ctx.channel
         if channel.topic is None:
-            raise commands.BadArgument("This channel has no topic!")
+            raise commands.BadArgument(f"{channel.mention} has no topic!")
 
         if user_to_mention is not None:
             title = f"Hey {user_to_mention.mention}, have a look at this!"
         else:
             title = None
 
-        embed = discord.Embed(title=f"#{channel.name}'s topic", description=channel.topic, color=discord.Color.blue())
+        embed = discord.Embed(title=f"#{channel.name}'s topic",
+                              description=channel.topic, color=discord.Color.blue())
         await ctx.respond_or_edit(content=title, embed=embed)
 
     @topic.error

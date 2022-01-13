@@ -307,7 +307,9 @@ class Filter(commands.Cog):
 
                 return {}
 
-    async def detect_cij_or_eta(self, message, db_guild):
+    async def detect_cij_or_eta(self, message: discord.Message, db_guild):
+        if message.edited_at is not None:
+            return
         if permissions.has(message.guild, message.author, 2):
             return
 

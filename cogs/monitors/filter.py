@@ -329,13 +329,13 @@ class Filter(commands.Cog):
 
         if any(intent in text for intent in intent_news) and subject_and_word_in_message:
             embed = discord.Embed(color=discord.Color.orange())
-            embed.description = f"It appears you are asking about future Jailbreaks. Nobody knows when a jailbreak will be released, you can get notified about releases in #announcements by going to <#{db_guild.channel_reaction_roles}>\n\nNo, you can't downgrade unless you are on A11 (2017) or older, and have blobs (see /tag blobsfaq for more info).\nUnless you specifically saved blobs for your device or used a jailbreak with the Procursus bootstrap (Taurine, Odyssey, Chimera, odysseyra1n) when your target iOS was signed you can’t downgrade at all."
+            embed.description = f"It appears you are asking about future Jailbreaks. Nobody knows when a jailbreak will be released, you can get notified about releases in #announcements by going to <#{db_guild.channel_reaction_roles}>\n\nNo, you can't downgrade unless you have an A11 (2017) or older device, and have blobs (see /tag blobsfaq for more info).\nUnless you specifically saved blobs for your device or used a jailbreak with the Procursus bootstrap (Taurine, Odyssey, Chimera, odysseyra1n) when your target iOS was signed you can’t downgrade at all."
             embed.set_footer(
                 text="This action was performed automatically. Please disregard if incorrect.")
             await message.reply(embed=embed)
         elif any(intent in text for intent in intent_cij) and subject_and_word_in_message:
             embed = discord.Embed(color=discord.Color.orange())
-            embed.description = "It appears you are asking if you can jailbreak your device, you can find out that information by using `/canijailbreak` or in the \"Chart\" section of [ios.cfw.guide](https://ios.cfw.guide/)\n\nIf you can't jailbreak, you can't downgrade unless you are on A11 (2017) or older, and have blobs (see /tag blobsfaq for more info).\nUnless you specifically saved blobs for your device or used a jailbreak with the Procursus bootstrap (Taurine, Odyssey, Chimera, odysseyra1n) when your target iOS was signed you can’t downgrade at all."
+            embed.description = "It appears you are asking if you can jailbreak your device, you can find out that information by using `/canijailbreak` or in the \"Chart\" section of [ios.cfw.guide](https://ios.cfw.guide/)\n\nIf you can't jailbreak, you can't downgrade unless you have an A11 (2017) or older device, and have blobs (see /tag blobsfaq for more info).\nUnless you specifically saved blobs for your device or used a jailbreak with the Procursus bootstrap (Taurine, Odyssey, Chimera, odysseyra1n) when your target iOS was signed you can’t downgrade at all."
             embed.set_footer(
                 text="This action was performed automatically. Please disregard if incorrect.")
             await message.reply(embed=embed)

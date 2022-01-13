@@ -1,8 +1,11 @@
+import json
 import re
 import traceback
 from datetime import timezone
 
+import aiohttp
 import discord
+from aiocache.decorators import cached
 from data.services.guild_service import guild_service
 from discord.commands.commands import message_command, user_command
 from discord.ext import commands
@@ -58,7 +61,8 @@ class Filter(commands.Cog):
     @user_command(guild_ids=[cfg.guild_id], name="Generate report")
     async def generate_report_rc(self, ctx: BlooContext, member: discord.Member) -> None:
         if ctx.author.top_role <= member.top_role:
-            raise commands.BadArgument("Target user must have a lower role than yourself.")
+            raise commands.BadArgument(
+                "Target user must have a lower role than yourself.")
         await manual_report(self.bot, ctx.author, member)
         await ctx.send_success("Generated report!")
 
@@ -67,7 +71,8 @@ class Filter(commands.Cog):
     @message_command(guild_ids=[cfg.guild_id], name="Generate report")
     async def generate_report_msg(self, ctx: BlooContext, message: discord.Message) -> None:
         if ctx.author.top_role <= message.author.top_role:
-            raise commands.BadArgument("Target user must have a lower role than yourself.")
+            raise commands.BadArgument(
+                "Target user must have a lower role than yourself.")
         await manual_report(self.bot, ctx.author, message)
         await ctx.send_success("Generated report!")
 
@@ -110,6 +115,8 @@ class Filter(commands.Cog):
             return
         if await self.do_spoiler_newline_filter(message, db_guild):
             return
+
+        await self.detect_cij_or_eta(message, db_guild)
 
     async def nick_filter(self, member):
         triggered_words = find_triggered_filters(
@@ -224,7 +231,8 @@ class Filter(commands.Cog):
     async def scam_filter(self, message: discord.Message):
         for url in scam_cache.scam_jb_urls:
             if url in message.content.lower():
-                embed = discord.Embed(title="Fake or scam jailbreak", color=discord.Color.red())
+                embed = discord.Embed(
+                    title="Fake or scam jailbreak", color=discord.Color.red())
                 embed.description = f"Your message contained the link to a **fake jailbreak** ({url}).\n\nIf you installed this jailbreak, remove it from your device immediately and try to get a refund if you paid for it. Jailbreaks *never* cost money and will not ask for any form of payment or survey to install them."
                 await self.delete(message)
                 await self.ratelimit(message)
@@ -233,7 +241,8 @@ class Filter(commands.Cog):
 
         for url in scam_cache.scam_unlock_urls:
             if url in message.content.lower():
-                embed = discord.Embed(title="Fake or scam unlock", color=discord.Color.red())
+                embed = discord.Embed(
+                    title="Fake or scam unlock", color=discord.Color.red())
                 embed.description = f"Your message contained the link to a **fake unlock** ({url}).\n\nIf you bought a phone second-hand and it arrived iCloud locked, contact the seller to remove it [using these instructions](https://support.apple.com/en-us/HT201351), or get a refund.\n\nIf you or a relative are the original owner of the device and you can provide the original proof of purchase, Apple Support can remove the lock.\nPlease refer to these articles: [How to remove Activation Lock](https://support.apple.com/HT201441) or [If you forgot your iPhone passcode](https://support.apple.com/HT204306)."
                 await self.delete(message)
                 await self.ratelimit(message)
@@ -287,6 +296,51 @@ class Filter(commands.Cog):
             await message.delete()
         except Exception:
             pass
+
+    @cached(ttl=3600)
+    async def fetch_cij_or_news_database(self):
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://raw.githubusercontent.com/DiscordGIR/CIJOrNewsFilter/main/database.json") as resp:
+                if resp.status == 200:
+                    data = await resp.text()
+                    return json.loads(data)
+
+                return {}
+
+    async def detect_cij_or_eta(self, message, db_guild):
+        if permissions.has(message.guild, message.author, 3):
+            return
+
+        cij_filter_response = await self.fetch_cij_or_news_database()
+        intent_cij = cij_filter_response.get("intent_cij")
+        intent_news = cij_filter_response.get("intent_news")
+
+        verb = cij_filter_response.get("verb")
+        # subject = cij_filter_response.get("subject")
+
+        if None in [intent_cij, intent_news, verb]:
+            logger.error(
+                f"Something went wrong with CIJ or ETA filter; {intent_cij}, {intent_news}, {verb}")
+            return
+
+        text = message.content.lower()
+        # subject_and_word_in_message = any(
+        #     v in text for v in verb) and any(s in text for s in subject)
+        word_in_message = any(
+            v in text for v in verb)
+
+        if any(intent in text for intent in intent_news) and word_in_message:
+            embed = discord.Embed(color=discord.Color.orange())
+            embed.description = f"It appears you are asking about future Jailbreaks. Nobody knows when a jailbreak will be released, you can get notified about releases in #announcements by going to <#{db_guild.channel_reaction_roles}>"
+            embed.set_footer(
+                text="This action was performed automatically. Please disregard if incorrect.")
+            await message.reply(embed=embed)
+        elif any(intent in text for intent in intent_cij) and word_in_message:
+            embed = discord.Embed(color=discord.Color.orange())
+            embed.description = "It appears you are asking if you can jailbreak your device, you can find out that information by using `/canijailbreak` or in the \"Chart\" section of [ios.cfw.guide](https://ios.cfw.guide/)"
+            embed.set_footer(
+                text="This action was performed automatically. Please disregard if incorrect.")
+            await message.reply(embed=embed)
 
     @generate_report_msg.error
     @generate_report_rc.error

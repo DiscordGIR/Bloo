@@ -22,6 +22,7 @@ job_defaults = {
 
 BOT_GLOBAL = None
 
+
 class Tasks():
     """Job scheduler for unmute, using APScheduler"""
 
@@ -32,7 +33,7 @@ class Tasks():
         ----------
         bot : discord.Client
             instance of Discord client
-            
+
         """
 
         global BOT_GLOBAL
@@ -63,7 +64,7 @@ class Tasks():
             User to unmute
         date : datetime.datetime
             When to unmute
-            
+
         """
 
         self.tasks.add_job(untimeout_callback, 'date', id=str(
@@ -78,7 +79,7 @@ class Tasks():
             User to remove role
         date : datetime.datetime
             When to remove role
-            
+
         """
 
         self.tasks.add_job(remove_bday_callback, 'date', id=str(
@@ -91,7 +92,7 @@ class Tasks():
         ----------
         id : int
             User whose unmute task we want to cancel
-            
+
         """
 
         self.tasks.remove_job(str(id), 'default')
@@ -103,19 +104,19 @@ class Tasks():
         ----------
         id : int
             User whose unmute task we want to cancel
-            
+
         """
 
         self.tasks.remove_job(str(id), 'default')
 
     def cancel_unbirthday(self, id: int) -> None:
         """When we manually unset the birthday of a user given by ID `id`, stop the task to remove the role.
-        
+
         Parameters
         ----------
         id : int
             User whose task we want to cancel
-            
+
         """
         self.tasks.remove_job(str(id+1), 'default')
 
@@ -131,7 +132,7 @@ class Tasks():
             Giveaway message ID
         date : datetime.datetime
             When to end the giveaway
-            
+
         """
 
         self.tasks.add_job(end_giveaway_callback, 'date', id=str(
@@ -148,11 +149,12 @@ class Tasks():
             What to remind them of
         date : datetime.datetime
             When to remind
-            
+
         """
 
         self.tasks.add_job(reminder_callback, 'date', id=str(
             id+random.randint(5, 100)), next_run_time=date, args=[id, reminder], misfire_grace_time=3600)
+
 
 def untimeout_callback(id: int) -> None:
     """Callback function for actually unmuting. Creates asyncio task
@@ -162,7 +164,7 @@ def untimeout_callback(id: int) -> None:
     ----------
     id : int
         User who we want to unmute
-        
+
     """
 
     BOT_GLOBAL.loop.create_task(remove_timeout(id))
@@ -175,12 +177,10 @@ async def remove_timeout(id: int) -> None:
     ----------
     id : int
         User to unmute
-        
+
     """
 
     db_guild = guild_service.get_guild()
-    guild = BOT_GLOBAL.get_guild(cfg.guild_id)
-    user: discord.Member = guild.get_member(id)
 
     case = Case(
         _id=db_guild.case_id,
@@ -190,8 +190,10 @@ async def remove_timeout(id: int) -> None:
         reason="Temporary mute expired.",
     )
     guild_service.inc_caseid()
-    user_service.add_case(user.id, case)
+    user_service.add_case(id, case)
 
+    guild = BOT_GLOBAL.get_guild(cfg.guild_id)
+    user: discord.Member = guild.get_member(id)
     if user is None:
         return
 
@@ -226,7 +228,7 @@ async def remind(id, reminder):
         ID of user to remind
     reminder : str
         body of reminder
-        
+
     """
 
     guild = BOT_GLOBAL.get_guild(cfg.guild_id)
@@ -254,7 +256,7 @@ def remove_bday_callback(id: int) -> None:
     ----------
     id : int
         User who we want to unmute
-        
+
     """
 
     BOT_GLOBAL.loop.create_task(remove_bday(id))
@@ -267,7 +269,7 @@ async def remove_bday(id: int) -> None:
     ----------
     id : int
         User to remove role of
-        
+
     """
 
     db_guild = guild_service.get_guild()
@@ -294,7 +296,7 @@ def end_giveaway_callback(channel_id: int, message_id: int, winners: int) -> Non
         ID of the channel that the giveaway is in
     message_id : int
         Message ID of the giveaway
-        
+
     """
 
     BOT_GLOBAL.loop.create_task(end_giveaway(channel_id, message_id, winners))
@@ -310,7 +312,7 @@ async def end_giveaway(channel_id: int, message_id: int, winners: int) -> None:
         ID of the channel that the giveaway is in
     message_id : int
         Message ID of the giveaway
-        
+
     """
 
     guild = BOT_GLOBAL.get_guild(cfg.guild_id)
@@ -325,7 +327,8 @@ async def end_giveaway(channel_id: int, message_id: int, winners: int) -> None:
 
     embed = message.embeds[0]
     embed.set_footer(text="Ended")
-    embed.set_field_at(0, name="Time remaining", value="This giveaway has ended.")
+    embed.set_field_at(0, name="Time remaining",
+                       value="This giveaway has ended.")
     embed.timestamp = datetime.now()
     embed.color = discord.Color.default()
 

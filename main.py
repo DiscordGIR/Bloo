@@ -51,6 +51,7 @@ initial_extensions = [
         "cogs.monitors.xp",
         "cogs.monitors.sileo",
         "cogs.monitors.tweaklist",
+        "cogs.monitors.repos"
 ]
 
 intents = discord.Intents.default()

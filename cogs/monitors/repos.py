@@ -20,6 +20,9 @@ class RepoWatcher(commands.Cog):
         default_repos = [
             "apt.bingner.com",
             "apt.procurs.us",
+            "table.nickchan.gq",
+            "ftp.sudhip.com/procursus",
+            "repo.quiprr.dev/procursus",
             "apt.saurik.com",
             "apt.oldcurs.us",
             "repo.chimera.sh",

@@ -100,6 +100,7 @@ async def format_tweak_page(ctx, entries, current_page, all_pages):
 async def canister(ctx: BlooContext, interaction: bool, whisper: bool, result):
     await TweakMenu(ctx, result, per_page=1, page_formatter=format_tweak_page, whisper=whisper, start_page=25, show_skip_buttons=False, non_interaction_message=ctx.message).start()
 
+
 class TweakDropdown(discord.ui.Select):
     def __init__(self, author, entries, interaction, should_whisper):
         self.author = author

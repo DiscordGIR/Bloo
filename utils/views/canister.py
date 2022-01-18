@@ -14,7 +14,11 @@ pattern = re.compile(
 
 default_repos = [
     "apt.bingner.com",
+    "apt.elucubratus.com",
     "apt.procurs.us",
+    "table.nickchan.gq",
+    "ftp.sudhip.com/procursus",
+    "repo.quiprr.dev/procursus",
     "apt.saurik.com",
     "apt.oldcurs.us",
     "repo.chimera.sh",

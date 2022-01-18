@@ -19,6 +19,7 @@ class RepoWatcher(commands.Cog):
 
         default_repos = [
             "apt.bingner.com",
+            "apt.elucubratus.com",
             "apt.procurs.us",
             "table.nickchan.gq",
             "ftp.sudhip.com/procursus",

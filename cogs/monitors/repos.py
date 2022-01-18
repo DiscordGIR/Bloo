@@ -3,6 +3,7 @@ import re
 from discord.ext import commands
 from data.services.guild_service import guild_service
 from utils.autocompleters import fetch_repos
+from utils.views.canister import default_repos
 from utils.permissions.permissions import permissions
 
 
@@ -25,6 +26,9 @@ class RepoWatcher(commands.Cog):
         repos = [repo['uri'].lower() for repo in repos if repo.get('uri')]
 
         potential_repo = url.group(0).rstrip("/").lower()
+        if any(repo in potential_repo for repo in default_repos):
+            return
+
         if potential_repo not in repos:
             return
 

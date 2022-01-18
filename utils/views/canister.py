@@ -14,7 +14,11 @@ pattern = re.compile(
 
 default_repos = [
     "apt.bingner.com",
+    "apt.elucubratus.com",
     "apt.procurs.us",
+    "table.nickchan.gq",
+    "ftp.sudhip.com/procursus",
+    "repo.quiprr.dev/procursus",
     "apt.saurik.com",
     "apt.oldcurs.us",
     "repo.chimera.sh",
@@ -95,6 +99,7 @@ async def format_tweak_page(ctx, entries, current_page, all_pages):
 
 async def canister(ctx: BlooContext, interaction: bool, whisper: bool, result):
     await TweakMenu(ctx, result, per_page=1, page_formatter=format_tweak_page, whisper=whisper, start_page=25, show_skip_buttons=False, non_interaction_message=ctx.message).start()
+
 
 class TweakDropdown(discord.ui.Select):
     def __init__(self, author, entries, interaction, should_whisper):
@@ -206,14 +211,18 @@ class TweakDropdown(discord.ui.Select):
                 discord.ui.Button(label='Add Repo to Sileo', emoji="<:sileo:679466569407004684>",
                                   url=f'https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={repo}', style=discord.ButtonStyle.url),
                 discord.ui.Button(label='Add Repo to Zebra', emoji="<:zebra:911433583032422420>",
-                                  url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={repo}', style=discord.ButtonStyle.url)
+                                  url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={repo}', style=discord.ButtonStyle.url),
+                discord.ui.Button(label='Other Package Managers', emoji="<:cydiasileosplit:932650041099825232>",
+                                  url=f'https://sharerepo.stkc.win/?repo={repo}', style=discord.ButtonStyle.url)
             ]
         else:
             extra_buttons = [
                 discord.ui.Button(label='Cannot add default repo', emoji="<:sileo:679466569407004684>",
                                   url=f'https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={repo}', disabled=True, style=discord.ButtonStyle.url),
                 discord.ui.Button(label='Cannot add default repo', emoji="<:zebra:911433583032422420>",
-                                  url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={repo}', disabled=True, style=discord.ButtonStyle.url)
+                                  url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={repo}', disabled=True, style=discord.ButtonStyle.url),
+                discord.ui.Button(label='Cannot add default repo', emoji="<:cydiasileosplit:932650041099825232>",
+                                  url=f'https://sharerepo.stkc.win/?repo={repo}', disabled=True, style=discord.ButtonStyle.url)
             ]
         if depiction is not None:
             extra_buttons.insert(0,

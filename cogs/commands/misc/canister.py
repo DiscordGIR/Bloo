@@ -101,6 +101,7 @@ async def canister_repo(ctx: BlooContext, interaction: bool, whisper: bool, resu
 
     await TweakMenu(ctx, result, per_page=1, page_formatter=format_repo_page, whisper=whisper).start()
 
+
 class Canister(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -118,7 +119,7 @@ class Canister(commands.Cog):
             return
 
         pattern = re.compile(
-            r".*?(?<!\[)+\[\[((?!\s+)([\w+\ \&\+\-\<\>\#\:\;\%]){2,})\]\](?!\])+.*")
+            r".*?(?<!\[)+\[\[((?!\s+)([\w+\ \&\+\-\<\>\#\:\;\%\(\)]){2,})\]\](?!\])+.*")
         if not pattern.match(message.content):
             return
 

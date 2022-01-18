@@ -17,9 +17,23 @@ class RepoWatcher(commands.Cog):
         if message.channel.id == guild_service.get_guild().channel_general and not permissions.has(message.guild, message.author, 5):
             return
 
+        default_repos = [
+            "apt.bingner.com",
+            "apt.procurs.us",
+            "apt.saurik.com",
+            "apt.oldcurs.us",
+            "repo.chimera.sh",
+            "diatr.us/apt",
+            "repo.theodyssey.dev",
+        ]
+
         url = re.search(r'(https?://\S+)', message.content)
         if url is None:
             return
+
+        for r in default_repos:
+            if r in url.group(0).lower():
+                return
 
         repos = await fetch_repos()
         repos = [repo['uri'].lower() for repo in repos if repo.get('uri')]

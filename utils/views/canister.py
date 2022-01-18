@@ -206,14 +206,18 @@ class TweakDropdown(discord.ui.Select):
                 discord.ui.Button(label='Add Repo to Sileo', emoji="<:sileo:679466569407004684>",
                                   url=f'https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={repo}', style=discord.ButtonStyle.url),
                 discord.ui.Button(label='Add Repo to Zebra', emoji="<:zebra:911433583032422420>",
-                                  url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={repo}', style=discord.ButtonStyle.url)
+                                  url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={repo}', style=discord.ButtonStyle.url),
+                discord.ui.Button(label='Other Package Managers', emoji="<:cydiasileosplit:932650041099825232>",
+                                  url=f'https://sharerepo.stkc.win/?repo={repo}', style=discord.ButtonStyle.url)
             ]
         else:
             extra_buttons = [
                 discord.ui.Button(label='Cannot add default repo', emoji="<:sileo:679466569407004684>",
                                   url=f'https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={repo}', disabled=True, style=discord.ButtonStyle.url),
                 discord.ui.Button(label='Cannot add default repo', emoji="<:zebra:911433583032422420>",
-                                  url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={repo}', disabled=True, style=discord.ButtonStyle.url)
+                                  url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={repo}', disabled=True, style=discord.ButtonStyle.url),
+                discord.ui.Button(label='Cannot add default repo', emoji="<:cydiasileosplit:932650041099825232>",
+                                  url=f'https://sharerepo.stkc.win/?repo={repo}', disabled=True, style=discord.ButtonStyle.url)
             ]
         if depiction is not None:
             extra_buttons.insert(0,

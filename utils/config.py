@@ -34,11 +34,11 @@ class Config:
             self.ban_appeal_guild_id = int(
                 os.environ.get("BAN_APPEAL_GUILD_ID"))
 
-            if os.environ.get("BAN_APPEAL_MOD_ROLE"):
-                self.setup_warning("BAN_APPEAL_MOD_ROLE")
+            if os.environ.get("BAN_APPEAL_MOD_ROLE") is None:
+                self.setup_error("BAN_APPEAL_MOD_ROLE")
 
-            if os.environ.get("BAN_APPEAL_URL"):
-                self.setup_warning("BAN_APPEAL_URL")
+            if os.environ.get("BAN_APPEAL_URL") is None:
+                self.setup_error("BAN_APPEAL_URL")
 
             self.ban_appeal_url = os.environ.get("BAN_APPEAL_URL")
             self.ban_appeal_mod_role = int(

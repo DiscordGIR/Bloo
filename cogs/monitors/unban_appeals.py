@@ -9,6 +9,8 @@ from utils.context import BlooContext
 from utils.config import cfg
 from discord.utils import format_dt
 
+from utils.permissions.permissions import permissions
+
 
 def chunks(lst, n):
     """Yield successive n-sized chunks from lst."""
@@ -19,6 +21,23 @@ def chunks(lst, n):
 class UnbanAppeals(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.Cog.listener()
+    async def on_member_join(self, member: discord.Member):
+        if member.guild.id != cfg.ban_appeal_guild_id:
+            return
+        main_guild = self.bot.get_guild(cfg.guild_id)
+        main_guild_member = main_guild.get_member(member.id)
+        if main_guild_member is None:
+            return
+
+        if not permissions.has(main_guild, member, 5):
+            try:
+                await member.send(embed=discord.Embed(description=f"You cannot join {member.guild} unless you are banned!", color=discord.Color.orange()))
+            except:
+                pass
+
+            await member.kick(reason="You are not allowed to join this server.")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):

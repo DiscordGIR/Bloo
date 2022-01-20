@@ -8,6 +8,8 @@ from data.services.user_service import user_service
 from utils.context import BlooContext
 from utils.mod.mod_logs import prepare_ban_log, prepare_kick_log
 
+from utils.config import cfg
+
 
 async def add_kick_case(ctx: BlooContext, user, reason, db_guild):
     """Adds kick case to user
@@ -83,7 +85,12 @@ async def notify_user_warn(ctx: BlooContext, user: discord.User, db_user, db_gui
 
     if cur_points >= 600:
         # automatically ban user if more than 600 points
-        dmed = await notify_user(user, f"You were banned from {ctx.guild.name} for reaching 600 or more points.", log)
+
+        if cfg.ban_appeal_url is None:
+            dmed = await notify_user(user, f"You were banned from {ctx.guild.name} for reaching 600 or more points.", log)
+        else:
+            dmed = await notify_user(user, f"You were banned from {ctx.guild.name} for reaching 600 or more points.\n\nIf you would like to appeal your ban, please fill out this form: <{cfg.ban_appeal_url}>", log)
+
         log_kickban = await add_ban_case(ctx, user, "600 or more warn points reached.", db_guild)
         await user.ban(reason="600 or more warn points reached.")
         ctx.bot.ban_cache.ban(user.id)

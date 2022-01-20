@@ -1,5 +1,6 @@
 import discord
-from discord.commands import (Option, message_command, slash_command, user_command)
+from discord.commands import (
+    Option, message_command, slash_command, user_command)
 from discord.ext import commands
 from discord.utils import format_dt
 
@@ -16,6 +17,7 @@ from utils.permissions.checks import PermissionsFailure, whisper
 from utils.permissions.converters import user_resolver
 from utils.permissions.permissions import permissions
 from utils.views.menu import Menu
+
 
 def format_xptop_page(ctx, entries, current_page, all_pages):
     """Formats the page for the xptop embed.
@@ -74,14 +76,7 @@ def format_cases_page(ctx, entries, current_page, all_pages):
 
     """
     page_count = 0
-    pun_map = {
-        "KICK": "Kicked",
-        "BAN": "Banned",
-        "CLEM": "Clemmed",
-        "UNBAN": "Unbanned",
-        "MUTE": "Duration",
-        "REMOVEPOINTS": "Points removed"
-    }
+
     user = ctx.case_user
     u = user_service.get_user(user.id)
 
@@ -96,20 +91,36 @@ def format_cases_page(ctx, entries, current_page, all_pages):
         formatted = f"{format_dt(timestamp, style='F')} ({format_dt(timestamp, style='R')})"
         if case._type == "WARN" or case._type == "LIFTWARN":
             if case.lifted:
-                embed.add_field(name=f'{determine_emoji(case._type)} Case #{case._id} [LIFTED]', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Lifted by**: {case.lifted_by_tag}\n**Lift reason**: {case.lifted_reason}\n**Warned on**: {formatted}', inline=True)
+                embed.add_field(name=f'{determine_emoji(case._type)} Case #{case._id} [LIFTED]',
+                                value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Lifted by**: {case.lifted_by_tag}\n**Lift reason**: {case.lifted_reason}\n**Warned on**: {formatted}', inline=True)
             elif case._type == "LIFTWARN":
-                embed.add_field(name=f'{determine_emoji(case._type)} Case #{case._id} [LIFTED (legacy)]', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {formatted}', inline=True)
+                embed.add_field(name=f'{determine_emoji(case._type)} Case #{case._id} [LIFTED (legacy)]',
+                                value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {formatted}', inline=True)
             else:
-                embed.add_field(name=f'{determine_emoji(case._type)} Case #{case._id}', value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {formatted}', inline=True)
+                embed.add_field(name=f'{determine_emoji(case._type)} Case #{case._id}',
+                                value=f'**Points**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Warned on**: {formatted}', inline=True)
         elif case._type == "MUTE" or case._type == "REMOVEPOINTS":
-            embed.add_field(name=f'{determine_emoji(case._type)} Case #{case._id}', value=f'**{pun_map[case._type]}**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {formatted}', inline=True)
+            embed.add_field(name=f'{determine_emoji(case._type)} Case #{case._id}',
+                            value=f'**{pun_map[case._type]}**: {case.punishment}\n**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {formatted}', inline=True)
         elif case._type in pun_map:
-            embed.add_field(name=f'{determine_emoji(case._type)} Case #{case._id}', value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**{pun_map[case._type]} on**: {formatted}', inline=True)
+            embed.add_field(name=f'{determine_emoji(case._type)} Case #{case._id}',
+                            value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**{pun_map[case._type]} on**: {formatted}', inline=True)
         else:
-            embed.add_field(name=f'{determine_emoji(case._type)} Case #{case._id}', value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {formatted}', inline=True)
+            embed.add_field(name=f'{determine_emoji(case._type)} Case #{case._id}',
+                            value=f'**Reason**: {case.reason}\n**Moderator**: {case.mod_tag}\n**Time**: {formatted}', inline=True)
     embed.set_footer(
         text=f"Page {current_page} of {len(all_pages)} - newest cases first ({page_count} total cases)")
     return embed
+
+
+pun_map = {
+    "KICK": "Kicked",
+    "BAN": "Banned",
+    "CLEM": "Clemmed",
+    "UNBAN": "Unbanned",
+    "MUTE": "Duration",
+    "REMOVEPOINTS": "Points removed"
+}
 
 
 def determine_emoji(type):
@@ -295,7 +306,8 @@ class UserInfo(commands.Cog):
         results = [(i, m) for (i, m) in results if ctx.guild.get_member(
             m._id) is not None][0:100]
 
-        menu = Menu(ctx, results, per_page=10, page_formatter=format_xptop_page, whisper=ctx.whisper)
+        menu = Menu(ctx, results, per_page=10,
+                    page_formatter=format_xptop_page, whisper=ctx.whisper)
         await menu.start()
 
     @whisper()
@@ -338,7 +350,8 @@ class UserInfo(commands.Cog):
 
         ctx.case_user = user
 
-        menu = Menu(ctx, cases, per_page=10, page_formatter=format_cases_page, whisper=ctx.whisper)
+        menu = Menu(ctx, cases, per_page=10,
+                    page_formatter=format_cases_page, whisper=ctx.whisper)
         await menu.start()
 
     @cases.error

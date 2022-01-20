@@ -17,13 +17,17 @@ from utils.autocompleters import liftwarn_autocomplete
 from utils.config import cfg
 from utils.logger import logger
 from utils.context import BlooContext
-from utils.mod.mod_logs import (prepare_editreason_log, prepare_liftwarn_log, prepare_mute_log, prepare_removepoints_log, prepare_unban_log, prepare_unmute_log, prepare_warn_log)
-from utils.mod.modactions_helpers import (add_ban_case, add_kick_case, notify_user, notify_user_warn, submit_public_log)
+from utils.mod.mod_logs import (prepare_editreason_log, prepare_liftwarn_log, prepare_mute_log,
+                                prepare_removepoints_log, prepare_unban_log, prepare_unmute_log, prepare_warn_log)
+from utils.mod.modactions_helpers import (
+    add_ban_case, add_kick_case, notify_user, notify_user_warn, submit_public_log)
 from utils.mod.global_modactions import warn
 from utils.permissions.checks import PermissionsFailure, always_whisper, mod_and_up, whisper
-from utils.permissions.converters import (mods_and_above_external_resolver, mods_and_above_member_resolver, user_resolver)
+from utils.permissions.converters import (
+    mods_and_above_external_resolver, mods_and_above_member_resolver, user_resolver)
 from utils.permissions.slash_perms import slash_perms
 from utils.views.modactions import WarnView
+
 
 class ModActions(commands.Cog):
     def __init__(self, bot):
@@ -52,7 +56,7 @@ class ModActions(commands.Cog):
 
         if points < 1:  # can't warn for negative/0 points
             raise commands.BadArgument(message="Points can't be lower than 1.")
-        
+
         await warn(ctx, user, points, reason)
 
     @mod_and_up()
@@ -62,7 +66,7 @@ class ModActions(commands.Cog):
         member = await mods_and_above_external_resolver(ctx, member)
         view = WarnView(ctx, member)
         await ctx.respond(embed=discord.Embed(description=f"Choose a warn reason for {member.mention}.", color=discord.Color.blurple()), view=view, ephemeral=True)
-    
+
     @mod_and_up()
     @always_whisper()
     @message_command(guild_ids=[cfg.guild_id], name="Warn 50 points")
@@ -189,7 +193,8 @@ class ModActions(commands.Cog):
             await member.timeout(until=time, reason=reason)
             ctx.tasks.schedule_untimeout(member.id, time)
         except ConflictingIdError:
-            raise commands.BadArgument("The database thinks this user is already muted.")
+            raise commands.BadArgument(
+                "The database thinks this user is already muted.")
 
         guild_service.inc_caseid()
         user_service.add_case(member.id, case)
@@ -218,7 +223,7 @@ class ModActions(commands.Cog):
             "Member to unmute"
         reason : str, optional
             "Reason for unmute, by default 'No reason.'"
-            
+
         """
 
         member = await mods_and_above_member_resolver(ctx, member)
@@ -267,7 +272,7 @@ class ModActions(commands.Cog):
             "The user to be banned, doesn't have to be part of the guild"
         reason : str, optional
             "Reason for ban, by default 'No reason.'"
-            
+
         """
 
         user = await mods_and_above_external_resolver(ctx, user)
@@ -288,7 +293,11 @@ class ModActions(commands.Cog):
         log = await add_ban_case(ctx, user, reason, db_guild)
 
         if not member_is_external:
-            await notify_user(user, f"You have been banned from {ctx.guild.name}", log)
+            if cfg.ban_appeal_url is None:
+                await notify_user(user, f"You have been banned from {ctx.guild.name}", log)
+            else:
+                await notify_user(user, f"You have been banned from {ctx.guild.name}\n\nIf you would like to appeal your ban, please fill out this form: <{cfg.ban_appeal_url}>", log)
+
             await user.ban(reason=reason)
         else:
             # hackban for user not currently in guild
@@ -362,7 +371,7 @@ class ModActions(commands.Cog):
         ----------
         limit : int, optional
             "Number of messages to purge, must be > 0, by default 0 for error handling"
-            
+
         """
 
         if limit <= 0:

@@ -27,14 +27,14 @@ class Config:
         else:
             self.setup_warning("AARON_ROLE")
 
-        if os.environ.get("UNBAN_APPEAL_GUILD_ID") is None or os.environ.get("UNBAN_APPEAL_MOD_ROLE") is None:
-            logger.info("Unban appeals monitoring is DISABLED!")
-            self.unban_appeal_guild_id = None
+        if os.environ.get("BAN_APPEAL_GUILD_ID") is None or os.environ.get("BAN_APPEAL_MOD_ROLE") is None:
+            logger.info("Ban appeals monitoring is DISABLED!")
+            self.ban_appeal_guild_id = None
         else:
-            self.unban_appeal_guild_id = int(
-                os.environ.get("UNBAN_APPEAL_GUILD_ID"))
-            self.unban_appeal_mod_role = int(
-                os.environ.get("UNBAN_APPEAL_MOD_ROLE"))
+            self.ban_appeal_guild_id = int(
+                os.environ.get("BAN_APPEAL_GUILD_ID"))
+            self.ban_appeal_mod_role = int(
+                os.environ.get("BAN_APPEAL_MOD_ROLE"))
 
         if os.environ.get("LOGGING_WEBHOOK_URL") is not None:
             logger.info("Discord webhook logging is ENABLED!")

@@ -52,6 +52,11 @@ AARON_ID=123 # ID of whoever owns the server
 DB_HOST="host.docker.internal"
 DB_PORT=27017
 
+# this is optional, if you want ban appeal form support
+BAN_APPEAL_URL=""
+BAN_APPEAL_GUILD_ID=12345
+BAN_APPEAL_MOD_ROLE=12345
+
 # this is optional, set this for development
 # (it's False by default for production)
 DEV=True

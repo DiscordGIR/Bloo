@@ -24,7 +24,7 @@ class UnbanAppeals(commands.Cog):
     async def on_message(self, message: discord.Message):
         if message.guild is None:
             return
-        if message.guild.id != cfg.unban_appeal_guild_id:
+        if message.guild.id != cfg.ban_appeal_guild_id:
             return
         if not message.webhook_id:
             return
@@ -43,7 +43,7 @@ class UnbanAppeals(commands.Cog):
 
         thread = await message.create_thread(name=f"{unban_username} ({unban_id})")
         mods_to_ping = " ".join(member.mention for member in message.guild.get_role(
-            cfg.unban_appeal_mod_role).members)
+            cfg.ban_appeal_mod_role).members)
 
         embeds_to_send = []
         if appealer is not None:
@@ -141,5 +141,5 @@ class UnbanAppeals(commands.Cog):
 
 
 def setup(bot):
-    if cfg.unban_appeal_guild_id is not None and cfg.unban_appeal_mod_role is not None:
+    if cfg.ban_appeal_guild_id is not None and cfg.ban_appeal_mod_role is not None:
         bot.add_cog(UnbanAppeals(bot))

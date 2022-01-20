@@ -49,6 +49,7 @@ initial_extensions = [
     "cogs.monitors.songs",
     "cogs.monitors.xp",
     "cogs.monitors.jailbreak_monitors",
+    "cogs.monitors.unban_appeals",
 ]
 
 intents = discord.Intents.default()

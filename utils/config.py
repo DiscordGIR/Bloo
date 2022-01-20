@@ -2,6 +2,7 @@ import os
 from dotenv.main import load_dotenv
 from utils.logger import logger
 
+
 class Config:
     def __init__(self):
         load_dotenv()
@@ -14,18 +15,27 @@ class Config:
 
         if self.owner_id is None:
             self.setup_error("OWNER_ID")
-            
+
         self.aaron_id = os.environ.get("AARON_ID")
         if self.aaron_id is None:
             self.setup_error("AARON_ID")
         self.aaron_id = int(self.aaron_id)
-        
+
         self.aaron_role = os.environ.get("AARON_ROLE")
         if self.aaron_role is not None:
             self.aaron_role = int(self.aaron_role)
         else:
             self.setup_warning("AARON_ROLE")
-        
+
+        if os.environ.get("UNBAN_APPEAL_GUILD_ID") is None or os.environ.get("UNBAN_APPEAL_MOD_ROLE") is None:
+            logger.info("Unban appeals monitoring is DISABLED!")
+            self.unban_appeal_guild_id = None
+        else:
+            self.unban_appeal_guild_id = int(
+                os.environ.get("UNBAN_APPEAL_GUILD_ID"))
+            self.unban_appeal_mod_role = int(
+                os.environ.get("UNBAN_APPEAL_MOD_ROLE"))
+
         if os.environ.get("LOGGING_WEBHOOK_URL") is not None:
             logger.info("Discord webhook logging is ENABLED!")
         else:
@@ -35,14 +45,18 @@ class Config:
 
         self.dev = os.environ.get("DEV") is not None
 
-        logger.info(f"Bloo will be running in: {self.guild_id} in \033[1m{'DEVELOPMENT' if self.dev else 'PRODUCTION'}\033[0m mode")
+        logger.info(
+            f"Bloo will be running in: {self.guild_id} in \033[1m{'DEVELOPMENT' if self.dev else 'PRODUCTION'}\033[0m mode")
         logger.info(f"Bot owned by: {self.owner_id}")
 
     def setup_warning(self, k: str):
-        logger.warn('.env file does not have key {}. Some features may not function as intended.'.format(k))
-        
+        logger.warn(
+            '.env file does not have key {}. Some features may not function as intended.'.format(k))
+
     def setup_error(self, k: str):
-        logger.error('.env file is not correctly set up! Missing key {}'.format(k))
+        logger.error(
+            '.env file is not correctly set up! Missing key {}'.format(k))
         exit(1)
+
 
 cfg = Config()

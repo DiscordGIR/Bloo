@@ -10,6 +10,12 @@ from utils.config import cfg
 from discord.utils import format_dt
 
 
+def chunks(lst, n):
+    """Yield successive n-sized chunks from lst."""
+    for i in range(0, len(lst), n):
+        yield lst[i:i + n]
+
+
 class UnbanAppeals(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -36,30 +42,42 @@ class UnbanAppeals(commands.Cog):
             appealer = None
 
         thread = await message.create_thread(name=f"{unban_username} ({unban_id})")
-        for mod in message.guild.get_role(cfg.unban_appeal_mod_role).members:
-            await thread.add_user(mod)
+        mods_to_ping = " ".join(member.mention for member in message.guild.get_role(
+            cfg.unban_appeal_mod_role).members)
 
+        embeds_to_send = []
         if appealer is not None:
-            await thread.send(embed=await self.generate_userinfo(appealer))
+            # await thread.send(embed=await self.generate_userinfo(appealer))
+            embeds_to_send.append(await self.generate_userinfo(appealer))
             cases_embeds = await self.generate_cases(appealer)
             if cases_embeds is not None:
-                for case_embed in cases_embeds:
-                    await thread.send(embed=case_embed)
+                # await thread.send(embeds=cases_embeds)
+                embeds_to_send.extend(cases_embeds)
             else:
-                await thread.send(embed=discord.Embed(color=discord.Color.green(), description="No cases found for this user."))
+                # await thread.send(embed=discord.Embed(color=discord.Color.green(), description="No cases found for this user."))
+                embeds_to_send.append(discord.Embed(
+                    color=discord.Color.green(), description="No cases found for this user."))
             if message.guild.get_member(appealer.id) is not None:
-                await thread.send(f"✅ {appealer.mention} is in the unban appeals server!")
+                embeds_to_send.append(discord.Embed(
+                    description=f"{appealer.mention} is in the unban appeals server!", color=discord.Color.green()))
+                # await thread.send(embed=discord.Embed(f"{appealer.mention} is in the unban appeals server!", color=discord.Color.green()))
             else:
-                await thread.send(f"❌ {appealer} did not join the unban appeals server!")
+                embeds_to_send.append(discord.Embed(
+                    description=f"{appealer} did not join the unban appeals server!", color=discord.Color.red()))
+                # await thread.send(embed=discord.Embed(f"{appealer} did not join the unban appeals server!", color=discord.Color.red()))
+
+            embeds_chunks = list(chunks(embeds_to_send, 10))
+            for chunk in embeds_chunks:
+                await thread.send(embeds=chunk)
         else:
-            await thread.send(f"❌ Hmm, I couldn't find {unban_username} ({unban_id}) from Discord's API. Maybe this is not a valid user!")
+            await thread.send(embed=discord.Embed(description=f"Hmm, I couldn't find {unban_username} ({unban_id}) from Discord's API. Maybe this is not a valid user!", color=discord.Color.red()))
 
-        await thread.send(unban_id)
-
-        m = await thread.send(f"Please vote with whether or not you want to unban this user!", allowed_mentions=discord.AllowedMentions(roles=True))
+        m = await thread.send(mods_to_ping, embed=discord.Embed(description=f"Please vote with whether or not you want to unban this user!", color=discord.Color.orange()), allowed_mentions=discord.AllowedMentions(roles=True))
         await m.add_reaction("🔺")
         await m.add_reaction("🔻")
         await m.add_reaction("❌")
+
+        await thread.send(unban_id)
 
     async def generate_userinfo(self, appealer: discord.User):
         results = user_service.get_user(appealer.id)
@@ -89,10 +107,6 @@ class UnbanAppeals(commands.Cog):
         # reverse so newest cases are first
         cases.reverse()
 
-        def chunks(lst, n):
-            """Yield successive n-sized chunks from lst."""
-            for i in range(0, len(lst), n):
-                yield lst[i:i + n]
         cases_chunks = list(chunks(cases, 10))
 
         embeds = []

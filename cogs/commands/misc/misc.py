@@ -297,46 +297,48 @@ class Misc(commands.Cog):
         except Exception:
             raise commands.BadArgument("Could not find CVE.")
 
-    # @whisper_in_general()
-    # @slash_command(guild_ids=[cfg.guild_id], description="View what jailbreak detection bypasses are available for an app")
-    async def bypass(self, ctx: BlooContext, app: Option(str, description="Name of the app", autocomplete=bypass_autocomplete)):
-        await ctx.defer(ephemeral=ctx.whisper)
-        async with aiohttp.ClientSession() as client:
-            async with client.get(f"https://beerpsi.me/api/v1/app?search={app}") as resp:
-                try:
-                    data = await resp.json()
-                except:
-                    raise commands.BadArgument(
-                        "An error occured finding the app.")
-                finally:
-                    if resp.status != 200:
-                        raise commands.BadArgument(
-                            "An error occured finding the app.")
+    @whisper_in_general()
+    @slash_command(guild_ids=[cfg.guild_id], description="This command is temporarily disabled.")
+    # async def bypass(self, ctx: BlooContext, app: Option(str, description="Name of the app", autocomplete=bypass_autocomplete)):
+    async def bypass(self, ctx: BlooContext):
+        raise commands.BadArgument("This command is temporarily disabled.")
+        # await ctx.defer(ephemeral=ctx.whisper)
+        # async with aiohttp.ClientSession() as client:
+        #     async with client.get(f"https://beerpsi.me/api/v1/app?search={app}") as resp:
+        #         try:
+        #             data = await resp.json()
+        #         except:
+        #             raise commands.BadArgument(
+        #                 "An error occured finding the app.")
+        #         finally:
+        #             if resp.status != 200:
+        #                 raise commands.BadArgument(
+        #                     "An error occured finding the app.")
 
-                if data.get("status") == "Not Found":
-                    raise commands.BadArgument(
-                        "The API does not recognize that app or there are no bypasses available.")
+        #         if data.get("status") == "Not Found":
+        #             raise commands.BadArgument(
+        #                 "The API does not recognize that app or there are no bypasses available.")
 
-                if len(data.get("data")) > 1:
-                    view = discord.ui.View(timeout=30)
-                    apps = data.get("data")[:25]
-                    apps.sort(key=lambda x: x.get("name"))
-                    menu = BypassDropdown(ctx, apps)
-                    view.add_item(menu)
-                    view.on_timeout = menu.on_timeout
-                    embed = discord.Embed(
-                        description="Which app would you like to view bypasses for?", color=discord.Color.blurple())
-                    await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
-                else:
-                    ctx.app = data.get("data")[0]
-                    bypasses = ctx.app.get("bypasses")
-                    if not bypasses or bypasses is None:
-                        raise commands.BadArgument(
-                            f"{ctx.app.get('name')} has no bypasses.")
+        #         if len(data.get("data")) > 1:
+        #             view = discord.ui.View(timeout=30)
+        #             apps = data.get("data")[:25]
+        #             apps.sort(key=lambda x: x.get("name"))
+        #             menu = BypassDropdown(ctx, apps)
+        #             view.add_item(menu)
+        #             view.on_timeout = menu.on_timeout
+        #             embed = discord.Embed(
+        #                 description="Which app would you like to view bypasses for?", color=discord.Color.blurple())
+        #             await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
+        #         else:
+        #             ctx.app = data.get("data")[0]
+        #             bypasses = ctx.app.get("bypasses")
+        #             if not bypasses or bypasses is None:
+        #                 raise commands.BadArgument(
+        #                     f"{ctx.app.get('name')} has no bypasses.")
 
-                    menu = BypassMenu(ctx, ctx.app.get(
-                        "bypasses"), per_page=1, page_formatter=format_bypass_page, whisper=ctx.whisper)
-                    await menu.start()
+        #             menu = BypassMenu(ctx, ctx.app.get(
+        #                 "bypasses"), per_page=1, page_formatter=format_bypass_page, whisper=ctx.whisper)
+        #             await menu.start()
 
     @slash_command(guild_ids=[cfg.guild_id], description="Post the embed for one of the rules")
     async def rule(self, ctx: BlooContext, title: Option(str, autocomplete=rule_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
@@ -375,7 +377,7 @@ class Misc(commands.Cog):
 
     @topic.error
     @rule.error
-    # @bypass.error
+    @bypass.error
     @cve.error
     @remindme.error
     @jumbo.error

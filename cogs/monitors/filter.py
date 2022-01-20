@@ -114,7 +114,7 @@ class Filter(commands.Cog):
             return
         if message.author.bot:
             return
-        if permissions.has(message.guild, message.author, 6):
+        if permissions.has(message.guild, message.author, 7):
             return
         db_guild = guild_service.get_guild()
         role_submod = message.guild.get_role(db_guild.role_sub_mod)
@@ -125,11 +125,15 @@ class Filter(commands.Cog):
         if message.content and await self.bad_word_filter(message, db_guild):
             return
 
+        if permissions.has(message.guild, message.author, 6):
+            return
+
         if message.content and await self.scam_filter(message):
             return
 
         if permissions.has(message.guild, message.author, 5):
             return
+
         if message.content and await self.do_invite_filter(message, db_guild):
             return
         if await self.do_spoiler_newline_filter(message, db_guild):

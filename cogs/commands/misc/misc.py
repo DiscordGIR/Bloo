@@ -14,7 +14,7 @@ import traceback
 import pytimeparse
 from PIL import Image
 from data.services.guild_service import guild_service
-from utils.autocompleters import bypass_autocomplete, rule_autocomplete
+from utils.autocompleters import bypass_autocomplete, get_ios_cfw, rule_autocomplete
 from utils.logger import logger
 from utils.config import cfg
 from utils.context import BlooContext
@@ -116,7 +116,7 @@ def format_bypass_page(ctx, entries, current_page, all_pages):
                         value=f"This bypass works on versions {ctx.current_bypass.get('version')} of the app")
 
     embed.set_footer(
-        text=f"Powered by beerpsi.me • Bypass {current_page} of {len(all_pages)}")
+        text=f"Powered by ios.cfw.guide • Bypass {current_page} of {len(all_pages)}")
     return embed
 
 
@@ -299,46 +299,38 @@ class Misc(commands.Cog):
 
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="This command is temporarily disabled.")
-    # async def bypass(self, ctx: BlooContext, app: Option(str, description="Name of the app", autocomplete=bypass_autocomplete)):
-    async def bypass(self, ctx: BlooContext):
-        raise commands.BadArgument("This command is temporarily disabled.")
-        # await ctx.defer(ephemeral=ctx.whisper)
-        # async with aiohttp.ClientSession() as client:
-        #     async with client.get(f"https://beerpsi.me/api/v1/app?search={app}") as resp:
-        #         try:
-        #             data = await resp.json()
-        #         except:
-        #             raise commands.BadArgument(
-        #                 "An error occured finding the app.")
-        #         finally:
-        #             if resp.status != 200:
-        #                 raise commands.BadArgument(
-        #                     "An error occured finding the app.")
+    async def bypass(self, ctx: BlooContext, app: Option(str, description="Name of the app", autocomplete=bypass_autocomplete)):
+        await ctx.defer(ephemeral=ctx.whisper)
+        data = await get_ios_cfw()
+        bypasses = data.get('bypass')
+        matching_apps = [body for a, body in bypasses.items() if app.lower() in a.lower()]
 
-        #         if data.get("status") == "Not Found":
-        #             raise commands.BadArgument(
-        #                 "The API does not recognize that app or there are no bypasses available.")
+        if not matching_apps:
+            raise commands.BadArgument(
+                "The API does not recognize that app or there are no bypasses available.")
 
-        #         if len(data.get("data")) > 1:
-        #             view = discord.ui.View(timeout=30)
-        #             apps = data.get("data")[:25]
-        #             apps.sort(key=lambda x: x.get("name"))
-        #             menu = BypassDropdown(ctx, apps)
-        #             view.add_item(menu)
-        #             view.on_timeout = menu.on_timeout
-        #             embed = discord.Embed(
-        #                 description="Which app would you like to view bypasses for?", color=discord.Color.blurple())
-        #             await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
-        #         else:
-        #             ctx.app = data.get("data")[0]
-        #             bypasses = ctx.app.get("bypasses")
-        #             if not bypasses or bypasses is None:
-        #                 raise commands.BadArgument(
-        #                     f"{ctx.app.get('name')} has no bypasses.")
+        # matching_app = bypasses[matching_apps[0]]
+        # print(matching_app)
+        if len(matching_apps) > 1:
+            view = discord.ui.View(timeout=30)
+            apps = matching_apps[:25]
+            apps.sort(key=lambda x: x.get("name"))
+            menu = BypassDropdown(ctx, apps)
+            view.add_item(menu)
+            view.on_timeout = menu.on_timeout
+            embed = discord.Embed(
+                description="Which app would you like to view bypasses for?", color=discord.Color.blurple())
+            await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
+        else:
+            ctx.app = matching_apps[0]
+            bypasses = ctx.app.get("bypasses")
+            if not bypasses or bypasses is None or bypasses == [None]:
+                raise commands.BadArgument(
+                    f"{ctx.app.get('name')} has no bypasses.")
 
-        #             menu = BypassMenu(ctx, ctx.app.get(
-        #                 "bypasses"), per_page=1, page_formatter=format_bypass_page, whisper=ctx.whisper)
-        #             await menu.start()
+            menu = BypassMenu(ctx, ctx.app.get(
+                "bypasses"), per_page=1, page_formatter=format_bypass_page, whisper=ctx.whisper)
+            await menu.start()
 
     @slash_command(guild_ids=[cfg.guild_id], description="Post the embed for one of the rules")
     async def rule(self, ctx: BlooContext, title: Option(str, autocomplete=rule_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):

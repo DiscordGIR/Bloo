@@ -46,3 +46,28 @@ def find_triggered_filters(input, member: discord.Member) -> List[FilterWord]:
 
             words_found.append(word)
     return words_found
+
+def find_triggered_raid_phrases(input, member):
+    symbols = (u"абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ",
+        u"abBrdeex3nnKnmHonpcTyoxu4wwbbbeoRABBrDEEX3NNKNMHONPCTyOXU4WWbbbEOR")
+
+    tr = {ord(a): ord(b) for a, b in zip(*symbols)}
+
+    folded_message = fold(input.translate(tr).lower()).lower()
+    folded_without_spaces = "".join(folded_message.split())
+    folded_without_spaces_and_punctuation = folded_without_spaces.translate(str.maketrans('', '', string.punctuation))
+
+    if folded_message:
+        for word in guild_service.get_guild().raid_phrases:
+            if not permissions.has(member.guild, member.author, word.bypass):
+                if (word.word.lower() in folded_message) or \
+                    (not word.false_positive and word.word.lower() in folded_without_spaces) or \
+                    (not word.false_positive and word.word.lower() in folded_without_spaces_and_punctuation):
+                    # remove all whitespace, punctuation in message and run filter again
+                    if word.false_positive and word.word.lower() not in folded_message.split():
+                        continue
+
+                    return word
+    #                 await self.raid_ban(message.author)
+    #                 return True
+    # return False

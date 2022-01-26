@@ -13,6 +13,7 @@ from fold_to_ascii import fold
 from utils.config import cfg
 from utils.context import BlooOldContext
 from utils.message_cooldown import MessageTextBucket
+from utils.mod.filter import find_triggered_raid_phrases
 from utils.mod.global_modactions import mute
 from utils.mod.mod_logs import prepare_ban_log
 from utils.mod.report import report_raid, report_raid_phrase, report_spam
@@ -299,28 +300,10 @@ class AntiRaidMonitor(commands.Cog):
         if permissions.has(message.guild, message.author, 2):
             return False
 
-        #TODO: Unify filtering system
-        symbols = (u"абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ",
-                u"abBrdeex3nnKnmHonpcTyoxu4wwbbbeoRABBrDEEX3NNKNMHONPCTyOXU4WWbbbEOR")
+        if find_triggered_raid_phrases(message.content, message.author) is not None:
+            await self.raid_ban(message.author)
+            return True
 
-        tr = {ord(a): ord(b) for a, b in zip(*symbols)}
-
-        folded_message = fold(message.content.translate(tr).lower()).lower()
-        folded_without_spaces = "".join(folded_message.split())
-        folded_without_spaces_and_punctuation = folded_without_spaces.translate(str.maketrans('', '', string.punctuation))
-
-        if folded_message:
-            for word in guild_service.get_guild().raid_phrases:
-                if not permissions.has(message.guild, message.author, word.bypass):
-                    if (word.word.lower() in folded_message) or \
-                        (not word.false_positive and word.word.lower() in folded_without_spaces) or \
-                        (not word.false_positive and word.word.lower() in folded_without_spaces_and_punctuation):
-                        # remove all whitespace, punctuation in message and run filter again
-                        if word.false_positive and word.word.lower() not in folded_message.split():
-                            continue
-
-                        await self.raid_ban(message.author)
-                        return True
         return False
 
     async def report_possible_raid_phrase(self, message):

@@ -14,6 +14,8 @@ These instructions assume you are on macOS or Linux. Windows users, good luck.
 **NOT RECOMMENDED FOR PRODUCTION, BECAUSE IT'S REALY SLOW**: Optionally, you can use [MongoDB Atlas](https://www.mongodb.com/atlas/database) instead of a local Mongo server, or you can ask SlimShadyIAm on Discord for access to the shared test database. In that case, you use:
 `DB_CONNECTION_STRING=mongodb+srv://.....` instead of `DB_HOST` and `DB_PORT`.
 
+---
+
 ### Database setup
 1. Make sure you filled out the right values for the `.env` file as explained above.
 2. Open up `setup.py` and fill in **ALL** the values. The bot's permissions, and as a result the bot itself, will not work without them.
@@ -21,6 +23,8 @@ These instructions assume you are on macOS or Linux. Windows users, good luck.
     - If running the bot without Docker, activate the `virtualenv` and then run `python3 setup.py`
     - If running the bot with Docker in production, start the container then run: `docker exec -it <container name> python3 setup.py`. You can find the container name by running `docker-compose ps` in the project folder.
     - If running the bot with Docker in development, you can just run `python3 setup.py` in the integrated bash shell.
+
+---
 
 ### Production bot setup
 This setup uses Docker for deployment. You will need the following:
@@ -40,6 +44,8 @@ The bot can be updated in the future by running: `git pull && docker-compose up 
 
  <!-- > Advanced users: if you want to run Mongo in Docker, you  -->
 
+---
+
 ### Development: with Docker (recommended!)
 You will need the following installed:
 - Docker
@@ -58,6 +64,8 @@ You will need the following installed:
 
 > Note that if you make changes to the `Dockerfile`, `.devcontainer.json`, or need to install a new requirement, you need to rebuild the Docker image. You can do this through the Command Palette again, run "Remote-Containers: Rebuild Container".
 
+---
+
 ### Development: without Docker (not recommended)
 You will need the following installed:
 - `python3.9+`
@@ -71,6 +79,8 @@ You will need the following installed:
 4. Set up the .env file as shown [here](#env-file).
 5. Make sure the database is set up.
 6. `python3 main.py`
+
+---
 
 ## Contributors
 

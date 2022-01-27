@@ -3,7 +3,44 @@
 ## Setup instructions
 These instructions assume you are on macOS or Linux. Windows users, good luck.
 
-### With Docker (recommended!)
+### Setting up the `.env` file
+1. Copy the `.env.example` to a file called `.env`
+2. Start filling in the values as you want it set up.
+3. For the `DB_HOST` variable:
+    - If running the bot without Docker (not recommended), you can change `DB_HOST` to `localhost` instead. 
+    - If running Mongo without Docker, `host.docker.internal` works on macOS and Windows, on Linux you can use `172.17.0.1`. 
+    - If running Mongo in Docker, set `DB_HOST` to `mongo`
+
+**NOT RECOMMENDED FOR PRODUCTION, BECAUSE IT'S REALY SLOW**: Optionally, you can use [MongoDB Atlas](https://www.mongodb.com/atlas/database) instead of a local Mongo server, or you can ask SlimShadyIAm on Discord for access to the shared test database. In that case, you use:
+`DB_CONNECTION_STRING=mongodb+srv://.....` instead of `DB_HOST` and `DB_PORT`.
+
+### Database setup
+1. Make sure you filled out the right values for the `.env` file as explained above.
+2. Open up `setup.py` and fill in **ALL** the values. The bot's permissions, and as a result the bot itself, will not work without them.
+3. Run `setup.py`:
+    - If running the bot without Docker, activate the `virtualenv` and then run `python3 setup.py`
+    - If running the bot with Docker in production, start the container then run: `docker exec -it <container name> python3 setup.py`. You can find the container name by running `docker-compose ps` in the project folder.
+    - If running the bot with Docker in development, you can just run `python3 setup.py` in the integrated bash shell.
+
+### Production bot setup
+This setup uses Docker for deployment. You will need the following:
+- Docker
+- `docker-compose`
+- Mongo installation (optional, but recommended because it makes the setup easier. Advanced uses can also run Mongo in Docker, see `docker-compose.yml`).
+
+#### Steps
+1. Set up the `.env`. file. Keep in mind whether or not you want to use Mongo in Docker or not. 
+2. Set up the database.
+3. Skip this step if running Mongo without Docker. If you want to run Mongo in Docker, you will need to edit `docker-compose.yml` slightly. Open it and follow the comments.
+4. Run the bot using `docker-compose up -d --build`.
+
+If everything is successful, the bot should be online in a few seconds. Otherwise, check the container's logs: `docker-compose logs bloo`.
+
+The bot can be updated in the future by running: `git pull && docker-compose up -d --build --force-recreate`
+
+ <!-- > Advanced users: if you want to run Mongo in Docker, you  -->
+
+### Development: with Docker (recommended!)
 You will need the following installed:
 - Docker
 - Visual Studio Code to run the development container
@@ -21,7 +58,7 @@ You will need the following installed:
 
 > Note that if you make changes to the `Dockerfile`, `.devcontainer.json`, or need to install a new requirement, you need to rebuild the Docker image. You can do this through the Command Palette again, run "Remote-Containers: Rebuild Container".
 
-### Without Docker (not recommended)
+### Development: without Docker (not recommended)
 You will need the following installed:
 - `python3.9+`
 - `venv` (Python's virtualenv module)
@@ -34,45 +71,6 @@ You will need the following installed:
 4. Set up the .env file as shown [here](#env-file).
 5. Make sure the database is set up.
 6. `python3 main.py`
-
-## `.env` file
-
-If not using Docker, you can change `DB_HOST` to `localhost` instead. `host.docker.internal` works on macOS and Windows, on Linux you can use `172.17.0.1`.
-
-Optionally, you can use [MongoDB Atlas](https://www.mongodb.com/atlas/database) instead of a local Mongo server, or you can ask SlimShadyIAm on Discord for access to the shared test database. In that case, you use:
-`DB_CONNECTION_STRING=mongodb+srv://.....` instead of `DB_HOST` and `DB_PORT`.
-
-```
-BLOO_TOKEN="your token here"
-
-MAIN_GUILD_ID=12345
-OWNER_ID=12345
-AARON_ID=123 # ID of whoever owns the server
-
-DB_HOST="host.docker.internal"
-DB_PORT=27017
-
-# this is optional, if you want ban appeal form support
-BAN_APPEAL_URL=""
-BAN_APPEAL_GUILD_ID=12345
-BAN_APPEAL_MOD_ROLE=12345
-
-# this is optional, set this for development
-# (it's False by default for production)
-DEV=True
-
-# this is optional if you want logging to be sent to a Discord webhook
-LOGGING_WEBHOOK_URL=""
-
-# this is optional, for /sabbath command
-AARON_ROLE=123
-
-# used for automatically uploading tweak lists to paste.ee
-PASTEE_TOKEN="your API key here"
-
-# optional, for /neural_net meme command
-RESNEXT_TOKEN="your token here"
-```
 
 ## Contributors
 

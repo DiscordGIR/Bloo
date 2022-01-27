@@ -428,6 +428,34 @@ class Logging(commands.Cog):
             await private.send(embed=embed)
 
     @commands.Cog.listener()
+    async def on_interaction(self, interaction: discord.Interaction):
+        if interaction.guild is None or interaction.guild.id != cfg.guild_id:
+            return
+        data = interaction.data
+        # print(interaction.data)
+        if data.get("type") != 1:
+            return
+
+        if data.get("options") is not None:
+            options = " ".join([f'`{option.get("name")}: {option.get("value")}`' for option in data.get("options")])
+        else:
+            options = ""
+
+        db_guild = guild_service.get_guild()
+        private = interaction.guild.get_channel(db_guild.channel_private)
+
+        embed = discord.Embed(title="Member Used Command", color=discord.Color.dark_teal())
+        embed.set_thumbnail(url=interaction.user.display_avatar)
+        embed.add_field(
+            name="Member", value=f'{interaction.user} ({interaction.user.mention})', inline=True) 
+        embed.add_field(name="Command", value=f'`/{data.get("name")}` {options}', inline=False)
+        embed.timestamp = datetime.now()
+        embed.set_footer(text=interaction.user.id)
+
+        if private is not None:
+            await private.send(embed=embed)
+
+    @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
             return

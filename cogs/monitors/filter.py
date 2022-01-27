@@ -1,7 +1,7 @@
 import json
 import re
 import traceback
-from datetime import timezone
+from datetime import datetime, timezone
 
 import aiohttp
 import discord
@@ -308,6 +308,8 @@ class Filter(commands.Cog):
         log_embed.add_field(name="Word", value=word)
         log_embed.add_field(
             name="Message", value=message.content, inline=False)
+        log_embed.timestamp = datetime.utcnow()
+        log_embed.set_footer(text=message.author.id)
 
         log_channel = message.guild.get_channel(
             guild_service.get_guild().channel_private)

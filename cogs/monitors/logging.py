@@ -431,8 +431,9 @@ class Logging(commands.Cog):
     async def on_interaction(self, interaction: discord.Interaction):
         if interaction.guild is None or interaction.guild.id != cfg.guild_id:
             return
+        if interaction.type != discord.InteractionType.application_command:
+            return
         data = interaction.data
-        # print(interaction.data)
         if data.get("type") != 1:
             return
 

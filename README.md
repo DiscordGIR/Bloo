@@ -29,20 +29,6 @@ These instructions *should* work on macOS, Windows and Linux.
 Optionally, you can use [MongoDB Atlas](https://www.mongodb.com/atlas/database) instead of a local Mongo server, or you can ask SlimShadyIAm on Discord for access to the shared test database. In that case, you use:
 `DB_CONNECTION_STRING=mongodb+srv://.....` instead of `DB_HOST` and `DB_PORT`.
 
----
-
-### Database setup
-If you have an existing dump of the database, make sure Mongo is running, then you can run `mongorestore <dump foldername>`. This can also be done if running Mongo in Docker by first copying the dump to the Mongo container with `docker cp`.
-
-If setting up the database from scratch, follow these instructions:
-1. Make sure you filled out the right values for the `.env` file as explained above.
-2. Open up `setup.py` and fill in **ALL** the values. The bot's permissions, and as a result the bot itself, will not work without them.
-3. Run `setup.py`:
-    - If running the bot without Docker, follow the first few setup instructions until you need to set up the database, activate the `virtualenv` and then run `python3 setup.py`. Then you can proceed with the rest of the setup instructions.
-    - If running the bot with Docker in production, start the container then run: `docker exec -it <Bloo container name> python3 setup.py`. You can find the container name by running `docker-compose ps` in the project folder.
-    - If running the bot with Docker in development, you can just run `python3 setup.py` in the integrated bash shell.
-
----
 ## Setting up the bot
 
 ### Production setup
@@ -63,8 +49,6 @@ If everything is successful, the bot should be online in a few seconds. Otherwis
 
 The bot can be updated in the future by running: `git pull && docker-compose up -d --build --force-recreate`
 
- <!-- > Advanced users: if you want to run Mongo in Docker, you  -->
-
 ---
 
 ### Development setup: with Docker (recommended!)
@@ -80,7 +64,7 @@ You will need the following installed:
 4. Open the Command Palette (`CMD+Shift+P` or `CTRL+Shift+P`) and run "Remote-Containers: Reopen In Container"
 5. VSCode should build the Docker image and open it automatically; this may take a couple of minutes as it has to install some extensions as well.
 6. Set up the `.env` file as shown [here](#env-file).
-7. Make sure the database is set up.
+7. Make sure the database is set up (see below).
 8. Open the integrated terminal in VSCode and run the `bloo` command to start the bot with hot reload!
 
 > Note that if you make changes to the `Dockerfile`, `.devcontainer.json`, or need to install a new requirement, you need to rebuild the Docker image. You can do this through the Command Palette again, run "Remote-Containers: Rebuild Container".
@@ -98,8 +82,25 @@ You will need the following installed:
 2. `source venv/bin/activate`
 3. `pip3 install -r requirements.txt`
 4. Set up the .env file as shown [here](#env-file).
-5. Make sure the database is set up.
+5. Make sure the database is set up (see below).
 6. `python3 main.py`
+
+---
+
+### Database setup
+If you have an existing dump of the database, make sure Mongo is running, then you can run `mongorestore <dump foldername>`. This can also be done if running Mongo in Docker by first copying the dump to the Mongo container with `docker cp`.
+
+If setting up the database from scratch, follow these instructions:
+1. Make sure you filled out the right values for the `.env` file as explained above.
+2. Open up `setup.py` and fill in **ALL** the values. The bot's permissions, and as a result the bot itself, will not work without them.
+3. Run `setup.py`:
+    - If running the bot without Docker, follow the first few setup instructions until you need to set up the database, activate the `virtualenv` and then run `python3 setup.py`. Then you can proceed with the rest of the setup instructions.
+    - If running the bot with Docker in production, start the container then run: `docker exec -it <Bloo container name> python3 setup.py` (if you get an error about the container restarting, restart the container and try to run the command again immediately). You can find the container name by running `docker container ls` in the project folder. After it's setup, restart the container. **Note:** changes to `setup.py` won't be transferred until you rebuild the container. So build the container AFTER `setup.py` is set up how you want.
+    - If running the bot with Docker in development, you can just run `python3 setup.py` in the integrated bash shell.
+
+If you want to inspect or change database values:
+- If running MongoDB locally, you can install Robo3T.
+- If running MongoDB in Docker, you can use the web GUI at http://127.0.0.1:8081
 
 ---
 

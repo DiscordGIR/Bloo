@@ -1,7 +1,6 @@
 from typing import final
 import discord
-from discord.commands import Option, slash_command
-from discord.commands.commands import message_command, user_command
+from discord.commands import Option, slash_command, message_command, user_command
 from discord.ext import commands
 
 import base64

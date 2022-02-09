@@ -6,8 +6,7 @@ from io import BytesIO
 import discord
 from data.model.tag import Tag
 from data.services.guild_service import guild_service
-from discord.commands import Option, slash_command
-from discord.commands.commands import message_command, user_command
+from discord.commands import Option, slash_command, message_command, user_command
 from discord.ext import commands
 from discord.ext.commands.cooldowns import CooldownMapping
 from utils.autocompleters import tags_autocomplete

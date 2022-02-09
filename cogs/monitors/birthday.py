@@ -2,7 +2,7 @@ import traceback
 from datetime import datetime
 
 import discord
-from discord.commands.commands import Option, slash_command
+from discord.commands import Option, slash_command
 import pytz
 from discord.ext import commands, tasks
 from utils.autocompleters import date_autocompleter

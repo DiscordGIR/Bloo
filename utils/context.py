@@ -29,7 +29,7 @@ class PromptDataReaction:
         self.delete_after = delete_after
         self.raw_emoji = raw_emoji
 
-class BlooContext(discord.context.ApplicationContext):
+class BlooContext(discord.ApplicationContext):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.whisper = False

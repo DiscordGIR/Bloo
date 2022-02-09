@@ -6,7 +6,7 @@ import pytz
 from data.model.case import Case
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service
-from discord.commands.commands import Option, slash_command
+from discord.commands import Option, slash_command
 from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
 from discord.utils import format_dt

@@ -7,7 +7,7 @@ import aiohttp
 import discord
 from aiocache.decorators import cached
 from data.services.guild_service import guild_service
-from discord.commands.commands import message_command, user_command
+from discord.commands import message_command, user_command
 from discord.ext import commands
 from utils.config import cfg
 from utils.context import BlooContext

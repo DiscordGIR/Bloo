@@ -1,7 +1,7 @@
 from datetime import timezone
 import traceback
 import discord
-from discord.commands.commands import Option, slash_command
+from discord.commands import Option, slash_command
 from discord.ext import commands
 
 from data.services.guild_service import guild_service

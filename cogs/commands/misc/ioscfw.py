@@ -5,8 +5,7 @@ import traceback
 import aiohttp
 import discord
 from aiocache.decorators import cached
-from discord.commands import slash_command
-from discord.commands.commands import Option
+from discord.commands import slash_command, Option
 from discord.ext import commands
 from utils.autocompleters import (device_autocomplete, device_autocomplete_jb,
                                   get_ios_cfw, ios_beta_version_autocomplete,

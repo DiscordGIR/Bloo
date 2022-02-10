@@ -44,8 +44,8 @@ class BlooContext(discord.ApplicationContext):
                 del kwargs["delete_after"]
             return await self.edit(*args, **kwargs)
         else:
-            if kwargs.get("view") is None:
-                kwargs["view"] = discord.utils.MISSING
+            # if kwargs.get("view") is None:
+                # kwargs["view"] = discord.utils.MISSING
             return await self.respond(*args, **kwargs)
 
     async def send_success(self, description: str, title: str = "", delete_after=None):

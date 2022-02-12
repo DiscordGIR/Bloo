@@ -238,8 +238,8 @@ class iOSCFW(commands.Cog):
         for os_version in ["iOS", "tvOS", "watchOS"]:
             version = version.replace(os_version + " ", "")
         ios = response.get("ios")
-        ios = [ios for ios in ios if f"{ios.get('version')} ({ios.get('build')})" == version or ios.get(
-            'build').lower() == version.lower() or ios.get('version').lower() == version.lower()]
+        ios = [ios for ios in ios if f"{ios.get('version')} ({ios.get('uniqueBuild')})" == version or ios.get(
+            'uniqueBuild').lower() == version.lower() or ios.get('version').lower() == version.lower()]
 
         if not ios:
             raise commands.BadArgument("No firmware found with that version.")
@@ -267,8 +267,8 @@ class iOSCFW(commands.Cog):
         for os_version in ["iOS", "tvOS", "watchOS"]:
             version = version.replace(os_version + " ", "")
         ios = response.get("ios")
-        ios = [ios for ios in ios if (f"{ios.get('version')} ({ios.get('build')})" == version or ios.get(
-            'build').lower() == version.lower() or ios.get('version').lower() == version.lower()) and ios.get('beta')]
+        ios = [ios for ios in ios if (f"{ios.get('version')} ({ios.get('uniqueBuild')})" == version or ios.get(
+            'uniqueBuild').lower() == version.lower() or ios.get('version').lower() == version.lower()) and ios.get('beta')]
 
         if not ios:
             raise commands.BadArgument("No firmware found with that version.")
@@ -283,7 +283,7 @@ class iOSCFW(commands.Cog):
         embed = discord.Embed(
             title=f"{os_version} {matching_ios.get('version')}")
         embed.add_field(name="Build number",
-                        value=matching_ios.get("build"), inline=True)
+                        value=matching_ios.get("uniqueBuild"), inline=True)
 
         embed.add_field(name="Supported devices", value=len(
             matching_ios.get("devices")) or "None found", inline=True)
@@ -302,7 +302,7 @@ class iOSCFW(commands.Cog):
 
         view = discord.ui.View()
         view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label="View more on ios.cfw.guide",
-                      url=f"https://ios.cfw.guide/chart/firmware/{matching_ios.get('build')}"))
+                      url=f"https://ios.cfw.guide/chart/firmware/{matching_ios.get('uniqueBuild')}"))
 
         embed.color = discord.Color.greyple()
 
@@ -318,7 +318,7 @@ class iOSCFW(commands.Cog):
             return embed, view
 
         filtered_firmwares = [firmware for firmware in ipsw_me_firmwares if firmware.get(
-            'buildid').lower() == matching_ios.get('build').lower()]
+            'buildid').lower() == matching_ios.get('uniqueBuild').lower()]
         signed_firmwares = [
             firmware for firmware in filtered_firmwares if firmware.get('signed')]
 
@@ -409,7 +409,7 @@ class iOSCFW(commands.Cog):
             latest_firmware = supported_firmwares[-1]
             if latest_firmware:
                 embed.add_field(name="Latest firmware",
-                                value=f"{latest_firmware.get('version')} (`{latest_firmware.get('build')}`)", inline=True)
+                                value=f"{latest_firmware.get('version')} (`{latest_firmware.get('uniqueBuild')}`)", inline=True)
 
         embed.add_field(
             name="SoC", value=f"{models[0].get('soc')} chip ({models[0].get('arch')})", inline=True)
@@ -473,7 +473,7 @@ class iOSCFW(commands.Cog):
 
             potential_version = None
             for jb_version in jb.get("compatibility"):
-                if matching_device.get("identifier") in jb_version.get("devices") and matching_ios.get("build") in jb_version.get("firmwares"):
+                if matching_device.get("identifier") in jb_version.get("devices") and matching_ios.get("uniqueBuild") in jb_version.get("firmwares"):
                     if potential_version is None:
                         potential_version = jb_version
                     elif potential_version.get("priority") is None and jb_version.get("priority") is not None:
@@ -493,7 +493,7 @@ class iOSCFW(commands.Cog):
             ctx.device = device_name
             ctx.device_id = matching_device.get("identifier")
             ctx.version = f'{resolve_os_version(matching_ios)} {matching_ios.get("version")}'
-            ctx.build = matching_ios.get("build")
+            ctx.build = matching_ios.get("uniqueBuild")
 
             if len(found_jbs) > 0:
                 def sort(x):

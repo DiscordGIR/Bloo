@@ -64,7 +64,7 @@ async def get_ios_cfw():
     """
 
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://ios.cfw.guide/main.json") as resp:
+        async with session.get("https://api.appledb.dev/main.json") as resp:
             if resp.status == 200:
                 data = await resp.json()
 

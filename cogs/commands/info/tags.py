@@ -1,7 +1,9 @@
 import random
+import re
 import traceback
 from datetime import datetime
 from io import BytesIO
+from aiohttp import request
 
 import discord
 from data.model.tag import Tag
@@ -32,6 +34,197 @@ def format_tag_page(_, entries, current_page, all_pages):
     embed.set_footer(
         text=f"Page {current_page} of {len(all_pages)}")
     return embed
+
+
+def prepare_tag_embed(tag):
+    """Given a tag object, prepare the appropriate embed for it
+
+    Parameters
+    ----------
+    tag : Tag
+        Tag object from database
+
+    Returns
+    -------
+    discord.Embed
+        The embed we want to send
+    """
+    embed = discord.Embed(title=tag.name)
+    embed.description = tag.content
+    embed.timestamp = tag.added_date
+    embed.color = discord.Color.blue()
+
+    if tag.image.read() is not None:
+        embed.set_image(url="attachment://image.gif" if tag.image.content_type ==
+                        "image/gif" else "attachment://image.png")
+    embed.set_footer(
+        text=f"Added by {tag.added_by_tag} | Used {tag.use_count} times")
+    return embed
+
+
+def prepare_tag_view(tag: Tag):
+    if not tag.button_links or tag.button_links is None:
+        return
+
+    view = discord.ui.View()
+    for label, link in tag.button_links:
+        view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label=label, url=link))
+
+    return view
+
+class TagModal(discord.ui.Modal):
+    def __init__(self, tag_name, author: discord.Member, image, content_type) -> None:
+        self.tag_name = tag_name
+        self.author = author
+        self.image = image
+        self.content_type = content_type
+
+        super().__init__(title=f"Add tag {self.tag_name}")
+
+        self.add_item(
+            discord.ui.InputText(
+                label="Body of the tag",
+                placeholder="Enter the body of the tag",
+                style=discord.InputTextStyle.long,
+            )
+        )
+        
+        for i in range(2):
+            self.add_item(
+                discord.ui.InputText(
+                    label=f"Button {(i%2)+1} name",
+                    placeholder="Enter a name for the button",
+                    style=discord.InputTextStyle.short,
+                    required=False,
+                    max_length=25
+                )
+            )
+            self.add_item(
+                discord.ui.InputText(
+                    label=f"Button {(i%2)+1} link",
+                    placeholder="Enter a link for the button",
+                    style=discord.InputTextStyle.short,
+                    required=False
+                )
+            )
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user != self.author:
+            return
+
+        button_names = [child.value for child in self.children[1::2] if child.value is not None]
+        links = [child.value for child in self.children[2::2] if child.value is not None]
+
+        # make sure all links are valid URLs with regex
+        if not all(re.match(r'^(https|http)://.*', link) for link in links):
+            embed = discord.Embed(color=discord.Color.red(), description="The links must be valid URLs!")
+            await interaction.response.send_message(embeds=[embed], ephemeral=True)
+            return
+
+        if len(button_names) != len(links):
+            embed = discord.Embed(color=discord.Color.red(), description="All buttons must have labels and links!")
+            await interaction.response.send_message(embeds=[embed], ephemeral=True)
+            return
+
+        buttons = list(zip(button_names, links))
+        description = self.children[0].value
+
+        # prepare tag data for database
+        tag = Tag()
+        tag.name = self.tag_name.lower()
+        tag.content = description
+        tag.added_by_id = self.author.id
+        tag.added_by_tag = str(self.author)
+        tag.button_links = buttons
+
+        # did the user want to attach an image to this tag?
+        if self.image is not None:
+            tag.image.put(self.image, content_type=self.content_type)
+
+        # store tag in database
+        guild_service.add_tag(tag)
+
+        _file = tag.image.read()
+        if _file is not None:
+            _file = discord.File(BytesIO(
+                _file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
+
+        await interaction.response.send_message(f"Added new tag!", file=_file or None, embed=prepare_tag_embed(tag), view=prepare_tag_view(tag), delete_after=5)
+
+class EditTagModal(discord.ui.Modal):
+    def __init__(self, tag: Tag, author: discord.Member) -> None:
+        self.tag = tag
+        self.author = author
+
+        super().__init__(title=f"Edit tag {self.tag.name}")
+
+        self.add_item(
+            discord.ui.InputText(
+                label="Body of the tag",
+                placeholder="Enter the body of the tag",
+                style=discord.InputTextStyle.long,
+                value=tag.content
+            )
+        )
+        
+        for i in range(2):
+            self.add_item(
+                discord.ui.InputText(
+                    label=f"Button {(i%2)+1} name",
+                    placeholder="Enter a name for the button",
+                    style=discord.InputTextStyle.short,
+                    required=False,
+                    max_length=25,
+                    value=self.tag.button_links[i][0] if len(self.tag.button_links) > i else None
+                )
+            )
+            self.add_item(
+                discord.ui.InputText(
+                    label=f"Button {(i%2)+1} link",
+                    placeholder="Enter a link for the button",
+                    style=discord.InputTextStyle.short,
+                    required=False,
+                    value=self.tag.button_links[i][1] if len(self.tag.button_links) > i else None
+                )
+            )
+
+    async def callback(self, interaction: discord.Interaction):
+        if interaction.user != self.author:
+            return
+
+        button_names = [child.value for child in self.children[1::2] if child.value is not None]
+        links = [child.value for child in self.children[2::2] if child.value is not None]
+
+        # make sure all links are valid URLs with regex
+        if not all(re.match(r'^(https|http)://.*', link) for link in links):
+            embed = discord.Embed(color=discord.Color.red(), description="The links must be valid URLs!")
+            await interaction.response.send_message(embeds=[embed], ephemeral=True)
+            return
+
+        if len(button_names) != len(links):
+            embed = discord.Embed(color=discord.Color.red(), description="All buttons must have labels and links!")
+            await interaction.response.send_message(embeds=[embed], ephemeral=True)
+            return
+
+        buttons = list(zip(button_names, links))
+        description = self.children[0].value
+
+        # prepare tag data for database
+        self.tag.name = self.tag.name.lower()
+        self.tag.content = description
+        self.tag.added_by_id = self.author.id
+        self.tag.added_by_tag = str(self.author)
+        self.tag.button_links = buttons
+
+        # store tag in database
+        guild_service.edit_tag(self.tag)
+
+        _file = self.tag.image.read()
+        if _file is not None:
+            _file = discord.File(BytesIO(
+                _file), filename="image.gif" if self.tag.image.content_type == "image/gif" else "image.png")
+
+        await interaction.response.send_message(f"Edited tag!", file=_file or None, embed=prepare_tag_embed(self.tag), view=prepare_tag_view(self.tag), delete_after=5)
 
 
 class Tags(commands.Cog):
@@ -81,7 +274,7 @@ class Tags(commands.Cog):
         else:
             title = None
 
-        await ctx.respond(content=title, embed=await self.prepare_tag_embed(tag), file=file)
+        await ctx.respond(content=title, embed=prepare_tag_embed(tag), view=prepare_tag_view(tag), file=file)
 
     @user_command(guild_ids=[cfg.guild_id], name="Support tag")
     async def support_tag_rc(self, ctx: BlooContext, user: discord.Member) -> None:
@@ -115,7 +308,7 @@ class Tags(commands.Cog):
                 file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
 
         title = f"Hey {member.mention}, have a look at this!"
-        await ctx.respond(content=title, embed=await self.prepare_tag_embed(tag), file=file)
+        await ctx.respond(content=title, embed=prepare_tag_embed(tag), file=file)
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Display a tag", permissions=slash_perms.genius_or_submod_and_up())
@@ -171,7 +364,7 @@ class Tags(commands.Cog):
 
     @genius_or_submod_and_up()
     @tags.command(guild_ids=[cfg.guild_id], description="Add a new tag")
-    async def add(self, ctx: BlooContext, name: str) -> None:
+    async def add(self, ctx: BlooContext, name: Option(str, description="Name of the new tag"), image: Option(discord.Attachment, required=False, description="Image to show in tag")) -> None:
         """Add a tag. Optionally attach an image. (Genius only)
 
         Example usage
@@ -195,50 +388,21 @@ class Tags(commands.Cog):
         if (guild_service.get_tag(name.lower())) is not None:
             raise commands.BadArgument("Tag with that name already exists.")
 
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="description",
-            description="Please enter the content of this tag, and optionally attach an image.",
-            convertor=str,
-            raw=True)
-        res = await ctx.prompt(prompt)
-
-        if res is None:
-            return
-
-        description, response = res
-        # prepare tag data for database
-        tag = Tag()
-        tag.name = name.lower()
-        tag.content = description
-        tag.added_by_id = ctx.author.id
-        tag.added_by_tag = str(ctx.author)
-
-        # did the user want to attach an image to this tag?
-        if len(response.attachments) > 0:
+        content_type = None
+        if image is not None:
             # ensure the attached file is an image
-            image = response.attachments[0]
-            _type = image.content_type
-            if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
+            content_type = image.content_type
+            if content_type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
                 raise commands.BadArgument("Attached file was not an image.")
-            else:
-                image = await image.read()
-            # save image bytes
-            tag.image.put(image, content_type=_type)
 
-        # store tag in database
-        guild_service.add_tag(tag)
+            image = await image.to_file()
 
-        _file = tag.image.read()
-        if _file is not None:
-            _file = discord.File(BytesIO(
-                _file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
-
-        await ctx.respond(f"Added new tag!", file=_file or discord.utils.MISSING, embed=await self.prepare_tag_embed(tag))
+        modal = TagModal(tag_name=name, author=ctx.author, image=image, content_type=content_type)
+        await ctx.interaction.response.send_modal(modal)
 
     @genius_or_submod_and_up()
     @tags.command(guild_ids=[cfg.guild_id], description="Edit an existing tag")
-    async def edit(self, ctx: BlooContext, name: Option(str, autocomplete=tags_autocomplete)) -> None:
+    async def edit(self, ctx: BlooContext, name: Option(str, autocomplete=tags_autocomplete), image: Option(discord.Attachment, required=False)) -> None:
         """Edit a tag's body, optionally attach an image.
 
         Example usage
@@ -261,46 +425,26 @@ class Tags(commands.Cog):
         if tag is None:
             raise commands.BadArgument("That tag does not exist.")
 
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="description",
-            description="Please enter the content of this tag, and optionally attach an image.",
-            convertor=str,
-            raw=True)
-
-        response = await ctx.prompt(prompt)
-        if response is None:
-            return
-
-        description, response = response
-        tag.content = description
-
-        if len(response.attachments) > 0:
+        content_type = None
+        if image is not None:
             # ensure the attached file is an image
-            image = response.attachments[0]
-            _type = image.content_type
-            if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
+            content_type = image.content_type
+            if content_type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
                 raise commands.BadArgument("Attached file was not an image.")
-            else:
-                image = await image.read()
+
+            image = await image.to_file()
 
             # save image bytes
             if tag.image is not None:
-                tag.image.replace(image, content_type=_type)
+                tag.image.replace(image, content_type=content_type)
             else:
-                tag.image.put(image, content_type=_type)
+                tag.image.put(image, content_type=content_type)
         else:
             tag.image.delete()
 
-        if not guild_service.edit_tag(tag):
-            raise commands.BadArgument("An error occurred editing that tag.")
+        modal = EditTagModal(tag=tag, author=ctx.author)
+        await ctx.interaction.response.send_modal(modal)
 
-        _file = tag.image.read()
-        if _file is not None:
-            _file = discord.File(BytesIO(
-                _file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
-
-        await ctx.respond(f"Tag edited!", file=_file or discord.utils.MISSING, embed=await self.prepare_tag_embed(tag))
 
     @genius_or_submod_and_up()
     @tags.command(guild_ids=[cfg.guild_id], description="Delete a tag")
@@ -329,31 +473,6 @@ class Tags(commands.Cog):
 
         guild_service.remove_tag(name)
         await ctx.send_warning(f"Deleted tag `{tag.name}`.", delete_after=5)
-
-    async def prepare_tag_embed(self, tag):
-        """Given a tag object, prepare the appropriate embed for it
-
-        Parameters
-        ----------
-        tag : Tag
-            Tag object from database
-
-        Returns
-        -------
-        discord.Embed
-            The embed we want to send
-        """
-        embed = discord.Embed(title=tag.name)
-        embed.description = tag.content
-        embed.timestamp = tag.added_date
-        embed.color = discord.Color.blue()
-
-        if tag.image.read() is not None:
-            embed.set_image(url="attachment://image.gif" if tag.image.content_type ==
-                            "image/gif" else "attachment://image.png")
-        embed.set_footer(
-            text=f"Added by {tag.added_by_tag} | Used {tag.use_count} times")
-        return embed
 
     @edit.error
     @tag.error

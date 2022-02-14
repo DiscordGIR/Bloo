@@ -22,10 +22,11 @@ def sort_versions(version):
 
 def transform_groups(groups):
     final_groups = []
+    groups = [g for _, g in groups.items()]
     for group in groups:
-        if group.get("subgroups") is not None:
-            for subgroup in group.get('subgroups'):
-                subgroup['order'] = group.get('order')
+        if group.get("subgroup") is not None:
+            for subgroup in group.get("subgroup"):
+                subgroup["order"] = group.get("order")
                 final_groups.append(subgroup)
         else:
             final_groups.append(group)
@@ -64,7 +65,7 @@ async def get_ios_cfw():
     """
 
     async with aiohttp.ClientSession() as session:
-        async with session.get("https://ios.cfw.guide/main.json") as resp:
+        async with session.get("https://api.appledb.dev/main.json") as resp:
             if resp.status == 200:
                 data = await resp.json()
 
@@ -74,7 +75,7 @@ async def get_ios_cfw():
 async def bypass_autocomplete(ctx: AutocompleteContext):
     data = await get_ios_cfw()
     bypasses = data.get("bypass")
-    apps = list(bypasses.keys())
+    apps = [b.get("name") for _, b in bypasses.items()]
     apps.sort(key=lambda x: x.lower())
     return [app for app in apps if ctx.value.lower() in app.lower()][:25]
 
@@ -85,6 +86,7 @@ async def jb_autocomplete(ctx: AutocompleteContext):
         return []
 
     apps = apps.get("jailbreak")
+    apps = [jb for _, jb in apps.items()]
     apps.sort(key=lambda x: x["name"].lower())
     return [app["name"] for app in apps if app["name"].lower().startswith(ctx.value.lower())][:25]
 
@@ -95,6 +97,7 @@ async def ios_version_autocomplete(ctx: AutocompleteContext):
         return []
 
     versions = versions.get("ios")
+    versions = [v for _, v in versions.items()]
     versions.sort(key=lambda x: x.get("released")
                   or "1970-01-01", reverse=True)
     return [f"{resolve_os_version(v)} {v['version']} ({v['build']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and not v['beta']][:25]
@@ -106,6 +109,7 @@ async def ios_beta_version_autocomplete(ctx: AutocompleteContext):
         return []
 
     versions = versions.get("ios")
+    versions = [v for _, v in versions.items()]
     versions.sort(key=lambda x: x.get("released")
                   or "1970-01-01", reverse=True)
     return [f"{resolve_os_version(v)} {v['version']} ({v['build']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and v['beta']][:25]
@@ -117,7 +121,8 @@ async def ios_on_device_autocomplete(ctx: AutocompleteContext):
         return []
 
     ios = cfw.get("ios")
-    devices = cfw.get("groups")
+    ios = [i for _, i in ios.items()]
+    devices = cfw.get("group")
     transformed_devices = transform_groups(devices)
     selected_device = ctx.options.get("device")
 
@@ -142,7 +147,7 @@ async def device_autocomplete(ctx: AutocompleteContext):
     if res is None:
         return []
 
-    all_devices = res.get("groups")
+    all_devices = res.get("group")
     transformed_devices = transform_groups(all_devices)
     devices = [d for d in transformed_devices if (any(ctx.value.lower() in x.lower(
     ) for x in d.get('devices')) or ctx.value.lower() in d.get('name').lower())]
@@ -167,7 +172,7 @@ async def device_autocomplete_jb(ctx: AutocompleteContext):
     if res is None:
         return []
 
-    all_devices = res.get("groups")
+    all_devices = res.get("group")
     transformed_devices = transform_groups(all_devices)
     devices = [d for d in transformed_devices if (any(ctx.value.lower() in x.lower() for x in d.get(
         'devices')) or ctx.value.lower() in d.get('name').lower()) and d.get('type') not in ["TV", "Watch"]]

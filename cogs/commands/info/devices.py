@@ -57,7 +57,7 @@ class Devices(commands.Cog):
                 return
 
         response = await get_ios_cfw()
-        device_groups = response.get("groups")
+        device_groups = response.get("group")
 
         transformed_groups = transform_groups(device_groups)
         devices = [group for group in transformed_groups if group.get(
@@ -70,6 +70,7 @@ class Devices(commands.Cog):
         board = devices[0].get("devices")[0]
 
         ios = response.get("ios")
+        ios = [i for _, i in ios.items()]
         version = version.replace("iOS ", "")
         firmware = [v for v in ios if board in v.get(
             'devices') and version == v.get('version')]
@@ -135,7 +136,7 @@ class Devices(commands.Cog):
         devices_dict = defaultdict(list)
 
         response = await get_ios_cfw()
-        devices = response.get("groups")
+        devices = response.get("group")
         devices_transformed = transform_groups(devices)
 
         for device in devices_transformed:

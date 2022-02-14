@@ -75,7 +75,7 @@ async def get_ios_cfw():
 async def bypass_autocomplete(ctx: AutocompleteContext):
     data = await get_ios_cfw()
     bypasses = data.get("bypass")
-    apps = list(bypasses.keys())
+    apps = [b.get("name") for _, b in bypasses.items()]
     apps.sort(key=lambda x: x.lower())
     return [app for app in apps if ctx.value.lower() in app.lower()][:25]
 

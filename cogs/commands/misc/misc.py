@@ -298,7 +298,7 @@ class Misc(commands.Cog):
             raise commands.BadArgument("Could not find CVE.")
 
     @whisper_in_general()
-    @slash_command(guild_ids=[cfg.guild_id], description="This command is temporarily disabled.")
+    @slash_command(guild_ids=[cfg.guild_id], description="Find out how to bypass jailbreak detection for an app")
     async def bypass(self, ctx: BlooContext, app: Option(str, description="Name of the app", autocomplete=bypass_autocomplete)):
         await ctx.defer(ephemeral=ctx.whisper)
         data = await get_ios_cfw()

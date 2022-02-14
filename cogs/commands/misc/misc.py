@@ -303,7 +303,7 @@ class Misc(commands.Cog):
         await ctx.defer(ephemeral=ctx.whisper)
         data = await get_ios_cfw()
         bypasses = data.get('bypass')
-        matching_apps = [body for a, body in bypasses.items() if app.lower() in a.lower()]
+        matching_apps = [body for _, body in bypasses.items() if app.lower() in body.get("name").lower()]
 
         if not matching_apps:
             raise commands.BadArgument(

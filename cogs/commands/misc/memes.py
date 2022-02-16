@@ -26,7 +26,7 @@ def format_meme_page(_, entries, current_page, all_pages):
     embed = discord.Embed(
         title=f'All memes', color=discord.Color.blurple())
     for meme in entries:
-        desc = f"Added by: {meme.added_by_tag}\nUsed {meme.use_count} times"
+        desc = f"Added by: {meme.added_by_tag}\nUsed {meme.use_count} {'time' if meme.use_count == 1 else 'times'}"
         if meme.image.read() is not None:
             desc += "\nHas image attachment"
         embed.add_field(name=meme.name, value=desc)
@@ -286,7 +286,7 @@ class Memes(commands.Cog):
             embed.set_image(url="attachment://image.gif" if meme.image.content_type ==
                             "image/gif" else "attachment://image.png")
         embed.set_footer(
-            text=f"Added by {meme.added_by_tag} | Used {meme.use_count} times")
+            text=f"Added by {meme.added_by_tag} | Used {meme.use_count} {'time' if meme.use_count == 1 else 'times'}")
         return embed
 
     @whisper()

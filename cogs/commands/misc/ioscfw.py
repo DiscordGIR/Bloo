@@ -503,11 +503,11 @@ class iOSCFW(commands.Cog):
             if len(found_jbs) > 0:
                 def sort(x):
                     if x.get("compatibility")[0].get("priority") is not None:
-                        return x.get("compatibility")[0].get("priority")
+                        return str(x.get("compatibility")[0].get("priority"))
                     elif x.get("priority") is not None:
-                        return x.get("priority")
+                        return str(x.get("priority"))
                     else:
-                        return x.get("name")
+                        return str(x.get("name"))
                     
                 found_jbs.sort(key=sort)
 

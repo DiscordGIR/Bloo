@@ -342,6 +342,9 @@ class AntiRaidMonitor(commands.Cog):
 
         # report the user to mods
         await report_raid_phrase(self.bot, message, domain)
+
+        # delete the message so nobody (accidentally) opens it
+        await ctx.message.delete()
             
     async def raid_ban(self, user: discord.Member, reason="Raid phrase detected", dm_user=False):
         """Helper function to ban users"""

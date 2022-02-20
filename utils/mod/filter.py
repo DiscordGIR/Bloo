@@ -59,7 +59,7 @@ def find_triggered_raid_phrases(input, member):
 
     if folded_message:
         for word in guild_service.get_guild().raid_phrases:
-            if not permissions.has(member.guild, member.author, word.bypass):
+            if not permissions.has(member.guild, member, word.bypass):
                 if (word.word.lower() in folded_message) or \
                     (not word.false_positive and word.word.lower() in folded_without_spaces) or \
                     (not word.false_positive and word.word.lower() in folded_without_spaces_and_punctuation):

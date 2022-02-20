@@ -517,6 +517,36 @@ class Memes(commands.Cog):
                         raise commands.BadArgument(
                             "An error occurred generating that meme.")
 
+    @memed_and_up()
+    @memegen.command(description="AI generated text from chat history")
+    async def text(self, ctx):
+        db_guild = guild_service.get_guild()
+        is_mod = permissions.has(ctx.guild, ctx.author, 5)
+        if ctx.channel.id not in [db_guild.channel_general, db_guild.channel_botspam] and not is_mod:
+            raise commands.BadArgument(f"This command can't be used here.")
+
+        if not is_mod:
+            bucket = self.memegen_cooldown.get_bucket(ctx.guild.name)
+            current = datetime.now().timestamp()
+            # ratelimit only if the invoker is not a moderator
+            if bucket.update_rate_limit(current):
+                raise commands.BadArgument("That command is on cooldown.")
+
+        async with aiofiles.open("bloo_ai.txt", mode="r") as f:
+            lines = await f.read()
+        lines = lines.split("\n")
+        if not lines:
+            return
+
+        text_model = markovify.Text(lines)
+        for _ in range(5):
+            word = text_model.make_sentence()
+            if word:
+                await ctx.respond(word, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
+                return
+        
+        raise commands.BadArgument("Failed to generate some text. The text model probably isn't big enough yet...")
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.guild is None:
@@ -526,7 +556,7 @@ class Memes(commands.Cog):
         db_guild = guild_service.get_guild()
         if message.channel.id != db_guild.channel_general:
             return
-        if not message.content:
+        if not message.content or len(message.content) < 4:
             return
         if message.author.bot:
             return
@@ -555,23 +585,6 @@ class Memes(commands.Cog):
 
             async with aiofiles.open("bloo_ai.txt", mode="w") as f:
                 await f.write("\n".join(lines_to_write))
-
-    @memegen.command(description="mmmarkov")
-    async def text(self, ctx):
-        async with aiofiles.open("bloo_ai.txt", mode="r") as f:
-            lines = await f.read()
-        lines = lines.split("\n")
-        if not lines:
-            return
-
-        text_model = markovify.Text(lines)
-        for _ in range(5):
-            word = text_model.make_sentence()
-            if word:
-                await ctx.respond(word, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
-                return
-        
-        raise commands.BadArgument("Failed to generate some text. The text model probably isn't big enough yet...")
 
     @text.error
     @_8ball.error

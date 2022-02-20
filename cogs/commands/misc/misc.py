@@ -1,27 +1,28 @@
-from typing import final
-import discord
-from discord.commands import Option, slash_command
-from discord.commands.commands import message_command, user_command
-from discord.ext import commands
-
 import base64
-import aiohttp
-from yarl import URL
 import datetime
 import io
 import json
 import traceback
+
+import aiohttp
+import discord
+
 import pytimeparse
-from PIL import Image
 from data.services.guild_service import guild_service
-from utils.autocompleters import bypass_autocomplete, get_ios_cfw, rule_autocomplete
-from utils.logger import logger
+from discord.commands import Option, slash_command
+from discord.commands.commands import message_command, user_command
+from discord.ext import commands
+from PIL import Image
+from utils.autocompleters import (bypass_autocomplete, get_ios_cfw,
+                                  rule_autocomplete)
 from utils.config import cfg
 from utils.context import BlooContext
+from utils.logger import logger
 from utils.menu import BypassMenu
-from utils.permissions.checks import PermissionsFailure, whisper, whisper_in_general
+from utils.permissions.checks import (PermissionsFailure, whisper,
+                                      whisper_in_general)
 from utils.permissions.permissions import permissions
-from utils.views.menu import Menu
+from yarl import URL
 
 
 class PFPView(discord.ui.View):

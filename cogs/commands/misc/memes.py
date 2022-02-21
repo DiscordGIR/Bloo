@@ -621,7 +621,7 @@ class Memes(commands.Cog):
 
     @memed_and_up()
     @memegen.command(description="AI generated text based on a prompt")
-    async def aitext(self, ctx, prompt: Option(str, description="Text to base results on")):
+    async def aitext(self, ctx: BlooContext, prompt: Option(str, description="Text to base results on")):
         if cfg.open_ai_token is None:
             raise commands.BadArgument("This command is disabled.")
 
@@ -650,7 +650,11 @@ class Memes(commands.Cog):
 
                 if resp.status == 200:
                     data = await resp.json()
-                    await ctx.respond(data.get("choices")[0].get("text"), allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
+                    text = data.get("choices")[0].get("text")
+                    if find_triggered_filters(text, ctx.author) or find_triggered_raid_phrases(text, ctx.author):
+                        raise commands.BadArgument("An OpenAI API error occured.")
+
+                    await ctx.respond(text, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
                 else:
                     raise commands.BadArgument("An OpenAI API error occured.")
 

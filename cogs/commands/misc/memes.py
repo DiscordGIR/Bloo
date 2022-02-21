@@ -552,7 +552,7 @@ class Memes(commands.Cog):
         raise commands.BadArgument("Failed to generate some text. The text model probably isn't big enough yet...")
 
     @memed_and_up()
-    @memegen.command(description="AI generated text from chat history")
+    @memegen.command(description="AI generated text from chat history, demotivational meme format")
     async def aipfp(self, ctx, member: Option(discord.Member, description="Whose profile picture to use")):
         if not cfg.markov_enabled:
             raise commands.BadArgument("Markov is not enabled in the bot's config.")
@@ -617,6 +617,42 @@ class Memes(commands.Cog):
                 else:
                     raise commands.BadArgument(
                         "An error occurred generating that meme. The image is probably too small.")
+
+
+    @memed_and_up()
+    @memegen.command(description="AI generated text based on a prompt")
+    async def aitext(self, ctx, prompt: Option(str, description="Text to base results on")):
+        if cfg.open_ai_token is None:
+            raise commands.BadArgument("This command is disabled.")
+
+        db_guild = guild_service.get_guild()
+        is_mod = permissions.has(ctx.guild, ctx.author, 5)
+        if ctx.channel.id not in [db_guild.channel_general, db_guild.channel_botspam] and not is_mod:
+            raise commands.BadArgument(f"This command can't be used here.")
+
+        if not is_mod:
+            bucket = self.memegen_cooldown.get_bucket(ctx.guild.name)
+            current = datetime.now().timestamp()
+            # ratelimit only if the invoker is not a moderator
+            if bucket.update_rate_limit(current):
+                raise commands.BadArgument("That command is on cooldown.")
+
+        await ctx.defer(ephemeral=False)
+        async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {cfg.open_ai_token}", "Content-Type": "application/json"}) as client:
+            async with client.post(f"https://api.openai.com/v1/engines/text-ada-001/completions", json={
+                "prompt": prompt,
+                "temperature": 0.7,
+                "max_tokens": 64,
+                "top_p": 1,
+                "frequency_penalty": 0,
+                "presence_penalty": 0
+                }) as resp:
+
+                if resp.status == 200:
+                    data = await resp.json()
+                    await ctx.respond(data.get("choices")[0].get("text"), allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
+                else:
+                    raise commands.BadArgument("An OpenAI API error occured.")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -735,6 +771,7 @@ class Memes(commands.Cog):
 
     @text.error
     @aipfp.error
+    @aitext.error
     @_8ball.error
     @regular.error
     @motivate.error

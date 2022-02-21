@@ -443,7 +443,7 @@ class Memes(commands.Cog):
                         resp = await resp.read()
                         embed = discord.Embed()
                         embed.set_footer(
-                            text=f"Requested by {ctx.author} • /memegen")
+                            text=f"Requested by {ctx.author} • /memegen regular")
                         embed.set_image(url="attachment://image.png")
                         embed.color = discord.Color.random()
 
@@ -509,7 +509,7 @@ class Memes(commands.Cog):
                         resp = await resp.read()
                         embed = discord.Embed()
                         embed.set_footer(
-                            text=f"Requested by {ctx.author} • /memegen")
+                            text=f"Requested by {ctx.author} • /memegen motivate")
                         embed.set_image(url="attachment://image.png")
                         embed.color = discord.Color.random()
 
@@ -609,7 +609,7 @@ class Memes(commands.Cog):
                     resp = await resp.read()
                     embed = discord.Embed()
                     embed.set_footer(
-                        text=f"Requested by {ctx.author} • /memegen")
+                        text=f"Requested by {ctx.author} • /memegen aipfp")
                     embed.set_image(url="attachment://image.png")
                     embed.color = discord.Color.random()
 
@@ -651,10 +651,15 @@ class Memes(commands.Cog):
                 if resp.status == 200:
                     data = await resp.json()
                     text = data.get("choices")[0].get("text")
+                    text = discord.utils.escape_markdown(text)
                     if find_triggered_filters(text, ctx.author) or find_triggered_raid_phrases(text, ctx.author):
                         raise commands.BadArgument("An OpenAI API error occured.")
 
-                    await ctx.respond(text, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
+                    embed = discord.Embed(color=discord.Color.random())
+                    embed.add_field(name="Prompt", value=discord.utils.escape_markdown(prompt), inline=False)
+                    embed.add_field(name="Response", value=text, inline=False)
+                    embed.set_footer(text=f"Requested by {ctx.author} • /memegen aitext")
+                    await ctx.respond(embed=embed)
                 else:
                     raise commands.BadArgument("An OpenAI API error occured.")
 

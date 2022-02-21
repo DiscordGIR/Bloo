@@ -50,6 +50,10 @@ class Config:
             logger.info("Discord webhook logging is DISABLED!")
 
         self.resnext_token = os.environ.get("RESNEXT_TOKEN")
+        self.markov_enabled = os.environ.get("MARKOV_ENABLED")
+        if self.markov_enabled != "True":
+            self.markov_enabled = None
+            logger.warning("Markov is DISABLED! `/memegen text` features will not be enabled.")
 
         self.dev = os.environ.get("DEV") is not None
 

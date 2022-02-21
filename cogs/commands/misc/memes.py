@@ -4,6 +4,7 @@ import traceback
 from asyncio import Lock
 from datetime import datetime
 from io import BytesIO
+from typing import List
 
 import aiofiles
 import aiohttp
@@ -520,6 +521,9 @@ class Memes(commands.Cog):
     @memed_and_up()
     @memegen.command(description="AI generated text from chat history")
     async def text(self, ctx):
+        if not cfg.markov_enabled:
+            raise commands.BadArgument("Markov is not enabled in the bot's config.")
+
         db_guild = guild_service.get_guild()
         is_mod = permissions.has(ctx.guild, ctx.author, 5)
         if ctx.channel.id not in [db_guild.channel_general, db_guild.channel_botspam] and not is_mod:
@@ -549,12 +553,14 @@ class Memes(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
+        if not cfg.markov_enabled:
+            return
         if message.guild is None:
             return
         if message.guild.id != cfg.guild_id:
             return
         db_guild = guild_service.get_guild()
-        if message.channel.id != db_guild.channel_general:
+        if message.channel.id not in [db_guild.channel_general, db_guild.channel_jailbreak]:
             return
         if not message.content or len(message.content) < 4:
             return
@@ -585,6 +591,80 @@ class Memes(commands.Cog):
 
             async with aiofiles.open("bloo_ai.txt", mode="w") as f:
                 await f.write("\n".join(lines_to_write))
+
+    @commands.Cog.listener()
+    async def on_message_delete(self, message: discord.Message):
+        if not cfg.markov_enabled:
+            return
+        if message.guild is None:
+            return
+        if message.guild.id != cfg.guild_id:
+            return
+        db_guild = guild_service.get_guild()
+        if message.channel.id not in [db_guild.channel_general, db_guild.channel_jailbreak]:
+            return
+        if not message.content or len(message.content) < 4:
+            return
+        if message.author.bot:
+            return
+        if re.search(r'((https|http)?://\S+)', message.content):
+            return
+
+        removed = False
+        async with self.markov_lock:
+            async with aiofiles.open("bloo_ai.txt", mode="a+") as f:
+                await f.seek(0)
+                lines = await f.read()
+                if not lines:
+                    lines = []
+                else:
+                    lines = lines.split("\n")
+
+                while message.content in lines:
+                    removed = True
+                    lines.remove(message.content)
+
+            if removed:
+                async with aiofiles.open("bloo_ai.txt", mode="w") as f:
+                    await f.write("\n".join(lines))
+
+    @commands.Cog.listener()
+    async def on_bulk_message_delete(self, messages: List[discord.Message]):
+        if not cfg.markov_enabled:
+            return
+        if messages[0].guild is None:
+            return
+        if messages[0].guild.id != cfg.guild_id:
+            return
+        db_guild = guild_service.get_guild()
+
+        removed = False
+        async with self.markov_lock:
+            async with aiofiles.open("bloo_ai.txt", mode="a+") as f:
+                await f.seek(0)
+                lines = await f.read()
+                if not lines:
+                    lines = []
+                else:
+                    lines = lines.split("\n")
+
+                for message in messages:
+                    if not message.content or len(message.content) < 4:
+                        continue
+                    if message.author.bot:
+                        continue
+                    if message.channel.id not in [db_guild.channel_general, db_guild.channel_jailbreak]:
+                        return
+                    if re.search(r'((https|http)?://\S+)', message.content):
+                        continue
+
+                    while message.content in lines:
+                        removed = True
+                        lines.remove(message.content)
+
+            if removed:
+                async with aiofiles.open("bloo_ai.txt", mode="w") as f:
+                    await f.write("\n".join(lines))
 
     @text.error
     @_8ball.error

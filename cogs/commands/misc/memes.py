@@ -551,6 +551,73 @@ class Memes(commands.Cog):
         
         raise commands.BadArgument("Failed to generate some text. The text model probably isn't big enough yet...")
 
+    @memed_and_up()
+    @memegen.command(description="AI generated text from chat history")
+    async def aipfp(self, ctx, member: Option(discord.Member, description="Whose profile picture to use")):
+        if not cfg.markov_enabled:
+            raise commands.BadArgument("Markov is not enabled in the bot's config.")
+        if cfg.resnext_token is None:
+            raise commands.BadArgument("ResNext token is not set up!")
+        member: discord.Member = member
+        if member.display_avatar is None:
+            raise commands.BadArgument("That member doesn't have an avatar set.")
+
+        db_guild = guild_service.get_guild()
+        is_mod = permissions.has(ctx.guild, ctx.author, 5)
+        if ctx.channel.id not in [db_guild.channel_general, db_guild.channel_botspam] and not is_mod:
+            raise commands.BadArgument(f"This command can't be used here.")
+
+        if not is_mod:
+            bucket = self.memegen_cooldown.get_bucket(ctx.guild.name)
+            current = datetime.now().timestamp()
+            # ratelimit only if the invoker is not a moderator
+            if bucket.update_rate_limit(current):
+                raise commands.BadArgument("That command is on cooldown.")
+
+        async with aiofiles.open("bloo_ai.txt", mode="r") as f:
+            lines = await f.read()
+        lines = lines.split("\n")
+        if not lines:
+            return
+
+        text_model = markovify.Text(lines)
+        for _ in range(5):
+            sentence_1 = text_model.make_sentence()
+            while sentence_1 and not re.match(r'^[\x20-\x7E]*$', sentence_1):
+                sentence_1 = text_model.make_sentence()
+
+            sentence_2 = text_model.make_sentence()
+            while sentence_2 and not re.match(r'^[\x20-\x7E]*$', sentence_2):
+                sentence_2 = text_model.make_sentence()
+            
+            if sentence_1 and sentence_2:
+                break
+
+        if not sentence_1 or not sentence_2:
+            raise commands.BadArgument("Failed to generate some text. The text model probably isn't big enough yet...")
+
+        await ctx.defer(ephemeral=False)
+        contents_before = await member.display_avatar.with_format("png").with_size(4096).read()
+        contents = BytesIO(contents_before)
+        async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
+            form = aiohttp.FormData()
+            form.add_field(
+                "file", contents, content_type="image/png")
+            
+            async with client.post(f'https://resnext.slim.rocks/demotivational-meme?top_text={sentence_1}&bottom_text={sentence_2}', data=form) as resp:
+                if resp.status == 200:
+                    resp = await resp.read()
+                    embed = discord.Embed()
+                    embed.set_footer(
+                        text=f"Requested by {ctx.author} • /memegen")
+                    embed.set_image(url="attachment://image.png")
+                    embed.color = discord.Color.random()
+
+                    await ctx.respond(embed=embed, file=discord.File(BytesIO(resp), filename="image.png"))
+                else:
+                    raise commands.BadArgument(
+                        "An error occurred generating that meme. The image is probably too small.")
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if not cfg.markov_enabled:
@@ -667,6 +734,7 @@ class Memes(commands.Cog):
                     await f.write("\n".join(lines))
 
     @text.error
+    @aipfp.error
     @_8ball.error
     @regular.error
     @motivate.error

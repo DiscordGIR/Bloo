@@ -107,7 +107,7 @@ class Stats(commands.Cog):
         embed = discord.Embed(title="Server Information",
                               color=discord.Color.blurple())
         embed.set_thumbnail(url=guild.icon)
-        embed.add_field(name="Region", value=guild.region, inline=True)
+        embed.add_field(name="Emojis", value=len(guild.emojis), inline=True)
         embed.add_field(name="Boost Tier",
                         value=guild.premium_tier, inline=True)
         embed.add_field(name="Users", value=guild.member_count, inline=True)

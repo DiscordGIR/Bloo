@@ -6,28 +6,13 @@ from discord.commands.context import AutocompleteContext
 
 import traceback
 from data.services.guild_service import guild_service
+from utils.autocompleters import commands_list
 from utils.logger import logger
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.permissions.checks import PermissionsFailure, whisper
 from utils.permissions.permissions import permissions
 
-async def commands_list(ctx: AutocompleteContext):
-    res = []
-    for cog in ctx.bot.cogs:
-        for command in ctx.bot.cogs[cog].get_commands():
-            if isinstance(command, discord.MessageCommand) or isinstance(command, discord.UserCommand):
-                continue
-            elif isinstance(command, SlashCommandGroup):
-                for sub_command in command.subcommands:
-                    if ctx.value.lower() in f"{command.name} {sub_command.name}":
-                        res.append(f"{command.name} {sub_command.name}")
-            else:
-                if ctx.value.lower() in command.name:
-                    res.append(command.name.lower())
-
-    res.sort()
-    return res
 
 class Utilities(commands.Cog):
     def __init__(self, bot: commands.Bot):

@@ -5,6 +5,7 @@ from typing import List
 
 import aiohttp
 from aiocache import cached
+import discord
 from discord.commands.commands import OptionChoice
 from data.model.case import Case
 from data.services.guild_service import guild_service
@@ -262,3 +263,34 @@ async def repo_autocomplete(ctx: AutocompleteContext):
         "slug") and repo.get("slug") is not None]
     repos.sort()
     return [repo for repo in repos if ctx.value.lower() in repo.lower()][:25]
+
+
+async def commands_list(ctx: AutocompleteContext):
+    res = []
+    for cog in ctx.bot.cogs:
+        for command in ctx.bot.cogs[cog].get_commands():
+            if isinstance(command, discord.MessageCommand) or isinstance(command, discord.UserCommand):
+                continue
+            elif isinstance(command, discord.SlashCommandGroup):
+                for sub_command in command.subcommands:
+                    if ctx.value.lower() in f"{command.name} {sub_command.name}":
+                        res.append(f"{command.name} {sub_command.name}")
+            else:
+                if ctx.value.lower() in command.name:
+                    res.append(command.name.lower())
+
+    res.sort()
+    return res
+
+async def command_names_list(ctx: AutocompleteContext):
+    res = []
+    for cog in ctx.bot.cogs:
+        for command in ctx.bot.cogs[cog].get_commands():
+            if isinstance(command, discord.MessageCommand) or isinstance(command, discord.UserCommand):
+                continue
+            else:
+                if ctx.value.lower() in command.name:
+                    res.append(command.name.lower())
+
+    res.sort()
+    return res

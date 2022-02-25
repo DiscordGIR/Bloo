@@ -4,6 +4,7 @@ from discord.ext import commands
 
 import os
 
+from data.services.user_service import user_service
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.database import db
@@ -78,6 +79,12 @@ class Bot(commands.Bot):
         if permissions.has(interaction.user.guild, interaction.user, 6):
             return await super().process_application_commands(interaction)
 
+        db_user = user_service.get_user(interaction.user.id)
+        if db_user.command_bans.get(interaction.data.get("name")):
+            ctx = await self.get_application_context(interaction)
+            await ctx.send_error("You are not allowed to use that command!")
+            return
+
         options = interaction.data.get("options")
         if options is None or not options:
             return await super().process_application_commands(interaction)
@@ -89,7 +96,8 @@ class Bot(commands.Bot):
             message_content, interaction.user)
 
         if triggered_words:
-            await interaction.response.send_message("Your interaction contained a filtered word. Aborting!", ephemeral=True)
+            ctx = await self.get_application_context(interaction)
+            await ctx.send_error("Your interaction contained a filtered word. Aborting!")
             return
 
         return await super().process_application_commands(interaction)

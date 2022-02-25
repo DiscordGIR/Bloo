@@ -10,13 +10,14 @@ from discord.commands.commands import Option, slash_command
 from discord.commands.errors import ApplicationCommandInvokeError
 from discord.ext import commands
 from discord.utils import format_dt
-from utils.autocompleters import date_autocompleter
+from utils.autocompleters import command_names_list, date_autocompleter
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
 from utils.mod.give_birthday_role import MONTH_MAPPING
 from utils.permissions.checks import (PermissionsFailure, admin_and_up,
-                                      guild_owner_and_up, mod_and_up, whisper)
+                                      guild_owner_and_up, mod_and_up)
+from utils.permissions.converters import mods_and_above_member_resolver
 from utils.permissions.slash_perms import slash_perms
 
 
@@ -201,6 +202,32 @@ class ModUtils(commands.Cog):
             await user.send(f"According to my calculations, today is your birthday! We've hiven you the {birthday_role} role for 24 hours.")
 
     @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Toggle banning a user from using a command", permissions=slash_perms.mod_and_up())
+    async def command_ban(self, ctx: BlooContext, user: discord.Option(discord.Member), command: Option(str, autocomplete=command_names_list)):
+        user = await mods_and_above_member_resolver(ctx, user)
+
+        _commands = []
+        for cog in ctx.bot.cogs:
+            for cmd in ctx.bot.cogs[cog].get_commands():
+                if isinstance(cmd, discord.MessageCommand) or isinstance(cmd, discord.UserCommand):
+                    continue
+                else:
+                    _commands.append(cmd.name.lower())
+
+        if command.lower() not in _commands:
+            raise commands.BadArgument("That command doesn't exist.")
+
+        db_user = user_service.get_user(user.id)
+        if command in db_user.command_bans:
+            db_user.command_bans[command] = not db_user.command_bans[command]
+        else:
+            db_user.command_bans[command] = True
+
+        db_user.save()
+
+        await ctx.send_success(f"{user.mention} was {'banned' if db_user.command_bans[command] else 'unbanned'} from using `/{command}`.")
+
+    @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Sayyyy", permissions=slash_perms.mod_and_up())
     async def say(self, ctx: BlooContext, message: str, channel: Option(discord.TextChannel, required=False, description="Where to post the message") = None):
         if channel is None:
@@ -266,6 +293,7 @@ class ModUtils(commands.Cog):
 
     @say.error
     @rundown.error
+    @command_ban.error
     @transferprofile.error
     @clem.error
     @freezexp.error

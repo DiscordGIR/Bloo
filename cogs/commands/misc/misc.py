@@ -9,8 +9,7 @@ import discord
 
 import pytimeparse
 from data.services.guild_service import guild_service
-from discord.commands import Option, slash_command
-from discord.commands.commands import message_command, user_command
+from discord.commands import Option, slash_command, message_command, user_command
 from discord.ext import commands
 from PIL import Image
 from utils.autocompleters import (bypass_autocomplete, get_ios_cfw,

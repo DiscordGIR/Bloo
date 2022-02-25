@@ -125,3 +125,4 @@ dmypy.json
 
 .DS_Store
 mongo_data/
+bloo_ai.txt

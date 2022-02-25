@@ -2,11 +2,14 @@ version: '3.4'
 
 services:
   bloo:
+    container_name: bloo
     build:
       context: .
       dockerfile: Dockerfile.production
       network: host
-    restart: always 
+    restart: always
+    volumes:
+        - ./bloo_ai.txt:/usr/src/app/bloo_ai.txt 
     network_mode: host # comment this out if you want to use dockerized mongo
     # also, if you want to use dockerized Mongo you need to change DB_HOST to "mongo" in .env
 

@@ -9,6 +9,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 # system dependencies
 RUN apt-get update
+RUN apt-get upgrade -y
 RUN apt install -y git gcc python3-dev
 
 # python dependencies
@@ -17,4 +18,4 @@ COPY . .
 RUN pip install --upgrade pip setuptools wheel
 RUN pip install -r requirements.txt
 
-CMD ["python", "main.py"]
+CMD ["python", "-u", "main.py"]

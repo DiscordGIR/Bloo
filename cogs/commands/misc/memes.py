@@ -1,11 +1,16 @@
 import random
 import re
 import traceback
+from asyncio import Lock
 from datetime import datetime
 from io import BytesIO
-import aiohttp
+from typing import List
 
+import aiofiles
+import aiohttp
 import discord
+import markovify
+from psutil import users
 from data.model.tag import Tag
 from data.services.guild_service import guild_service
 from discord.commands import Option, slash_command
@@ -15,11 +20,13 @@ from utils.autocompleters import memes_autocomplete
 from utils.config import cfg
 from utils.context import BlooContext, PromptData
 from utils.logger import logger
-from utils.views.menu import Menu
 from utils.message_cooldown import MessageTextBucket
-from utils.permissions.checks import PermissionsFailure, memed_and_up, mempro_and_up, mod_and_up, whisper
+from utils.mod.filter import find_triggered_filters, find_triggered_raid_phrases
+from utils.permissions.checks import (PermissionsFailure, memed_and_up,
+                                      mempro_and_up, mod_and_up, whisper)
 from utils.permissions.permissions import permissions
 from utils.permissions.slash_perms import slash_perms
+from utils.views.menu import Menu
 
 
 def format_meme_page(_, entries, current_page, all_pages):
@@ -44,6 +51,7 @@ class Memes(commands.Cog):
             1, 25, MessageTextBucket.custom)
         self.memegen_cooldown = CooldownMapping.from_cooldown(
             1, 25, MessageTextBucket.custom)
+        self.markov_lock = Lock()
 
     @slash_command(guild_ids=[cfg.guild_id], description="Display a meme")
     async def meme(self, ctx: BlooContext, name: Option(str, description="Meme name", autocomplete=memes_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
@@ -97,7 +105,8 @@ class Memes(commands.Cog):
         if len(memes) == 0:
             raise commands.BadArgument("There are no memes defined.")
 
-        menu = Menu(ctx, memes, per_page=12, page_formatter=format_meme_page, whisper=ctx.whisper)
+        menu = Menu(ctx, memes, per_page=12,
+                    page_formatter=format_meme_page, whisper=ctx.whisper)
         await menu.start()
 
     memes = discord.SlashCommandGroup("memes", "Interact with memes", guild_ids=[
@@ -296,10 +305,11 @@ class Memes(commands.Cog):
                      "Don’t count on it.", "It is certain.", "It is decidedly so.", "Most likely.", "My reply is no.", "My sources say no.",
                      "Outlook not so good.", "Outlook good.", "Reply hazy, try again.", "Signs point to yes.", "Very doubtful.", "Without a doubt.",
                      "Yes.", "Yes – definitely.", "You may rely on it."]
-        
+
         response = random.choice(responses)
         embed = discord.Embed(color=discord.Color.blurple())
-        embed.add_field(name="Question", value=discord.utils.escape_markdown(question), inline=False)
+        embed.add_field(name="Question", value=discord.utils.escape_markdown(
+            question), inline=False)
         embed.add_field(name="Answer", value=response, inline=False)
         await ctx.respond(embed=embed, ephemeral=ctx.whisper)
 
@@ -338,14 +348,16 @@ class Memes(commands.Cog):
                 "Attached file was not an image.")
 
         if response.attachments[0].size > 8_000_000:
-            raise commands.BadArgument("That image is too large to be processed.")
+            raise commands.BadArgument(
+                "That image is too large to be processed.")
 
         async with ctx.typing():
             contents_before = await response.attachments[0].read()
             contents = BytesIO(contents_before)
             async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
                 form = aiohttp.FormData()
-                form.add_field("file", contents, content_type=response.attachments[0].content_type)
+                form.add_field(
+                    "file", contents, content_type=response.attachments[0].content_type)
                 async with client.post('https://resnext.slim.rocks/', data=form) as resp:
                     if resp.status == 200:
                         j = await resp.json()
@@ -353,7 +365,8 @@ class Memes(commands.Cog):
                         confidence = j.get('confidence')
                         confidence_percent = f"{confidence*100:.1f}%"
                         embed.description = f"image prediction: {j.get('classification')}\nconfidence: {confidence_percent}"
-                        embed.set_footer(text=f"Requested by {ctx.author} • /neuralnet • Processed in {j.get('process_time')}s")
+                        embed.set_footer(
+                            text=f"Requested by {ctx.author} • /neuralnet • Processed in {j.get('process_time')}s")
                         embed.set_image(url="attachment://image.png")
 
                         if confidence < 0.25:
@@ -367,9 +380,11 @@ class Memes(commands.Cog):
 
                         await ctx.send(embed=embed, file=discord.File(BytesIO(contents_before), filename="image.png"))
                     else:
-                        raise commands.BadArgument("An error occurred classifying that image.")
+                        raise commands.BadArgument(
+                            "An error occurred classifying that image.")
 
-    memegen = discord.SlashCommandGroup("memegen", "Generate memes", guild_ids=[cfg.guild_id], permissions=slash_perms.memed_and_up())
+    memegen = discord.SlashCommandGroup("memegen", "Generate memes", guild_ids=[
+                                        cfg.guild_id], permissions=slash_perms.memed_and_up())
 
     @memed_and_up()
     @memegen.command(description="Meme generator")
@@ -381,8 +396,9 @@ class Memes(commands.Cog):
         if not re.match(r'^[\x20-\x7E]*$', top_text):
             raise commands.BadArgument("Top text can't have weird characters.")
         if not re.match(r'^[\x20-\x7E]*$', bottom_text):
-            raise commands.BadArgument("Bottom text can't have weird characters.")
-        
+            raise commands.BadArgument(
+                "Bottom text can't have weird characters.")
+
         db_guild = guild_service.get_guild()
         is_mod = permissions.has(ctx.guild, ctx.author, 5)
         if ctx.channel.id not in [db_guild.channel_general, db_guild.channel_botspam] and not is_mod:
@@ -412,25 +428,29 @@ class Memes(commands.Cog):
                 "Attached file was not an image.")
 
         if response.attachments[0].size > 8_000_000:
-            raise commands.BadArgument("That image is too large to be processed.")
+            raise commands.BadArgument(
+                "That image is too large to be processed.")
 
         async with ctx.typing():
             contents_before = await response.attachments[0].read()
             contents = BytesIO(contents_before)
             async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
                 form = aiohttp.FormData()
-                form.add_field("file", contents, content_type=response.attachments[0].content_type)
+                form.add_field(
+                    "file", contents, content_type=response.attachments[0].content_type)
                 async with client.post(f'https://resnext.slim.rocks/meme?top_text={top_text}&bottom_text={bottom_text}', data=form) as resp:
                     if resp.status == 200:
                         resp = await resp.read()
                         embed = discord.Embed()
-                        embed.set_footer(text=f"Requested by {ctx.author} • /memegen")
+                        embed.set_footer(
+                            text=f"Requested by {ctx.author} • /memegen regular")
                         embed.set_image(url="attachment://image.png")
                         embed.color = discord.Color.random()
 
                         await ctx.send(embed=embed, file=discord.File(BytesIO(resp), filename="image.png"))
                     else:
-                        raise commands.BadArgument("An error occurred generating that meme.")
+                        raise commands.BadArgument(
+                            "An error occurred generating that meme.")
 
     @memed_and_up()
     @memegen.command(description="Motivational poster)")
@@ -442,8 +462,9 @@ class Memes(commands.Cog):
         if not re.match(r'^[\x20-\x7E]*$', top_text):
             raise commands.BadArgument("Top text can't have weird characters.")
         if not re.match(r'^[\x20-\x7E]*$', bottom_text):
-            raise commands.BadArgument("Bottom text can't have weird characters.")
-        
+            raise commands.BadArgument(
+                "Bottom text can't have weird characters.")
+
         db_guild = guild_service.get_guild()
         is_mod = permissions.has(ctx.guild, ctx.author, 5)
         if ctx.channel.id not in [db_guild.channel_general, db_guild.channel_botspam] and not is_mod:
@@ -473,26 +494,293 @@ class Memes(commands.Cog):
                 "Attached file was not an image.")
 
         if response.attachments[0].size > 8_000_000:
-            raise commands.BadArgument("That image is too large to be processed.")
+            raise commands.BadArgument(
+                "That image is too large to be processed.")
 
         async with ctx.typing():
             contents_before = await response.attachments[0].read()
             contents = BytesIO(contents_before)
             async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
                 form = aiohttp.FormData()
-                form.add_field("file", contents, content_type=response.attachments[0].content_type)
+                form.add_field(
+                    "file", contents, content_type=response.attachments[0].content_type)
                 async with client.post(f'https://resnext.slim.rocks/demotivational-meme?top_text={top_text}&bottom_text={bottom_text}', data=form) as resp:
                     if resp.status == 200:
                         resp = await resp.read()
                         embed = discord.Embed()
-                        embed.set_footer(text=f"Requested by {ctx.author} • /memegen")
+                        embed.set_footer(
+                            text=f"Requested by {ctx.author} • /memegen motivate")
                         embed.set_image(url="attachment://image.png")
                         embed.color = discord.Color.random()
 
                         await ctx.send(embed=embed, file=discord.File(BytesIO(resp), filename="image.png"))
                     else:
-                        raise commands.BadArgument("An error occurred generating that meme.")
+                        raise commands.BadArgument(
+                            "An error occurred generating that meme.")
 
+    @memed_and_up()
+    @memegen.command(description="AI generated text from chat history")
+    async def text(self, ctx):
+        if not cfg.markov_enabled:
+            raise commands.BadArgument("Markov is not enabled in the bot's config.")
+
+        db_guild = guild_service.get_guild()
+        is_mod = permissions.has(ctx.guild, ctx.author, 5)
+        if ctx.channel.id not in [db_guild.channel_general, db_guild.channel_botspam] and not is_mod:
+            raise commands.BadArgument(f"This command can't be used here.")
+
+        if not is_mod:
+            bucket = self.memegen_cooldown.get_bucket(ctx.guild.name)
+            current = datetime.now().timestamp()
+            # ratelimit only if the invoker is not a moderator
+            if bucket.update_rate_limit(current):
+                raise commands.BadArgument("That command is on cooldown.")
+
+        async with aiofiles.open("bloo_ai.txt", mode="r") as f:
+            lines = await f.read()
+        lines = lines.split("\n")
+        if not lines:
+            return
+
+        text_model = markovify.Text(lines)
+        for _ in range(5):
+            word = text_model.make_sentence()
+            if word:
+                await ctx.respond(word, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
+                return
+        
+        raise commands.BadArgument("Failed to generate some text. The text model probably isn't big enough yet...")
+
+    @memed_and_up()
+    @memegen.command(description="AI generated text from chat history, demotivational meme format")
+    async def aipfp(self, ctx, member: Option(discord.Member, description="Whose profile picture to use")):
+        if not cfg.markov_enabled:
+            raise commands.BadArgument("Markov is not enabled in the bot's config.")
+        if cfg.resnext_token is None:
+            raise commands.BadArgument("ResNext token is not set up!")
+        member: discord.Member = member
+        if member.display_avatar is None:
+            raise commands.BadArgument("That member doesn't have an avatar set.")
+
+        db_guild = guild_service.get_guild()
+        is_mod = permissions.has(ctx.guild, ctx.author, 5)
+        if ctx.channel.id not in [db_guild.channel_general, db_guild.channel_botspam] and not is_mod:
+            raise commands.BadArgument(f"This command can't be used here.")
+
+        if not is_mod:
+            bucket = self.memegen_cooldown.get_bucket(ctx.guild.name)
+            current = datetime.now().timestamp()
+            # ratelimit only if the invoker is not a moderator
+            if bucket.update_rate_limit(current):
+                raise commands.BadArgument("That command is on cooldown.")
+
+        async with aiofiles.open("bloo_ai.txt", mode="r") as f:
+            lines = await f.read()
+        lines = lines.split("\n")
+        if not lines:
+            return
+
+        text_model = markovify.Text(lines)
+        for _ in range(5):
+            sentence_1 = text_model.make_sentence()
+            while sentence_1 and not re.match(r'^[\x20-\x7E]*$', sentence_1):
+                sentence_1 = text_model.make_sentence()
+
+            sentence_2 = text_model.make_sentence()
+            while sentence_2 and not re.match(r'^[\x20-\x7E]*$', sentence_2):
+                sentence_2 = text_model.make_sentence()
+            
+            if sentence_1 and sentence_2:
+                break
+
+        if not sentence_1 or not sentence_2:
+            raise commands.BadArgument("Failed to generate some text. The text model probably isn't big enough yet...")
+
+        await ctx.defer(ephemeral=False)
+        contents_before = await member.display_avatar.with_format("png").with_size(4096).read()
+        contents = BytesIO(contents_before)
+        async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
+            form = aiohttp.FormData()
+            form.add_field(
+                "file", contents, content_type="image/png")
+            
+            async with client.post(f'https://resnext.slim.rocks/demotivational-meme?top_text={sentence_1}&bottom_text={sentence_2}', data=form) as resp:
+                if resp.status == 200:
+                    resp = await resp.read()
+                    embed = discord.Embed()
+                    embed.set_footer(
+                        text=f"Requested by {ctx.author} • /memegen aipfp")
+                    embed.set_image(url="attachment://image.png")
+                    embed.color = discord.Color.random()
+
+                    await ctx.respond(embed=embed, file=discord.File(BytesIO(resp), filename="image.png"))
+                else:
+                    raise commands.BadArgument(
+                        "An error occurred generating that meme. The image is probably too small.")
+
+
+    @memed_and_up()
+    @memegen.command(description="AI generated text based on a prompt")
+    async def aitext(self, ctx: BlooContext, prompt: Option(str, description="Text to base results on")):
+        if cfg.open_ai_token is None:
+            raise commands.BadArgument("This command is disabled.")
+
+        db_guild = guild_service.get_guild()
+        is_mod = permissions.has(ctx.guild, ctx.author, 5)
+        if ctx.channel.id not in [db_guild.channel_general, db_guild.channel_botspam] and not is_mod:
+            raise commands.BadArgument(f"This command can't be used here.")
+
+        if not is_mod:
+            bucket = self.memegen_cooldown.get_bucket(ctx.guild.name)
+            current = datetime.now().timestamp()
+            # ratelimit only if the invoker is not a moderator
+            if bucket.update_rate_limit(current):
+                raise commands.BadArgument("That command is on cooldown.")
+
+        await ctx.defer(ephemeral=False)
+        async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {cfg.open_ai_token}", "Content-Type": "application/json"}) as client:
+            async with client.post(f"https://api.openai.com/v1/engines/text-ada-001/completions", json={
+                "prompt": prompt,
+                "temperature": 0.7,
+                "max_tokens": 64,
+                "top_p": 1,
+                "frequency_penalty": 0,
+                "presence_penalty": 0
+                }) as resp:
+
+                if resp.status == 200:
+                    data = await resp.json()
+                    text = data.get("choices")[0].get("text")
+                    text = discord.utils.escape_markdown(text)
+                    if find_triggered_filters(text, ctx.author) or find_triggered_raid_phrases(text, ctx.author):
+                        raise commands.BadArgument("An OpenAI API error occured.")
+
+                    embed = discord.Embed(color=discord.Color.random())
+                    embed.add_field(name="Prompt", value=discord.utils.escape_markdown(prompt), inline=False)
+                    embed.add_field(name="Response", value=text, inline=False)
+                    embed.set_footer(text=f"Requested by {ctx.author} • /memegen aitext")
+                    await ctx.respond(embed=embed)
+                else:
+                    raise commands.BadArgument("An OpenAI API error occured.")
+
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if not cfg.markov_enabled:
+            return
+        if message.guild is None:
+            return
+        if message.guild.id != cfg.guild_id:
+            return
+        db_guild = guild_service.get_guild()
+        if message.channel.id not in [db_guild.channel_general, db_guild.channel_jailbreak]:
+            return
+        if not message.content or len(message.content) < 4:
+            return
+        if message.author.bot:
+            return
+        if re.search(r'((https|http)?://\S+)', message.content):
+            return
+
+        if find_triggered_filters(message.content, message.author) or find_triggered_raid_phrases(message.content, message.author):
+            return
+
+        async with self.markov_lock:
+            async with aiofiles.open("bloo_ai.txt", mode="a+") as f:
+                await f.seek(0)
+                lines = await f.read()
+                if not lines:
+                    lines = []
+                else:
+                    lines = lines.split("\n")
+
+                if len(lines) > 50_000:
+                    lines_to_write = lines[-50_000:]
+                    lines_to_write.append(message.content)
+                elif not lines:
+                    lines_to_write = [message.content]
+                else:
+                    lines_to_write = lines + [message.content]
+
+            async with aiofiles.open("bloo_ai.txt", mode="w") as f:
+                await f.write("\n".join(lines_to_write))
+
+    @commands.Cog.listener()
+    async def on_message_delete(self, message: discord.Message):
+        if not cfg.markov_enabled:
+            return
+        if message.guild is None:
+            return
+        if message.guild.id != cfg.guild_id:
+            return
+        db_guild = guild_service.get_guild()
+        if message.channel.id not in [db_guild.channel_general, db_guild.channel_jailbreak]:
+            return
+        if not message.content or len(message.content) < 4:
+            return
+        if message.author.bot:
+            return
+        if re.search(r'((https|http)?://\S+)', message.content):
+            return
+
+        removed = False
+        async with self.markov_lock:
+            async with aiofiles.open("bloo_ai.txt", mode="a+") as f:
+                await f.seek(0)
+                lines = await f.read()
+                if not lines:
+                    lines = []
+                else:
+                    lines = lines.split("\n")
+
+                while message.content in lines:
+                    removed = True
+                    lines.remove(message.content)
+
+            if removed:
+                async with aiofiles.open("bloo_ai.txt", mode="w") as f:
+                    await f.write("\n".join(lines))
+
+    @commands.Cog.listener()
+    async def on_bulk_message_delete(self, messages: List[discord.Message]):
+        if not cfg.markov_enabled:
+            return
+        if messages[0].guild is None:
+            return
+        if messages[0].guild.id != cfg.guild_id:
+            return
+        db_guild = guild_service.get_guild()
+
+        removed = False
+        async with self.markov_lock:
+            async with aiofiles.open("bloo_ai.txt", mode="a+") as f:
+                await f.seek(0)
+                lines = await f.read()
+                if not lines:
+                    lines = []
+                else:
+                    lines = lines.split("\n")
+
+                for message in messages:
+                    if not message.content or len(message.content) < 4:
+                        continue
+                    if message.author.bot:
+                        continue
+                    if message.channel.id not in [db_guild.channel_general, db_guild.channel_jailbreak]:
+                        return
+                    if re.search(r'((https|http)?://\S+)', message.content):
+                        continue
+
+                    while message.content in lines:
+                        removed = True
+                        lines.remove(message.content)
+
+            if removed:
+                async with aiofiles.open("bloo_ai.txt", mode="w") as f:
+                    await f.write("\n".join(lines))
+
+    @text.error
+    @aipfp.error
+    @aitext.error
     @_8ball.error
     @regular.error
     @motivate.error

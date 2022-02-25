@@ -72,6 +72,10 @@ PASTEE_TOKEN="your API key here"
 
 # optional, for /neural_net meme command
 RESNEXT_TOKEN="your token here"
+
+# optional, if you want `/memegen text` for AI generated text based on chat history.
+# note that this will store messages (anonymized)
+ENABLE_MARKOV=True
 ```
 
 ## Contributors

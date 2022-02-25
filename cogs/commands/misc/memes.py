@@ -50,7 +50,7 @@ class Memes(commands.Cog):
         self.res_cooldown = CooldownMapping.from_cooldown(
             1, 25, MessageTextBucket.custom)
         self.memegen_cooldown = CooldownMapping.from_cooldown(
-            1, 25, MessageTextBucket.custom)
+            1, 45, MessageTextBucket.custom)
         self.markov_lock = Lock()
 
     @slash_command(guild_ids=[cfg.guild_id], description="Display a meme")

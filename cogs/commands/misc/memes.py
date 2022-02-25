@@ -639,7 +639,7 @@ class Memes(commands.Cog):
 
         await ctx.defer(ephemeral=False)
         async with aiohttp.ClientSession(headers={"Authorization": f"Bearer {cfg.open_ai_token}", "Content-Type": "application/json"}) as client:
-            async with client.post(f"https://api.openai.com/v1/engines/text-ada-001/completions", json={
+            async with client.post(f"https://api.openai.com/v1/engines/text-davinci-001/completions", json={
                 "prompt": prompt,
                 "temperature": 0.7,
                 "max_tokens": 64,

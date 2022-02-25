@@ -73,11 +73,10 @@ def prepare_tag_view(tag: Tag):
     return view
 
 class TagModal(discord.ui.Modal):
-    def __init__(self, tag_name, author: discord.Member, image, content_type) -> None:
+    def __init__(self, tag_name, author: discord.Member) -> None:
         self.tag_name = tag_name
         self.author = author
-        self.image = image
-        self.content_type = content_type
+        self.tag = None
 
         super().__init__(title=f"Add tag {self.tag_name}")
 
@@ -109,6 +108,7 @@ class TagModal(discord.ui.Modal):
             )
 
     async def callback(self, interaction: discord.Interaction):
+        print("called")
         if interaction.user != self.author:
             return
 
@@ -137,19 +137,9 @@ class TagModal(discord.ui.Modal):
         tag.added_by_tag = str(self.author)
         tag.button_links = buttons
 
-        # did the user want to attach an image to this tag?
-        if self.image is not None:
-            tag.image.put(self.image, content_type=self.content_type)
-
-        # store tag in database
-        guild_service.add_tag(tag)
-
-        _file = tag.image.read()
-        if _file is not None:
-            _file = discord.File(BytesIO(
-                _file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
-
-        await interaction.response.send_message(f"Added new tag!", file=_file or None, embed=prepare_tag_embed(tag), view=prepare_tag_view(tag), delete_after=5)
+        self.tag = tag
+        self.stop()
+        await interaction.response.send_message()
 
 class EditTagModal(discord.ui.Modal):
     def __init__(self, tag: Tag, author: discord.Member) -> None:
@@ -397,8 +387,30 @@ class Tags(commands.Cog):
 
             image = await image.to_file()
 
-        modal = TagModal(tag_name=name, author=ctx.author, image=image, content_type=content_type)
+        modal = TagModal(tag_name=name, author=ctx.author)
         await ctx.interaction.response.send_modal(modal)
+        print("here")
+        await modal.wait()
+        print("here?")
+
+        tag = modal.tag
+        if tag is None:
+            await ctx.send_warning("Tag creation was cancelled.")
+
+         # did the user want to attach an image to this tag?
+        if image is not None:
+            tag.image.put(image, content_type=content_type)
+
+        # store tag in database
+        guild_service.add_tag(tag)
+
+        _file = tag.image.read()
+        if _file is not None:
+            _file = discord.File(BytesIO(
+                _file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
+
+        await ctx.followup.send(f"Added new tag!", file=_file or discord.MISSING, embed=prepare_tag_embed(tag) or discord.MISSING, view=prepare_tag_view(tag) or discord.MISSING, delete_after=5)
+
 
     @genius_or_submod_and_up()
     @tags.command(guild_ids=[cfg.guild_id], description="Edit an existing tag")

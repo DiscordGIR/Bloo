@@ -108,7 +108,6 @@ class TagModal(discord.ui.Modal):
             )
 
     async def callback(self, interaction: discord.Interaction):
-        print("called")
         if interaction.user != self.author:
             return
 
@@ -128,6 +127,10 @@ class TagModal(discord.ui.Modal):
 
         buttons = list(zip(button_names, links))
         description = self.children[0].value
+        if not description:
+            embed = discord.Embed(color=discord.Color.red(), description="Description is missing!")
+            await interaction.response.send_message(embeds=[embed], ephemeral=True)
+            return
 
         # prepare tag data for database
         tag = Tag()
@@ -139,12 +142,16 @@ class TagModal(discord.ui.Modal):
 
         self.tag = tag
         self.stop()
-        await interaction.response.send_message()
+        try:
+            await interaction.response.send_message()
+        except:
+            pass
 
 class EditTagModal(discord.ui.Modal):
     def __init__(self, tag: Tag, author: discord.Member) -> None:
         self.tag = tag
         self.author = author
+        self.edited = False
 
         super().__init__(title=f"Edit tag {self.tag.name}")
 
@@ -196,26 +203,25 @@ class EditTagModal(discord.ui.Modal):
             await interaction.response.send_message(embeds=[embed], ephemeral=True)
             return
 
+        description = self.children[0].value
+        if not description:
+            embed = discord.Embed(color=discord.Color.red(), description="Description is missing!")
+            await interaction.response.send_message(embeds=[embed], ephemeral=True)
+            return
+
         buttons = list(zip(button_names, links))
         description = self.children[0].value
 
         # prepare tag data for database
-        self.tag.name = self.tag.name.lower()
         self.tag.content = description
-        self.tag.added_by_id = self.author.id
-        self.tag.added_by_tag = str(self.author)
         self.tag.button_links = buttons
+        self.edited = True
+        self.stop()
 
-        # store tag in database
-        guild_service.edit_tag(self.tag)
-
-        _file = self.tag.image.read()
-        if _file is not None:
-            _file = discord.File(BytesIO(
-                _file), filename="image.gif" if self.tag.image.content_type == "image/gif" else "image.png")
-
-        await interaction.response.send_message(f"Edited tag!", file=_file or None, embed=prepare_tag_embed(self.tag), view=prepare_tag_view(self.tag), delete_after=5)
-
+        try:
+            await interaction.response.send_message()
+        except:
+            pass
 
 class Tags(commands.Cog):
     def __init__(self, bot):
@@ -385,13 +391,11 @@ class Tags(commands.Cog):
             if content_type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
                 raise commands.BadArgument("Attached file was not an image.")
 
-            image = await image.to_file()
+            image = await image.read()
 
         modal = TagModal(tag_name=name, author=ctx.author)
         await ctx.interaction.response.send_modal(modal)
-        print("here")
         await modal.wait()
-        print("here?")
 
         tag = modal.tag
         if tag is None:
@@ -444,7 +448,7 @@ class Tags(commands.Cog):
             if content_type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
                 raise commands.BadArgument("Attached file was not an image.")
 
-            image = await image.to_file()
+            image = await image.read()
 
             # save image bytes
             if tag.image is not None:
@@ -456,6 +460,23 @@ class Tags(commands.Cog):
 
         modal = EditTagModal(tag=tag, author=ctx.author)
         await ctx.interaction.response.send_modal(modal)
+        await modal.wait()
+
+        if not modal.edited: 
+            await ctx.send_warning("Tag edit was cancelled.")
+            return
+
+        tag = modal.tag
+
+        # store tag in database
+        guild_service.edit_tag(tag)
+
+        _file = tag.image.read()
+        if _file is not None:
+            _file = discord.File(BytesIO(
+                _file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
+
+        await ctx.followup.send(f"Edited tag!", file=_file or None, embed=prepare_tag_embed(tag), view=prepare_tag_view(tag), delete_after=5)
 
 
     @genius_or_submod_and_up()

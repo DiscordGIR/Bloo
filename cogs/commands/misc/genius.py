@@ -1,3 +1,4 @@
+from pydoc import describe
 import discord
 from discord.commands import slash_command
 from discord.commands import Option
@@ -12,6 +13,7 @@ from utils.logger import logger
 from utils.context import BlooContext, PromptData
 from utils.permissions.checks import (PermissionsFailure, always_whisper, genius_or_submod_and_up, whisper_in_general)
 from utils.permissions.slash_perms import slash_perms
+from utils.views.prompt import GenericDescriptionModal
 
 
 class Genius(commands.Cog):
@@ -21,7 +23,7 @@ class Genius(commands.Cog):
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Submit a new common issue", permissions=slash_perms.genius_or_submod_and_up())
-    async def commonissue(self, ctx: BlooContext, *, title: str):
+    async def commonissue(self, ctx: BlooContext, *, title: Option(str, description="Title of the issue"),  image: Option(discord.Attachment, required=False, description="Image to show in issue")) -> None:
         """Submit a new common issue (Geniuses only)
         
         Example usage
@@ -34,36 +36,36 @@ class Genius(commands.Cog):
             "Title for the issue"
             
         """
-
         # get #common-issues channel
         channel = ctx.guild.get_channel(
             guild_service.get_guild().channel_common_issues)
         if not channel:
             raise commands.BadArgument("common issues channel not found")
 
+        # ensure the attached file is an image
+        if image is not None:
+            _type = image.content_type
+            if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
+                raise commands.BadArgument("Attached file was not an image.")
+
         # prompt the user for common issue body
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="description",
-            description="Please enter a description of this common issue (optionally attach an image).",
-            convertor=str,
-            raw=True)
+        modal = GenericDescriptionModal(author=ctx.author, title=f"New common issue — {title}")
+        await ctx.interaction.response.send_modal(modal)
+        await modal.wait()
 
-        res = await ctx.prompt(prompt)
-        if res is None:
-            await ctx.send_warning("Cancelled new common issue.")
+        description = modal.value
+        if not description:
+            await ctx.send_warning("Cancelled adding common issue.")
             return
-        
-        description, response = res
 
-        embed, f = await self.prepare_issues_embed(title, description, response)
+        embed, f = await self.prepare_issues_embed(title, description, ctx.author, image)
         await channel.send(embed=embed, file=f)
-        await ctx.send_success("Common issue posted!", delete_after=5)
+        await ctx.followup.send("Common issue posted!", delete_after=5)
         await self.do_reindex(channel)
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Post an embed", permissions=slash_perms.genius_or_submod_and_up())
-    async def postembed(self, ctx: BlooContext, *, title: str):
+    async def postembed(self, ctx: BlooContext, *, title: Option(str, description="Title of the embed"), image: Option(discord.Attachment, required=False, description="Image to show in embed")):
         """Post an embed in the current channel (Geniuses only)
 
         Example usage
@@ -80,22 +82,23 @@ class Genius(commands.Cog):
         # get #common-issues channel
         channel = ctx.channel
 
-        # prompt the user for common issue body
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="description",
-            description="Please enter a description of this embed (optionally attach an image)",
-            convertor=str,
-            raw=True)
+        # ensure the attached file is an image
+        if image is not None:
+            _type = image.content_type
+            if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
+                raise commands.BadArgument("Attached file was not an image.")
 
-        res = await ctx.prompt(prompt)
-        if res is None:
+        # prompt the user for common issue body
+        modal = GenericDescriptionModal(author=ctx.author, title=f"New embed — {title}")
+        await ctx.interaction.response.send_modal(modal)
+        await modal.wait()
+
+        description = modal.value
+        if not description:
             await ctx.send_warning("Cancelled new embed.")
             return
 
-        description, response = res
-
-        embed, f = await self.prepare_issues_embed(title, description, response)
+        embed, f = await self.prepare_issues_embed(title, description, ctx.author, image)
         await channel.send(embed=embed, file=f)
 
     @genius_or_submod_and_up()
@@ -188,24 +191,18 @@ class Genius(commands.Cog):
         if _file:
             await ctx.send(_file.url, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
 
-    async def prepare_issues_embed(self, title, description, message):
+    async def prepare_issues_embed(self, title, description, author, image: discord.Attachment = None):
         embed = discord.Embed(title=title)
         embed.color = discord.Color.random()
         embed.description = description
         f = None
 
         # did the user want to attach an image to this tag?
-        if len(message.attachments) > 0:
-            # ensure the attached file is an image
-            image = message.attachments[0]
-            _type = image.content_type
-            if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
-                raise commands.BadArgument("Attached file was not an image.")
-
+        if image is not None:
             f = await image.to_file()
             embed.set_image(url=f"attachment://{f.filename}")
 
-        embed.set_footer(text=f"Submitted by {message.author}")
+        embed.set_footer(text=f"Submitted by {author}")
         embed.timestamp = datetime.datetime.now()
         return embed, f
 

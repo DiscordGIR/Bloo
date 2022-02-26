@@ -19,6 +19,7 @@ class User(mongoengine.Document):
     
     birthday            = mongoengine.ListField(default=[])
     sticky_roles        = mongoengine.ListField(default=[])
+    command_bans        = mongoengine.DictField(default={})
 
     meta = {
         'db_alias': 'default',

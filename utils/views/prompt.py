@@ -2,7 +2,7 @@ import discord
 
 
 class GenericDescriptionModal(discord.ui.Modal):
-    def __init__(self, author: discord.Member, title: str, label: str = "Description", placeholder: str = "Please enter a description"):
+    def __init__(self, author: discord.Member, title: str, label: str = "Description", placeholder: str = "Please enter a description", prefill: str = ""):
         self.author = author
         self.value = None
 
@@ -13,6 +13,7 @@ class GenericDescriptionModal(discord.ui.Modal):
                 label=label,
                 placeholder=placeholder,
                 style=discord.InputTextStyle.long,
+                value=prefill
             )
         )
 

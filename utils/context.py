@@ -52,6 +52,8 @@ class BlooContext(discord.ApplicationContext):
         else:
             # if kwargs.get("view") is None:
                 # kwargs["view"] = discord.utils.MISSING
+            if kwargs.get("followup") is not None:
+                del kwargs["followup"]
             return await self.respond(*args, **kwargs)
 
     async def send_success(self, description: str, title: str = "", delete_after=None, followup=False):

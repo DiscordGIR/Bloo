@@ -476,7 +476,7 @@ class Tags(commands.Cog):
             _file = discord.File(BytesIO(
                 _file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
 
-        await ctx.followup.send(f"Edited tag!", file=_file or None, embed=prepare_tag_embed(tag), view=prepare_tag_view(tag), delete_after=5)
+        await ctx.followup.send(f"Edited tag!", file=_file or discord.MISSING, embed=prepare_tag_embed(tag), view=prepare_tag_view(tag) or discord.MISSING, delete_after=5)
 
 
     @genius_or_submod_and_up()

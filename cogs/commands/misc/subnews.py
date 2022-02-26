@@ -57,7 +57,7 @@ class SubNews(commands.Cog):
             f = None
 
         await channel.send(content=body, file=f)
-        await ctx.send_followup_success("Posted subreddit news post!", delete_after=5)
+        await ctx.send_success("Posted subreddit news post!", delete_after=5, followup=True)
 
     @subnews.error
     async def info_error(self,  ctx: BlooContext, error):

@@ -60,7 +60,7 @@ class Genius(commands.Cog):
 
         embed, f = await self.prepare_issues_embed(title, description, ctx.author, image)
         await channel.send(embed=embed, file=f)
-        await ctx.followup.send("Common issue posted!", delete_after=5)
+        await ctx.send_success("Common issue posted!", delete_after=5, followup=True)
         await self.do_reindex(channel)
 
     @genius_or_submod_and_up()

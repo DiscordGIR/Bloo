@@ -68,12 +68,21 @@ def prepare_tag_view(tag: Tag):
 
     view = discord.ui.View()
     for label, link in tag.button_links:
-        view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label=label, url=link))
+        # regex match emoji in label
+        custom_emojis = re.search(r'<:\d+>|<:.+?:\d+>|<a:.+:\d+>|[\U00010000-\U0010ffff]', label)
+        if custom_emojis is not None:
+            emoji = custom_emojis.group(0).strip()
+            label = label.replace(emoji, '')
+            label = label.strip()
+        else:
+            emoji = None
+        view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label=label, url=link, emoji=emoji))
 
     return view
 
 class TagModal(discord.ui.Modal):
-    def __init__(self, tag_name, author: discord.Member) -> None:
+    def __init__(self, bot, tag_name, author: discord.Member) -> None:
+        self.bot = bot
         self.tag_name = tag_name
         self.author = author
         self.tag = None
@@ -92,10 +101,10 @@ class TagModal(discord.ui.Modal):
             self.add_item(
                 discord.ui.InputText(
                     label=f"Button {(i%2)+1} name",
-                    placeholder="Enter a name for the button",
+                    placeholder="Enter a name for the button. You can also put an emoji at the start.",
                     style=discord.InputTextStyle.short,
                     required=False,
-                    max_length=25
+                    max_length=80
                 )
             )
             self.add_item(
@@ -116,21 +125,31 @@ class TagModal(discord.ui.Modal):
 
         # make sure all links are valid URLs with regex
         if not all(re.match(r'^(https|http)://.*', link) for link in links):
-            embed = discord.Embed(color=discord.Color.red(), description="The links must be valid URLs!")
-            await interaction.response.send_message(embeds=[embed], ephemeral=True)
+            await self.send_error(interaction, "The links must be valid URLs!")
             return
 
         if len(button_names) != len(links):
-            embed = discord.Embed(color=discord.Color.red(), description="All buttons must have labels and links!")
-            await interaction.response.send_message(embeds=[embed], ephemeral=True)
+            await self.send_error(interaction, "All buttons must have labels and links!")
             return
 
         buttons = list(zip(button_names, links))
         description = self.children[0].value
         if not description:
-            embed = discord.Embed(color=discord.Color.red(), description="Description is missing!")
-            await interaction.response.send_message(embeds=[embed], ephemeral=True)
+            await self.send_error(interaction, "Description is missing!")
             return
+
+        for label in button_names:
+            custom_emojis = re.search(r'<:\d+>|<:.+?:\d+>|<a:.+:\d+>|[\U00010000-\U0010ffff]', label)
+            if custom_emojis is not None:
+                emoji = custom_emojis.group(0).strip()
+                if not label.startswith(emoji):
+                    await self.send_error(interaction, "Emojis must be at the start of labels!")
+                    return
+                label = label.replace(emoji, '')
+                label = label.strip()
+                if not label:
+                    await self.send_error(interaction, "A button cannot just be an emoji!")
+                    return
 
         # prepare tag data for database
         tag = Tag()
@@ -146,6 +165,10 @@ class TagModal(discord.ui.Modal):
             await interaction.response.send_message()
         except:
             pass
+        
+    async def send_error(self, interaction: discord.Interaction, error: str):
+        embed = discord.Embed(title=":(\nYour command ran into a problem", description=error, color=discord.Color.red())
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class EditTagModal(discord.ui.Modal):
     def __init__(self, tag: Tag, author: discord.Member) -> None:
@@ -168,10 +191,10 @@ class EditTagModal(discord.ui.Modal):
             self.add_item(
                 discord.ui.InputText(
                     label=f"Button {(i%2)+1} name",
-                    placeholder="Enter a name for the button",
+                    placeholder="Enter a name for the button. You can also put an emoji at the start.",
                     style=discord.InputTextStyle.short,
                     required=False,
-                    max_length=25,
+                    max_length=80,
                     value=self.tag.button_links[i][0] if len(self.tag.button_links) > i else None
                 )
             )
@@ -192,25 +215,33 @@ class EditTagModal(discord.ui.Modal):
         button_names = [child.value for child in self.children[1::2] if child.value is not None]
         links = [child.value for child in self.children[2::2] if child.value is not None]
 
-        # make sure all links are valid URLs with regex
+                # make sure all links are valid URLs with regex
         if not all(re.match(r'^(https|http)://.*', link) for link in links):
-            embed = discord.Embed(color=discord.Color.red(), description="The links must be valid URLs!")
-            await interaction.response.send_message(embeds=[embed], ephemeral=True)
+            await self.send_error(interaction, "The links must be valid URLs!")
             return
 
         if len(button_names) != len(links):
-            embed = discord.Embed(color=discord.Color.red(), description="All buttons must have labels and links!")
-            await interaction.response.send_message(embeds=[embed], ephemeral=True)
-            return
-
-        description = self.children[0].value
-        if not description:
-            embed = discord.Embed(color=discord.Color.red(), description="Description is missing!")
-            await interaction.response.send_message(embeds=[embed], ephemeral=True)
+            await self.send_error(interaction, "All buttons must have labels and links!")
             return
 
         buttons = list(zip(button_names, links))
         description = self.children[0].value
+        if not description:
+            await self.send_error(interaction, "Description is missing!")
+            return
+
+        for label in button_names:
+            custom_emojis = re.search(r'<:\d+>|<:.+?:\d+>|<a:.+:\d+>|[\U00010000-\U0010ffff]', label)
+            if custom_emojis is not None:
+                emoji = custom_emojis.group(0).strip()
+                if not label.startswith(emoji):
+                    await self.send_error(interaction, "Emojis must be at the start of labels!")
+                    return
+                label = label.replace(emoji, '')
+                label = label.strip()
+                if not label:
+                    await self.send_error(interaction, "A button cannot just be an emoji!")
+                    return
 
         # prepare tag data for database
         self.tag.content = description
@@ -222,6 +253,10 @@ class EditTagModal(discord.ui.Modal):
             await interaction.response.send_message()
         except:
             pass
+
+    async def send_error(self, interaction: discord.Interaction, error: str):
+        embed = discord.Embed(title=":(\nYour command ran into a problem", description=error, color=discord.Color.red())
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
 class Tags(commands.Cog):
     def __init__(self, bot):
@@ -393,7 +428,7 @@ class Tags(commands.Cog):
 
             image = await image.read()
 
-        modal = TagModal(tag_name=name, author=ctx.author)
+        modal = TagModal(bot=self.bot, tag_name=name, author=ctx.author)
         await ctx.interaction.response.send_modal(modal)
         await modal.wait()
 

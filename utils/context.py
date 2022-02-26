@@ -61,6 +61,20 @@ class BlooContext(discord.ApplicationContext):
         """
         embed = discord.Embed(title=title, description=description,  color=discord.Color.dark_green())
         return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=None, delete_after=delete_after)
+
+    async def send_followup_success(self, description: str, title: str = "", delete_after=None):
+        """Sends a success message, as a followup
+        
+        Parameters
+        ----------
+        description : str
+            "Success message"
+        title : str
+            "Success message title"
+
+        """
+        embed = discord.Embed(title=title, description=description,  color=discord.Color.dark_green())
+        return await self.followup.send(content="", embed=embed, ephemeral=self.whisper, view=None, delete_after=delete_after)
     
     async def send_warning(self, description: str, title: str = "", delete_after=None):
         """Sends a warning message

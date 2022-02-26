@@ -312,7 +312,7 @@ class Memes(commands.Cog):
 
     @mempro_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Ooo magic (image version)", permissions=slash_perms.mempro_and_up())
-    async def neuralnet(self, ctx: BlooContext, image: Option(discord.Attachment, description="Image to show in embed")) -> None:
+    async def neuralnet(self, ctx: BlooContext, image: Option(discord.Attachment, description="Image to run neural net on")) -> None:
         if cfg.resnext_token is None:
             raise commands.BadArgument("ResNext token is not set up!")
 
@@ -374,7 +374,7 @@ class Memes(commands.Cog):
 
     @memed_and_up()
     @memegen.command(description="Meme generator")
-    async def regular(self, ctx: BlooContext, top_text: str, bottom_text: str, image: Option(discord.Attachment, description="Image to show in embed")) -> None:
+    async def regular(self, ctx: BlooContext, top_text: str, bottom_text: str, image: Option(discord.Attachment, description="Image to use as base")) -> None:
         if cfg.resnext_token is None:
             raise commands.BadArgument("ResNext token is not set up!")
 
@@ -428,7 +428,7 @@ class Memes(commands.Cog):
 
     @memed_and_up()
     @memegen.command(description="Motivational poster)")
-    async def motivate(self, ctx: BlooContext, top_text: str, bottom_text: str, image: Option(discord.Attachment, description="Image to show in embed"), ) -> None:
+    async def motivate(self, ctx: BlooContext, top_text: str, bottom_text: str, image: Option(discord.Attachment, description="Image to use as base")) -> None:
         if cfg.resnext_token is None:
             raise commands.BadArgument("ResNext token is not set up!")
 

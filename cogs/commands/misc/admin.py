@@ -15,7 +15,7 @@ class Admin(commands.Cog):
 
     @admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Change bot's profile picture", permissions=slash_perms.mod_and_up())
-    async def setpfp(self, ctx: BlooContext):
+    async def setpfp(self, ctx: BlooContext, image: discord.Option(discord.Attachment, description="Image to usea as profile picture")):
         """Set the bot's profile picture (admin only)
         
         Example usage
@@ -24,23 +24,11 @@ class Admin(commands.Cog):
         
         """
         
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="image",
-            description="Please attach an image.",
-            raw=True)
-
-        response = await ctx.prompt(prompt)
-        if response is None:
-            return
-
-        _, response = response
-
-        if len(response.attachments) < 1:
+        if image is None or image.content_type not in ["image/png", "image/jpeg", "image/webp"]:
             raise commands.BadArgument(
                 "Please attach an image to use as the profile picture.")
 
-        await self.bot.user.edit(avatar=await response.attachments[0].read())
+        await self.bot.user.edit(avatar=await image.read())
         await ctx.send_success("Done!", delete_after=5)
 
     @setpfp.error

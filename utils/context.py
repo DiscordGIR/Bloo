@@ -48,12 +48,14 @@ class BlooContext(discord.ApplicationContext):
                 del kwargs["ephemeral"]
             if "delete_after" in kwargs:
                 del kwargs["delete_after"]
+            if "followup" in kwargs:
+                del kwargs["followup"]
+
             return await self.edit(*args, **kwargs)
         else:
-            # if kwargs.get("view") is None:
-                # kwargs["view"] = discord.utils.MISSING
-            if kwargs.get("followup") is not None:
+            if "followup" in kwargs:
                 del kwargs["followup"]
+
             return await self.respond(*args, **kwargs)
 
     async def send_success(self, description: str, title: str = "", delete_after=None, followup=False):

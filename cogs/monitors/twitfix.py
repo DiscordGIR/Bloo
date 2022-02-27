@@ -1,3 +1,4 @@
+import asyncio
 import re
 
 import discord
@@ -5,7 +6,6 @@ from discord.ext import commands
 from utils.config import cfg
 from utils.mod.filter import find_triggered_filters
 
-from utils.context import BlooContext
 from utils.config import cfg
 
 class TwitterFix(commands.Cog):
@@ -28,6 +28,12 @@ class TwitterFix(commands.Cog):
       triggered_words = find_triggered_filters(
             message.content, message.author)
       if triggered_words:
+        return
+
+      await asyncio.sleep(1)
+
+      new_msg = await message.channel.fetch_message(message.id)
+      if new_msg.embeds:
         return
 
       link = tweet_link.group(0)

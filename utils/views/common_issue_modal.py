@@ -1,26 +1,24 @@
 import re
 import discord
 
-from data.model.tag import Tag
-
-
-class TagModal(discord.ui.Modal):
-    def __init__(self, bot, tag_name, author: discord.Member) -> None:
+class CommonIssueModal(discord.ui.Modal):
+    def __init__(self, bot, title, author: discord.Member) -> None:
         self.bot = bot
-        self.tag_name = tag_name
+        self.title = title
         self.author = author
-        self.tag = None
+        self.description = None
+        self.buttons = None
 
-        super().__init__(title=f"Add tag {self.tag_name}")
+        super().__init__(title=f"Add common issue — {self.title}")
 
         self.add_item(
             discord.ui.InputText(
-                label="Body of the tag",
-                placeholder="Enter the body of the tag",
+                label="Body of the common issue",
+                placeholder="Enter the body of the common issue",
                 style=discord.InputTextStyle.long,
             )
         )
-
+        
         for i in range(2):
             self.add_item(
                 discord.ui.InputText(
@@ -75,42 +73,47 @@ class TagModal(discord.ui.Modal):
                     await self.send_error(interaction, "A button cannot just be an emoji!")
                     return
 
-        # prepare tag data for database
-        tag = Tag()
-        tag.name = self.tag_name.lower()
-        tag.content = description
-        tag.added_by_id = self.author.id
-        tag.added_by_tag = str(self.author)
-        tag.button_links = buttons
+        self.buttons = buttons
+        self.description = description
 
-        self.tag = tag
         self.stop()
         try:
             await interaction.response.send_message()
         except:
             pass
-        
+
     async def send_error(self, interaction: discord.Interaction, error: str):
         embed = discord.Embed(title=":(\nYour command ran into a problem", description=error, color=discord.Color.red())
         await interaction.response.send_message(embed=embed, ephemeral=True)
 
-class EditTagModal(discord.ui.Modal):
-    def __init__(self, tag: Tag, author: discord.Member) -> None:
-        self.tag = tag
+class EditCommonIssue(discord.ui.Modal):
+    def __init__(self, bot, title, issue_message, author: discord.Member) -> None:
+        self.bot = bot
         self.author = author
         self.edited = False
+        self.title = title
+        self.description = issue_message.embeds[0].description
 
-        super().__init__(title=f"Edit tag {self.tag.name}")
+        components = issue_message.components
+        buttons = []
+        if components:
+            for component in components:
+                if isinstance(component, discord.ActionRow):
+                    for child in component.children:
+                        buttons.append((f"{str(child.emoji) + ' ' if child.emoji else ''}{child.label}", child.url))
+
+        self.buttons = buttons
+        super().__init__(title=f"Edit tag {self.title}")
 
         self.add_item(
             discord.ui.InputText(
                 label="Body of the tag",
                 placeholder="Enter the body of the tag",
                 style=discord.InputTextStyle.long,
-                value=tag.content
+                value=self.description
             )
         )
-        
+
         for i in range(2):
             self.add_item(
                 discord.ui.InputText(
@@ -119,7 +122,7 @@ class EditTagModal(discord.ui.Modal):
                     style=discord.InputTextStyle.short,
                     required=False,
                     max_length=80,
-                    value=self.tag.button_links[i][0] if len(self.tag.button_links) > i else None
+                    value=self.buttons[i][0] if len(self.buttons) > i else None
                 )
             )
             self.add_item(
@@ -128,7 +131,7 @@ class EditTagModal(discord.ui.Modal):
                     placeholder="Enter a link for the button",
                     style=discord.InputTextStyle.short,
                     required=False,
-                    value=self.tag.button_links[i][1] if len(self.tag.button_links) > i else None
+                    value=self.buttons[i][1] if len(self.buttons) > i else None
                 )
             )
 
@@ -139,7 +142,7 @@ class EditTagModal(discord.ui.Modal):
         button_names = [child.value.strip() for child in self.children[1::2] if child.value is not None]
         links = [child.value.strip() for child in self.children[2::2] if child.value is not None]
 
-                # make sure all links are valid URLs with regex
+        # make sure all links are valid URLs with regex
         if not all(re.match(r'^(https|http)://.*', link) for link in links):
             await self.send_error(interaction, "The links must be valid URLs!")
             return
@@ -167,12 +170,11 @@ class EditTagModal(discord.ui.Modal):
                     await self.send_error(interaction, "A button cannot just be an emoji!")
                     return
 
-        # prepare tag data for database
-        self.tag.content = description
-        self.tag.button_links = buttons
+        self.buttons = buttons
+        self.description = description
         self.edited = True
-        self.stop()
 
+        self.stop()
         try:
             await interaction.response.send_message()
         except:

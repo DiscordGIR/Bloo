@@ -46,6 +46,7 @@ initial_extensions = [
     "cogs.monitors.boosteremojis",
     "cogs.monitors.logging",
     "cogs.monitors.role_assignment_buttons",
+    "cogs.monitors.twitfix",
     "cogs.monitors.sabbath",
     "cogs.monitors.songs",
     "cogs.monitors.xp",
@@ -56,6 +57,7 @@ initial_extensions = [
 intents = discord.Intents.default()
 intents.members = True
 intents.messages = True
+intents.message_content = True
 intents.presences = True
 mentions = discord.AllowedMentions(everyone=False, users=True, roles=False)
 

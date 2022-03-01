@@ -27,6 +27,7 @@ from utils.permissions.checks import (PermissionsFailure, memed_and_up,
 from utils.permissions.permissions import permissions
 from utils.permissions.slash_perms import slash_perms
 from utils.views.menu import Menu
+from utils.views.prompt import GenericDescriptionModal
 
 
 def format_meme_page(_, entries, current_page, all_pages):
@@ -114,7 +115,7 @@ class Memes(commands.Cog):
 
     @mod_and_up()
     @memes.command(description="Add a new meme")
-    async def add(self, ctx: BlooContext, name: str) -> None:
+    async def add(self, ctx: BlooContext, name: str, image: Option(discord.Attachment, required=False, description="Image to show in embed")) -> None:
         """Add a meme. Optionally attach an image. (Genius only)
 
         Example usage
@@ -138,18 +139,22 @@ class Memes(commands.Cog):
         if (guild_service.get_meme(name.lower())) is not None:
             raise commands.BadArgument("Meme with that name already exists.")
 
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="description",
-            description="Please enter the content of this meme, and optionally attach an image.",
-            convertor=str,
-            raw=True)
-        res = await ctx.prompt(prompt)
+        # ensure the attached file is an image
+        if image is not None:
+            _type = image.content_type
+            if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
+                raise commands.BadArgument("Attached file was not an image.")
 
-        if res is None:
+        # prompt the user for common issue body
+        modal = GenericDescriptionModal(author=ctx.author, title=f"New meme — {name}")
+        await ctx.interaction.response.send_modal(modal)
+        await modal.wait()
+
+        description = modal.value
+        if not description:
+            await ctx.send_warning("Cancelled adding meme.")
             return
 
-        description, response = res
         # prepare meme data for database
         meme = Tag()
         meme.name = name.lower()
@@ -158,14 +163,8 @@ class Memes(commands.Cog):
         meme.added_by_tag = str(ctx.author)
 
         # did the user want to attach an image to this meme?
-        if len(response.attachments) > 0:
-            # ensure the attached file is an image
-            image = response.attachments[0]
-            _type = image.content_type
-            if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
-                raise commands.BadArgument("Attached file was not an image.")
-            else:
-                image = await image.read()
+        if image is not None:
+            image = await image.read()
             # save image bytes
             meme.image.put(image, content_type=_type)
 
@@ -181,7 +180,7 @@ class Memes(commands.Cog):
 
     @mod_and_up()
     @memes.command(description="Edit an existing meme")
-    async def edit(self, ctx: BlooContext, name: Option(str, autocomplete=memes_autocomplete)) -> None:
+    async def edit(self, ctx: BlooContext, name: Option(str, autocomplete=memes_autocomplete), image: Option(discord.Attachment, required=False, description="Image to show in embed")) -> None:
         """Edit a meme's body, optionally attach an image.
 
         Example usage
@@ -204,28 +203,26 @@ class Memes(commands.Cog):
         if meme is None:
             raise commands.BadArgument("That meme does not exist.")
 
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="description",
-            description="Please enter the content of this meme, and optionally attach an image.",
-            convertor=str,
-            raw=True)
-
-        response = await ctx.prompt(prompt)
-        if response is None:
-            return
-
-        description, response = response
-        meme.content = description
-
-        if len(response.attachments) > 0:
-            # ensure the attached file is an image
-            image = response.attachments[0]
+        # ensure the attached file is an image
+        if image is not None:
             _type = image.content_type
             if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
                 raise commands.BadArgument("Attached file was not an image.")
-            else:
-                image = await image.read()
+
+        # prompt the user for common issue body
+        modal = GenericDescriptionModal(author=ctx.author, title=f"New meme — {name}", prefill=meme.content)
+        await ctx.interaction.response.send_modal(modal)
+        await modal.wait()
+
+        description = modal.value
+        if not description:
+            await ctx.send_warning("Cancelled adding meme.")
+            return
+
+        meme.content = description
+
+        if image is not None:
+            image = await image.read()
 
             # save image bytes
             if meme.image is not None:
@@ -315,7 +312,7 @@ class Memes(commands.Cog):
 
     @mempro_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Ooo magic (image version)", permissions=slash_perms.mempro_and_up())
-    async def neuralnet(self, ctx: BlooContext) -> None:
+    async def neuralnet(self, ctx: BlooContext, image: Option(discord.Attachment, description="Image to run neural net on")) -> None:
         if cfg.resnext_token is None:
             raise commands.BadArgument("ResNext token is not set up!")
 
@@ -331,64 +328,53 @@ class Memes(commands.Cog):
             if bucket.update_rate_limit(current):
                 raise commands.BadArgument("That command is on cooldown.")
 
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="image",
-            description="Please attach an image.",
-            raw=True)
-
-        something = await ctx.prompt(prompt)
-        if something is None:
-            return
-
-        _, response = something
-
-        if not response.attachments or response.attachments[0].content_type not in ["image/png", "image/jpeg", "image/webp"]:
+        if image is None or image.content_type not in ["image/png", "image/jpeg", "image/webp"]:
             raise commands.BadArgument(
                 "Attached file was not an image.")
 
-        if response.attachments[0].size > 8_000_000:
+        if image.size > 8_000_000:
             raise commands.BadArgument(
                 "That image is too large to be processed.")
 
-        async with ctx.typing():
-            contents_before = await response.attachments[0].read()
-            contents = BytesIO(contents_before)
-            async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
-                form = aiohttp.FormData()
-                form.add_field(
-                    "file", contents, content_type=response.attachments[0].content_type)
-                async with client.post('https://resnext.slim.rocks/', data=form) as resp:
-                    if resp.status == 200:
-                        j = await resp.json()
-                        embed = discord.Embed()
-                        confidence = j.get('confidence')
-                        confidence_percent = f"{confidence*100:.1f}%"
-                        embed.description = f"image prediction: {j.get('classification')}\nconfidence: {confidence_percent}"
-                        embed.set_footer(
-                            text=f"Requested by {ctx.author} • /neuralnet • Processed in {j.get('process_time')}s")
-                        embed.set_image(url="attachment://image.png")
+        await ctx.defer(ephemeral=False)
 
-                        if confidence < 0.25:
-                            embed.color = discord.Color.red()
-                        elif confidence < 0.5:
-                            embed.color = discord.Color.yellow()
-                        elif confidence < 0.75:
-                            embed.color = discord.Color.orange()
-                        else:
-                            embed.color = discord.Color.green()
+        contents_before = await image.read()
+        contents = BytesIO(contents_before)
+        async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
+            form = aiohttp.FormData()
+            form.add_field(
+                "file", contents, content_type=image.content_type)
+            async with client.post('https://resnext.slim.rocks/', data=form) as resp:
+                if resp.status == 200:
+                    j = await resp.json()
+                    embed = discord.Embed()
+                    confidence = j.get('confidence')
+                    confidence_percent = f"{confidence*100:.1f}%"
+                    embed.description = f"image prediction: {j.get('classification')}\nconfidence: {confidence_percent}"
+                    embed.set_footer(
+                        text=f"Requested by {ctx.author} • /neuralnet • Processed in {j.get('process_time')}s")
+                    embed.set_image(url="attachment://image.png")
 
-                        await ctx.send(embed=embed, file=discord.File(BytesIO(contents_before), filename="image.png"))
+                    if confidence < 0.25:
+                        embed.color = discord.Color.red()
+                    elif confidence < 0.5:
+                        embed.color = discord.Color.yellow()
+                    elif confidence < 0.75:
+                        embed.color = discord.Color.orange()
                     else:
-                        raise commands.BadArgument(
-                            "An error occurred classifying that image.")
+                        embed.color = discord.Color.green()
+
+                    await ctx.respond(embed=embed, file=discord.File(BytesIO(contents_before), filename="image.png"))
+                else:
+                    raise commands.BadArgument(
+                        "An error occurred classifying that image.")
 
     memegen = discord.SlashCommandGroup("memegen", "Generate memes", guild_ids=[
                                         cfg.guild_id], permissions=slash_perms.memed_and_up())
 
     @memed_and_up()
     @memegen.command(description="Meme generator")
-    async def regular(self, ctx: BlooContext, top_text: str, bottom_text: str) -> None:
+    async def regular(self, ctx: BlooContext, top_text: str, bottom_text: str, image: Option(discord.Attachment, description="Image to use as base")) -> None:
         if cfg.resnext_token is None:
             raise commands.BadArgument("ResNext token is not set up!")
 
@@ -411,50 +397,38 @@ class Memes(commands.Cog):
             if bucket.update_rate_limit(current):
                 raise commands.BadArgument("That command is on cooldown.")
 
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="image",
-            description="Please attach an image.",
-            raw=True)
-
-        something = await ctx.prompt(prompt)
-        if something is None:
-            return
-
-        _, response = something
-
-        if not response.attachments or response.attachments[0].content_type not in ["image/png", "image/jpeg", "image/webp"]:
+        if image is None or image.content_type not in ["image/png", "image/jpeg", "image/webp"]:
             raise commands.BadArgument(
                 "Attached file was not an image.")
 
-        if response.attachments[0].size > 8_000_000:
+        if image.size > 8_000_000:
             raise commands.BadArgument(
                 "That image is too large to be processed.")
 
-        async with ctx.typing():
-            contents_before = await response.attachments[0].read()
-            contents = BytesIO(contents_before)
-            async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
-                form = aiohttp.FormData()
-                form.add_field(
-                    "file", contents, content_type=response.attachments[0].content_type)
-                async with client.post(f'https://resnext.slim.rocks/meme?top_text={top_text}&bottom_text={bottom_text}', data=form) as resp:
-                    if resp.status == 200:
-                        resp = await resp.read()
-                        embed = discord.Embed()
-                        embed.set_footer(
-                            text=f"Requested by {ctx.author} • /memegen regular")
-                        embed.set_image(url="attachment://image.png")
-                        embed.color = discord.Color.random()
+        await ctx.defer(ephemeral=False)
+        contents_before = await image.read()
+        contents = BytesIO(contents_before)
+        async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
+            form = aiohttp.FormData()
+            form.add_field(
+                "file", contents, content_type=image.content_type)
+            async with client.post(f'https://resnext.slim.rocks/meme?top_text={top_text}&bottom_text={bottom_text}', data=form) as resp:
+                if resp.status == 200:
+                    resp = await resp.read()
+                    embed = discord.Embed()
+                    embed.set_footer(
+                        text=f"Requested by {ctx.author} • /memegen regular")
+                    embed.set_image(url="attachment://image.png")
+                    embed.color = discord.Color.random()
 
-                        await ctx.send(embed=embed, file=discord.File(BytesIO(resp), filename="image.png"))
-                    else:
-                        raise commands.BadArgument(
-                            "An error occurred generating that meme.")
+                    await ctx.respond(embed=embed, file=discord.File(BytesIO(resp), filename="image.png"))
+                else:
+                    raise commands.BadArgument(
+                        "An error occurred generating that meme.")
 
     @memed_and_up()
     @memegen.command(description="Motivational poster)")
-    async def motivate(self, ctx: BlooContext, top_text: str, bottom_text: str) -> None:
+    async def motivate(self, ctx: BlooContext, top_text: str, bottom_text: str, image: Option(discord.Attachment, description="Image to use as base")) -> None:
         if cfg.resnext_token is None:
             raise commands.BadArgument("ResNext token is not set up!")
 
@@ -477,46 +451,34 @@ class Memes(commands.Cog):
             if bucket.update_rate_limit(current):
                 raise commands.BadArgument("That command is on cooldown.")
 
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="image",
-            description="Please attach an image.",
-            raw=True)
-
-        something = await ctx.prompt(prompt)
-        if something is None:
-            return
-
-        _, response = something
-
-        if not response.attachments or response.attachments[0].content_type not in ["image/png", "image/jpeg", "image/webp"]:
+        if image is None or image.content_type not in ["image/png", "image/jpeg", "image/webp"]:
             raise commands.BadArgument(
                 "Attached file was not an image.")
 
-        if response.attachments[0].size > 8_000_000:
+        if image.size > 8_000_000:
             raise commands.BadArgument(
                 "That image is too large to be processed.")
 
-        async with ctx.typing():
-            contents_before = await response.attachments[0].read()
-            contents = BytesIO(contents_before)
-            async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
-                form = aiohttp.FormData()
-                form.add_field(
-                    "file", contents, content_type=response.attachments[0].content_type)
-                async with client.post(f'https://resnext.slim.rocks/demotivational-meme?top_text={top_text}&bottom_text={bottom_text}', data=form) as resp:
-                    if resp.status == 200:
-                        resp = await resp.read()
-                        embed = discord.Embed()
-                        embed.set_footer(
-                            text=f"Requested by {ctx.author} • /memegen motivate")
-                        embed.set_image(url="attachment://image.png")
-                        embed.color = discord.Color.random()
+        await ctx.defer(ephemeral=False)
+        contents_before = await image.read()
+        contents = BytesIO(contents_before)
+        async with aiohttp.ClientSession(headers={"token": cfg.resnext_token}) as client:
+            form = aiohttp.FormData()
+            form.add_field(
+                "file", contents, content_type=image.content_type)
+            async with client.post(f'https://resnext.slim.rocks/demotivational-meme?top_text={top_text}&bottom_text={bottom_text}', data=form) as resp:
+                if resp.status == 200:
+                    resp = await resp.read()
+                    embed = discord.Embed()
+                    embed.set_footer(
+                        text=f"Requested by {ctx.author} • /memegen motivate")
+                    embed.set_image(url="attachment://image.png")
+                    embed.color = discord.Color.random()
 
-                        await ctx.send(embed=embed, file=discord.File(BytesIO(resp), filename="image.png"))
-                    else:
-                        raise commands.BadArgument(
-                            "An error occurred generating that meme.")
+                    await ctx.respond(embed=embed, file=discord.File(BytesIO(resp), filename="image.png"))
+                else:
+                    raise commands.BadArgument(
+                        "An error occurred generating that meme.")
 
     @memed_and_up()
     @memegen.command(description="AI generated text from chat history")

@@ -313,7 +313,7 @@ class AntiRaidMonitor(commands.Cog):
         # extract domain from url
         domain = url.group(1).split("/")[2]
 
-        if domain == "bit.ly":
+        if domain in ["bit.ly", "github.com"]:
             # for bit.ly we don't want to ban the whole domain, just this specific one
             domain = url.group(1)
 

@@ -1,7 +1,7 @@
 import typing
 import discord
 from discord.ext import commands
-from discord.commands.commands import Option, SlashCommand, SlashCommandGroup, slash_command
+from discord.commands import Option, SlashCommand, SlashCommandGroup, slash_command
 from discord.commands.context import AutocompleteContext
 
 import traceback

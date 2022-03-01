@@ -9,3 +9,4 @@ class Tag(mongoengine.EmbeddedDocument):
     added_date   = mongoengine.DateTimeField(default=datetime.now)
     use_count    = mongoengine.IntField(default=0)
     image        = mongoengine.FileField(default=None)
+    button_links = mongoengine.ListField(default=[], required=False)

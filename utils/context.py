@@ -29,7 +29,7 @@ class PromptDataReaction:
         self.delete_after = delete_after
         self.raw_emoji = raw_emoji
 
-class BlooContext(discord.context.ApplicationContext):
+class BlooContext(discord.ApplicationContext):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.whisper = False
@@ -38,17 +38,27 @@ class BlooContext(discord.context.ApplicationContext):
     async def respond_or_edit(self, *args, **kwargs):
         """Creates or edits an interaction response"""
         if self.interaction.response.is_done():
+            if kwargs.get("followup"):
+                if kwargs.get("view") is None:
+                    kwargs["view"] = discord.utils.MISSING
+                del kwargs["followup"]
+                return await self.followup.send(*args, **kwargs)
+
             if kwargs.get("ephemeral") is not None:
                 del kwargs["ephemeral"]
             if "delete_after" in kwargs:
                 del kwargs["delete_after"]
+            if "followup" in kwargs:
+                del kwargs["followup"]
+
             return await self.edit(*args, **kwargs)
         else:
-            if kwargs.get("view") is None:
-                kwargs["view"] = discord.utils.MISSING
+            if "followup" in kwargs:
+                del kwargs["followup"]
+
             return await self.respond(*args, **kwargs)
 
-    async def send_success(self, description: str, title: str = "", delete_after=None):
+    async def send_success(self, description: str, title: str = "", delete_after=None, followup=False):
         """Sends a success message
         
         Parameters
@@ -60,9 +70,9 @@ class BlooContext(discord.context.ApplicationContext):
 
         """
         embed = discord.Embed(title=title, description=description,  color=discord.Color.dark_green())
-        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=None, delete_after=delete_after)
-    
-    async def send_warning(self, description: str, title: str = "", delete_after=None):
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=None, delete_after=delete_after, followup=followup)
+
+    async def send_warning(self, description: str, title: str = "", delete_after=None, followup=False):
         """Sends a warning message
         
         Parameters
@@ -74,7 +84,7 @@ class BlooContext(discord.context.ApplicationContext):
 
         """
         embed = discord.Embed(title=title, description=description,  color=discord.Color.orange())
-        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=None, delete_after=delete_after)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=None, delete_after=delete_after, followup=followup)
     
     async def send_error(self, description):
         """Sends an error message
@@ -88,7 +98,7 @@ class BlooContext(discord.context.ApplicationContext):
 
         """
         embed = discord.Embed(title=":(\nYour command ran into a problem", description=description,  color=discord.Color.red())
-        return await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=None)
+        return await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=None, followup=True)
         
     async def prompt(self, info: PromptData):
         """Prompts for a response

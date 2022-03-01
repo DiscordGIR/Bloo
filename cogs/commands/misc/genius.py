@@ -1,6 +1,8 @@
+from pydoc import describe
+import re
 import discord
 from discord.commands import slash_command
-from discord.commands.commands import Option
+from discord.commands import Option
 from discord.ext import commands
 
 import datetime
@@ -12,16 +14,52 @@ from utils.logger import logger
 from utils.context import BlooContext, PromptData
 from utils.permissions.checks import (PermissionsFailure, always_whisper, genius_or_submod_and_up, whisper_in_general)
 from utils.permissions.slash_perms import slash_perms
+from utils.views.common_issue_modal import CommonIssueModal, EditCommonIssue
+from utils.views.prompt import GenericDescriptionModal
 
+
+async def prepare_issue_response(title, description, author, buttons = [], image: discord.Attachment = None):
+    embed = discord.Embed(title=title)
+    embed.color = discord.Color.random()
+    embed.description = description
+    f = None
+
+    # did the user want to attach an image to this tag?
+    if image is not None:
+        f = await image.to_file()
+        embed.set_image(url=f"attachment://{f.filename}")
+
+    embed.set_footer(text=f"Submitted by {author}")
+    embed.timestamp = datetime.datetime.now()
+
+    if not buttons or buttons is None:
+        return embed, f, None
+
+    view = discord.ui.View()
+    for label, link in buttons:
+        # regex match emoji in label
+        custom_emojis = re.search(r'<:\d+>|<:.+?:\d+>|<a:.+:\d+>|[\U00010000-\U0010ffff]', label)
+        if custom_emojis is not None:
+            emoji = custom_emojis.group(0).strip()
+            label = label.replace(emoji, '')
+            label = label.strip()
+        else:
+            emoji = None
+        view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label=label, url=link, emoji=emoji))
+
+    return embed, f, view
 
 class Genius(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.cache = []
 
+    commonissue = discord.SlashCommandGroup("commonissue", "Interact with common issues", guild_ids=[
+                                      cfg.guild_id], permissions=slash_perms.genius_or_submod_and_up())
+
     @genius_or_submod_and_up()
-    @slash_command(guild_ids=[cfg.guild_id], description="Submit a new common issue", permissions=slash_perms.genius_or_submod_and_up())
-    async def commonissue(self, ctx: BlooContext, *, title: str):
+    @commonissue.command(description="Submit a new common issue")
+    async def new(self, ctx: BlooContext, *, title: Option(str, description="Title of the issue"),  image: Option(discord.Attachment, required=False, description="Image to show in issue")) -> None:
         """Submit a new common issue (Geniuses only)
         
         Example usage
@@ -34,36 +72,76 @@ class Genius(commands.Cog):
             "Title for the issue"
             
         """
-
         # get #common-issues channel
         channel = ctx.guild.get_channel(
             guild_service.get_guild().channel_common_issues)
         if not channel:
             raise commands.BadArgument("common issues channel not found")
 
+        # ensure the attached file is an image
+        if image is not None:
+            _type = image.content_type
+            if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
+                raise commands.BadArgument("Attached file was not an image.")
+
         # prompt the user for common issue body
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="description",
-            description="Please enter a description of this common issue (optionally attach an image).",
-            convertor=str,
-            raw=True)
+        modal = CommonIssueModal(bot=self.bot, author=ctx.author, title=title)
+        await ctx.interaction.response.send_modal(modal)
+        await modal.wait()
 
-        res = await ctx.prompt(prompt)
-        if res is None:
-            await ctx.send_warning("Cancelled new common issue.")
+        description = modal.description
+        buttons = modal.buttons
+
+        if not description:
+            await ctx.send_warning("Cancelled adding common issue.")
             return
-        
-        description, response = res
 
-        embed, f = await self.prepare_issues_embed(title, description, response)
-        await channel.send(embed=embed, file=f)
-        await ctx.send_success("Common issue posted!", delete_after=5)
+        embed, f, view = await prepare_issue_response(title, description, ctx.author, buttons, image)
+
+        await channel.send(embed=embed, file=f, view=view)
+        await ctx.send_success("Common issue posted!", delete_after=5, followup=True)
+        await self.do_reindex(channel)
+
+    @genius_or_submod_and_up()
+    @commonissue.command(description="Submit a new common issue")
+    async def edit(self, ctx: BlooContext, *, title: Option(str, description="Title of the issue", autocomplete=issue_autocomplete), image: Option(discord.Attachment, required=False, description="Image to show in issue")) -> None:
+        channel = ctx.guild.get_channel(
+            guild_service.get_guild().channel_common_issues)
+        if not channel:
+            raise commands.BadArgument("common issues channel not found")
+
+        if title not in self.bot.issue_cache.cache:
+            raise commands.BadArgument("Issue not found! Title must match one of the embeds exactly, use autocomplete to help!")
+
+        message: discord.Message = self.bot.issue_cache.cache[title]
+
+        # ensure the attached file is an image
+        if image is not None:
+            _type = image.content_type
+            if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
+                raise commands.BadArgument("Attached file was not an image.")
+
+        # prompt the user for common issue body
+        modal = EditCommonIssue(bot=self.bot, author=ctx.author, title=title, issue_message=message)
+        await ctx.interaction.response.send_modal(modal)
+        await modal.wait()
+
+        if not modal.edited:
+            await ctx.send_warning("Cancelled adding common issue.")
+            return
+
+        description = modal.description
+        buttons = modal.buttons
+
+        embed, f, view = await prepare_issue_response(title, description, ctx.author, buttons, image)
+        embed.set_footer(text=message.embeds[0].footer.text)
+        await message.edit(embed=embed, file=f or discord.MISSING, attachments=[], view=view)
+        await ctx.send_success("Common issue edited!", delete_after=5, followup=True)
         await self.do_reindex(channel)
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Post an embed", permissions=slash_perms.genius_or_submod_and_up())
-    async def postembed(self, ctx: BlooContext, *, title: str):
+    async def postembed(self, ctx: BlooContext, *, title: Option(str, description="Title of the embed"), image: Option(discord.Attachment, required=False, description="Image to show in embed")):
         """Post an embed in the current channel (Geniuses only)
 
         Example usage
@@ -80,22 +158,23 @@ class Genius(commands.Cog):
         # get #common-issues channel
         channel = ctx.channel
 
-        # prompt the user for common issue body
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="description",
-            description="Please enter a description of this embed (optionally attach an image)",
-            convertor=str,
-            raw=True)
+        # ensure the attached file is an image
+        if image is not None:
+            _type = image.content_type
+            if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
+                raise commands.BadArgument("Attached file was not an image.")
 
-        res = await ctx.prompt(prompt)
-        if res is None:
+        # prompt the user for common issue body
+        modal = GenericDescriptionModal(author=ctx.author, title=f"New embed — {title}")
+        await ctx.interaction.response.send_modal(modal)
+        await modal.wait()
+
+        description = modal.value
+        if not description:
             await ctx.send_warning("Cancelled new embed.")
             return
 
-        description, response = res
-
-        embed, f = await self.prepare_issues_embed(title, description, response)
+        embed, f, _ = await prepare_issue_response(title, description, ctx.author, image)
         await channel.send(embed=embed, file=f)
 
     @genius_or_submod_and_up()
@@ -188,47 +267,35 @@ class Genius(commands.Cog):
         if _file:
             await ctx.send(_file.url, allowed_mentions=discord.AllowedMentions(users=False, roles=False, everyone=False))
 
-    async def prepare_issues_embed(self, title, description, message):
-        embed = discord.Embed(title=title)
-        embed.color = discord.Color.random()
-        embed.description = description
-        f = None
-
-        # did the user want to attach an image to this tag?
-        if len(message.attachments) > 0:
-            # ensure the attached file is an image
-            image = message.attachments[0]
-            _type = image.content_type
-            if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
-                raise commands.BadArgument("Attached file was not an image.")
-
-            f = await image.to_file()
-            embed.set_image(url=f"attachment://{f.filename}")
-
-        embed.set_footer(text=f"Submitted by {message.author}")
-        embed.timestamp = datetime.datetime.now()
-        return embed, f
-
     @whisper_in_general()
     @slash_command(guild_ids=[cfg.guild_id], description="Post the embed for one of the common issues")
     async def issue(self, ctx: BlooContext, title: Option(str, autocomplete=issue_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
         if title not in self.bot.issue_cache.cache:
             raise commands.BadArgument("Issue not found! Title must match one of the embeds exactly, use autocomplete to help!")
 
-        message = self.bot.issue_cache.cache[title]
+        message: discord.Message = self.bot.issue_cache.cache[title]
         embed = message.embeds[0]
+        view = discord.ui.View()
+        components = message.components
+        if components:
+            for component in components:
+                if isinstance(component, discord.ActionRow):
+                    for child in component.children:
+                        b = discord.ui.Button(style=child.style, emoji=child.emoji, label=child.label, url=child.url)
+                        view.add_item(b)
 
         if user_to_mention is not None:
             title = f"Hey {user_to_mention.mention}, have a look at this!"
         else:
             title = None
 
-        await ctx.respond_or_edit(content=title, embed=embed, ephemeral=ctx.whisper)
+        await ctx.respond_or_edit(content=title, embed=embed, ephemeral=ctx.whisper, view=view)
 
     @issue.error
     @rawembed.error
     @postembed.error
-    @commonissue.error
+    @new.error
+    @edit.error
     async def info_error(self,  ctx: BlooContext, error):
         if isinstance(error, discord.ApplicationCommandInvokeError):
             error = error.original
@@ -243,8 +310,9 @@ class Genius(commands.Cog):
                 or isinstance(error, commands.NoPrivateMessage)):
             await ctx.send_error(error)
         else:
-            await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            logger.error(traceback.format_exc())
+            err = traceback.format_exc()
+            await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.", err=err)
+            logger.error(err)
 
 
 def setup(bot):

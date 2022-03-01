@@ -6,7 +6,7 @@ from typing import List
 import aiohttp
 from aiocache import cached
 import discord
-from discord.commands.commands import OptionChoice
+from discord.commands import OptionChoice
 from data.model.case import Case
 from data.services.guild_service import guild_service
 from data.services.user_service import user_service

@@ -9,6 +9,7 @@ from utils.logger import logger
 from utils.context import BlooContext, PromptData
 from utils.permissions.checks import PermissionsFailure, submod_or_admin_and_up
 from utils.permissions.slash_perms import slash_perms
+from utils.views.prompt import GenericDescriptionModal
 
 class SubNews(commands.Cog):
     def __init__(self, bot):
@@ -16,7 +17,7 @@ class SubNews(commands.Cog):
 
     @submod_or_admin_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Post a new subreddit news post", permissions=slash_perms.submod_or_admin_and_up())
-    async def subnews(self, ctx: BlooContext):
+    async def subnews(self, ctx: BlooContext, image: discord.Option(discord.Attachment, required=False, description="Image to show in embed")):
         """Posts a new subreddit news post
         
         Example usage
@@ -34,24 +35,19 @@ class SubNews(commands.Cog):
         if not subnews:
             raise commands.BadArgument("A subbredit news role was not found. Conact Slim")
 
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="description",
-            description="Please enter a description of this post (and attach an image if you want).",
-            convertor=str,
-            raw=True)
+        modal = GenericDescriptionModal(author=ctx.author, title=f"New sub news post")
+        await ctx.interaction.response.send_modal(modal)
+        await modal.wait()
 
-        res = await ctx.prompt(prompt)
-        if res is None:
-            await ctx.send_warning("Cancelled subnews post.")
+        description = modal.value
+        if not description:
+            await ctx.send_warning("Cancelled adding meme.")
             return
 
-        description, response = res
         body = f"{subnews.mention} New Subreddit news post!\n\n{description}"
 
-        if len(response.attachments) > 0:
+        if image is not None:
             # ensure the attached file is an image
-            image = response.attachments[0]
             _type = image.content_type
             if _type not in ["image/png", "image/jpeg", "image/gif", "image/webp"]:
                 raise commands.BadArgument("Attached file was not an image.")
@@ -61,7 +57,7 @@ class SubNews(commands.Cog):
             f = None
 
         await channel.send(content=body, file=f)
-        await ctx.send_success("Posted subreddit news post!", delete_after=5)
+        await ctx.send_success("Posted subreddit news post!", delete_after=5, followup=True)
 
     @subnews.error
     async def info_error(self,  ctx: BlooContext, error):

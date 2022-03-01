@@ -11,6 +11,7 @@ from utils.context import BlooContext, PromptData
 from utils.permissions.checks import PermissionsFailure, admin_and_up, mod_and_up
 from utils.permissions.slash_perms import slash_perms
 from utils.views.confirm import Confirm
+from utils.views.prompt import GenericDescriptionModal
 
 
 class AntiRaid(commands.Cog):
@@ -56,20 +57,18 @@ class AntiRaid(commands.Cog):
             "Phrases to add, separated with enter"
         """
 
-        await ctx.defer(ephemeral=True)
-        prompt = PromptData(
-            value_name="description",
-            description="Please enter the list of things you want added to raid filter (separated by newlines).",
-            convertor=str)
+        modal = GenericDescriptionModal(author=ctx.author, title=f"New sub news post")
+        await ctx.interaction.response.send_modal(modal)
+        await modal.wait()
 
-        phrases = await ctx.prompt(prompt)
-
-        if phrases is None:
+        phrases = modal.value
+        if not phrases:
+            await ctx.send_warning("Cancelled adding new raid phrases.", followup=True)
             return
 
         async with ctx.typing():
             phrases = list(set(phrases.split("\n")))
-            phrases = [phrase.strip() for phrase in phrases]
+            phrases = [phrase.strip() for phrase in phrases if phrase.strip()]
 
             phrases_contenders = set(phrases)
             phrases_already_in_db = set([phrase.word for phrase in guild_service.get_guild().raid_phrases])
@@ -92,7 +91,7 @@ class AntiRaid(commands.Cog):
             embed.set_footer(text=f"Note: we found {duplicate_count} duplicates in your list.")
 
         view = Confirm(ctx)
-        await ctx.respond_or_edit(embed=embed, view=view, ephemeral=True)
+        await ctx.respond_or_edit(embed=embed, view=view, ephemeral=True, followup=True)
         await view.wait()
         do_add = view.value
 
@@ -101,9 +100,9 @@ class AntiRaid(commands.Cog):
                 for phrase in new_phrases:
                     guild_service.add_raid_phrase(phrase)
 
-            await ctx.send_success(f"Added {len(new_phrases)} phrases to the raid filter.")
+            await ctx.send_success(f"Added {len(new_phrases)} phrases to the raid filter.", followup=True)
         else:
-            await ctx.send_warning("Cancelled.")
+            await ctx.send_warning("Cancelled.", followup=True)
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Remove a phrase from the raid filter.", permissions=slash_perms.mod_and_up())

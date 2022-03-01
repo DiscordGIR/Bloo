@@ -310,8 +310,9 @@ class Genius(commands.Cog):
                 or isinstance(error, commands.NoPrivateMessage)):
             await ctx.send_error(error)
         else:
-            await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            logger.error(traceback.format_exc())
+            err = traceback.format_exc()
+            await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.", err=err)
+            logger.error(err)
 
 
 def setup(bot):

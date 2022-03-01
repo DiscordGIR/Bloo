@@ -86,7 +86,7 @@ class BlooContext(discord.ApplicationContext):
         embed = discord.Embed(title=title, description=description,  color=discord.Color.orange())
         return await self.respond_or_edit(content="", embed=embed, ephemeral=self.whisper, view=None, delete_after=delete_after, followup=followup)
     
-    async def send_error(self, description):
+    async def send_error(self, description, err=None):
         """Sends an error message
         
         Parameters
@@ -97,6 +97,14 @@ class BlooContext(discord.ApplicationContext):
             "Error message title"
 
         """
+        if err is not None:
+            try:
+                lines = err.strip().split("\n")
+                num = -2 if len(lines) > 2 else -1
+                description += "```\n\n" + '\n'.join(lines[num:]) + "```"
+            except:
+                pass
+
         embed = discord.Embed(title=":(\nYour command ran into a problem", description=description,  color=discord.Color.red())
         return await self.respond_or_edit(content="", embed=embed, ephemeral=True, view=None, followup=True)
         

@@ -29,8 +29,11 @@ async def prepare_issue_response(title, description, author, buttons = [], image
         f = await image.to_file()
         embed.set_image(url=f"attachment://{f.filename}")
 
+    embed.set_footer(text=f"Submitted by {author}")
+    embed.timestamp = datetime.datetime.now()
+
     if not buttons or buttons is None:
-        return
+        return embed, f, None
 
     view = discord.ui.View()
     for label, link in buttons:
@@ -44,8 +47,6 @@ async def prepare_issue_response(title, description, author, buttons = [], image
             emoji = None
         view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label=label, url=link, emoji=emoji))
 
-    embed.set_footer(text=f"Submitted by {author}")
-    embed.timestamp = datetime.datetime.now()
     return embed, f, view
 
 class Genius(commands.Cog):
@@ -309,8 +310,9 @@ class Genius(commands.Cog):
                 or isinstance(error, commands.NoPrivateMessage)):
             await ctx.send_error(error)
         else:
-            await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.")
-            logger.error(traceback.format_exc())
+            err = traceback.format_exc()
+            await ctx.send_error("A fatal error occured. Tell <@109705860275539968> about this.", err=err)
+            logger.error(err)
 
 
 def setup(bot):

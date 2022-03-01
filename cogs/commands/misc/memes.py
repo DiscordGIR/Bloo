@@ -581,7 +581,7 @@ class Memes(commands.Cog):
                         "An error occurred generating that meme. The image is probably too small.")
 
 
-    @memed_and_up()
+    @mod_and_up()
     @memegen.command(description="AI generated text based on a prompt")
     async def aitext(self, ctx: BlooContext, prompt: Option(str, description="Text to base results on")):
         if cfg.open_ai_token is None:
@@ -615,11 +615,12 @@ class Memes(commands.Cog):
                     text = data.get("choices")[0].get("text")
                     text = discord.utils.escape_markdown(text)
                     if find_triggered_filters(text, ctx.author) or find_triggered_raid_phrases(text, ctx.author):
-                        raise commands.BadArgument("An OpenAI API error occured.")
+                        text = "A filter was triggered by this response. Please try a different prompt."
 
                     embed = discord.Embed(color=discord.Color.random())
-                    embed.add_field(name="Prompt", value=discord.utils.escape_markdown(prompt), inline=False)
-                    embed.add_field(name="Response", value=text, inline=False)
+                    prompt_formatted = discord.utils.escape_markdown(prompt)
+                    embed.add_field(name="Prompt", value=prompt_formatted[:1024] + "..." if len(prompt_formatted) > 1024 else prompt_formatted, inline=False)
+                    embed.add_field(name="Response", value=text or "API did not return a response.", inline=False)
                     embed.set_footer(text=f"Requested by {ctx.author} • /memegen aitext")
                     await ctx.respond(embed=embed)
                 else:

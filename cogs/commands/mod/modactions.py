@@ -280,11 +280,11 @@ class ModActions(commands.Cog):
         reason = escape_mentions(reason)
         db_guild = guild_service.get_guild()
 
+        await ctx.defer(ephemeral=False)
         member_is_external = isinstance(user, discord.User)
 
         # if the ID given is of a user who isn't in the guild, try to fetch the profile
         if member_is_external:
-            async with ctx.typing():
                 if self.bot.ban_cache.is_banned(user.id):
                     raise commands.BadArgument("That user is already banned!")
 

@@ -335,7 +335,7 @@ class Filter(commands.Cog):
     async def detect_cij_or_eta(self, message: discord.Message, db_guild):
         if message.edited_at is not None:
             return
-        if permissions.has(message.guild, message.author, 2):
+        if permissions.has(message.guild, message.author, 1):
             return
 
         cij_filter_response = await self.fetch_cij_or_news_database()

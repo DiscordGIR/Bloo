@@ -360,15 +360,20 @@ class Filter(commands.Cog):
             embed.set_footer(
                 text="This action was performed automatically. Please disregard if incorrect.")
             #view = DissmissableMessage(message.author)
-            res = await message.reply(embed=embed)
+            res = await message.reply(embed=embed, delete_after=20)
             #view.start(res)
         elif any(intent in text for intent in intent_cij) and subject_and_word_in_message:
             embed = discord.Embed(color=discord.Color.orange())
-            embed.description = "It appears you are asking if you can jailbreak your device, you can find out that information by using `/canijailbreak` or in the \"Get Started\" section of [ios.cfw.guide](https://ios.cfw.guide/get-started)."
+            embed.description = "It appears you are asking if you can jailbreak your device, you can find out that information by using `/canijailbreak` or in the \"Get Started\" section of ios.cfw.guide."
             embed.set_footer(
                 text="This action was performed automatically. Please disregard if incorrect.")
+            view = discord.ui.View()
+            view.add_item(discord.ui.Button(label='Get Started', emoji="<:Guide:947350624385794079>",
+                                            url=f"https://ios.cfw.guide/get-started/#required-reading", style=discord.ButtonStyle.url))
+            view.add_item(discord.ui.Button(label='Jailbreak Chart', emoji="<:Search2:947525874297757706>",
+                                            url=f"https://appledb.dev/", style=discord.ButtonStyle.url))
             #view = DissmissableMessage(message.author)
-            res = await message.reply(embed=embed)
+            res = await message.reply(embed=embed, view=view, delete_after=20)
             #view.start(res)
 
     @generate_report_msg.error

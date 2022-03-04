@@ -137,7 +137,10 @@ class Canister(commands.Cog):
             result = list(await search(search_term))
 
         if not result:
-            await ctx.send_error("That package wasn't found in Canister's database.")
+            embed = discord.Embed(
+                title=":(\nI couldn't find that package", color=discord.Color.red())
+            embed.description = f"Try broadening your search query."
+            await ctx.send(embed=embed, delete_after=8)
             return
 
         view = discord.ui.View(timeout=30)
@@ -175,8 +178,11 @@ class Canister(commands.Cog):
         result = list(await search(query))
 
         if not result:
-            raise commands.BadArgument(
-                "That package wasn't found in Canister's database.")
+            embed = discord.Embed(
+                title=":(\nI couldn't find that package", color=discord.Color.red())
+            embed.description = f"Try broadening your search query."
+            await ctx.respond(embed=embed)
+            return
 
         view = discord.ui.View(timeout=30)
         td = TweakDropdown(ctx.author, result, interaction=True,

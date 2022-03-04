@@ -11,6 +11,7 @@ from utils.autocompleters import fetch_repos
 from utils.logger import logger
 from utils.permissions.permissions import permissions
 from utils.views.canister import default_repos
+from utils.config import cfg
 from yarl import URL
 
 
@@ -20,6 +21,10 @@ class RepoWatcher(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        if message.guild.id == None:
+            return
+        if message.guild.id != cfg.guild_id:
+            return
         if message.author.bot:
             return
         if message.channel.id == guild_service.get_guild().channel_general and not permissions.has(message.guild, message.author, 5):
@@ -93,6 +98,10 @@ class Sileo(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        if message.guild.id == None:
+            return
+        if message.guild.id != cfg.guild_id:
+            return
         if message.author.bot:
             return
         if message.channel.id == guild_service.get_guild().channel_general and not permissions.has(message.guild, message.author, 5):
@@ -109,26 +118,27 @@ class Sileo(commands.Cog):
                     response = json.loads(await resp.text())
 
                 if len(response['data']) != 0:
-                    color = response['data'][0]['tintColor']
+                    canister = response['data'][0]
+                    color = canister['tintColor']
                     view = discord.ui.View()
                     if color is None:
                         color = discord.Color.blue()
                     else:
                         color = discord.Color(int(color.strip('#'), 16))
                     embed = discord.Embed(
-                        title=f"{response['data'][0]['name']} - {response['data'][0]['repository']['name']}", color=color)
+                        title=f"{canister['name']} - {canister['repository']['name']}", color=color)
                     embed.description = f"You have linked to a package, you can use the button below to open it directly in Sileo."
-                    icon = response['data'][0]['packageIcon']
-                    depiction = response['data'][0]['depiction']
+                    icon = canister['packageIcon']
+                    depiction = canister['depiction']
                     view.add_item(discord.ui.Button(label='View Package in Sileo', emoji="<:Search2:947525874297757706>",
                                 url=f"https://sharerepo.stkc.win/v3/?pkgid={urlscheme.group(1)}", style=discord.ButtonStyle.url))
                     if depiction is not None:
                         view.add_item(discord.ui.Button(label='View Depiction', emoji="<:Depiction:947358756033949786>", url=response[
                                     'data'][0]['depiction'], style=discord.ButtonStyle.url))
                     if icon is not None:
-                        embed.set_thumbnail(url=response['data'][0]['packageIcon'])
+                        embed.set_thumbnail(url=canister['packageIcon'])
                     view.add_item(discord.ui.Button(label='Add Repo to Sileo', emoji="<:sileo:679466569407004684>",
-                                url=f"https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={response['data'][0]['repository']['uri']}", style=discord.ButtonStyle.url))
+                                url=f"https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={canister['repository']['uri']}", style=discord.ButtonStyle.url))
                     await message.reply(embed=embed, view=view, mention_author=False)
                 else:
                     view = discord.ui.View()

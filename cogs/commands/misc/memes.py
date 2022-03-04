@@ -53,6 +53,8 @@ class Memes(commands.Cog):
         self.memegen_cooldown = CooldownMapping.from_cooldown(
             1, 45, MessageTextBucket.custom)
         self.markov_lock = Lock()
+        self.meme_phrases = ["{user}, have a look at this funny meme! LOL!", "Hey, {user}. Have a look at this knee-slapper!",
+                             "{user}, look at this meme! Just don't show Aaron.", "{user} 😂😂😂😂😭😭😭😭"]
 
     @slash_command(guild_ids=[cfg.guild_id], description="Display a meme")
     async def meme(self, ctx: BlooContext, name: Option(str, description="Meme name", autocomplete=memes_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):
@@ -88,7 +90,7 @@ class Memes(commands.Cog):
                 file), filename="image.gif" if meme.image.content_type == "image/gif" else "image.png")
 
         if user_to_mention is not None:
-            title = f"{user_to_mention.mention}, have a look at this funny meme! LOL!"
+            title = random.choice(self.meme_phrases).format(user=user_to_mention.mention)
         else:
             title = None
 

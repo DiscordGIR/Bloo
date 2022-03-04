@@ -103,29 +103,43 @@ class Sileo(commands.Cog):
         if urlscheme is None:
             return
 
-        try:
-            async with aiohttp.ClientSession() as client:
-                async with client.get(URL(f'https://api.parcility.co/db/package/{urlscheme.group(1)}', encoded=True)) as resp:
-                    if resp.status == 200:
-                        response = json.loads(await resp.text())
+        async with aiohttp.ClientSession() as client:
+            async with client.get(f'https://api.canister.me/v1/community/packages/search?query={urlscheme.group(1)}&searchFields=identifier&responseFields=name,repository.uri,repository.name,depiction,packageIcon,tintColor') as resp:
+                if resp.status == 200:
+                    response = json.loads(await resp.text())
 
-                view = discord.ui.View()
-                embed = discord.Embed(
-                    title=f"{response.get('data')['Name']} - {response.get('data')['repo']['label']}", color=discord.Color.green())
-                embed.description = f"You have linked to a package, you can use the above link to open it directly in Sileo."
-                embed.set_thumbnail(url=response.get('data')['Icon'])
-                try:
-                    view.add_item(discord.ui.Button(label='View Depiction', emoji="<:Depiction:947358756033949786>", url=response.get(
-                        'data')['Depiction'], style=discord.ButtonStyle.url))
-                except: pass
-                view.add_item(discord.ui.Button(label='Add Repo to Sileo', emoji="<:sileo:679466569407004684>",
-                              url=f"https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={response.get('data')['repo']['url']}", style=discord.ButtonStyle.url))
-                await message.reply(f'<sileo://package/{urlscheme.group(1)}>', embed=embed, view=view, allowed_mentions=discord.AllowedMentions(users=False))
-        except:
-            embed = discord.Embed(title=f"Unknown Package",
-                                  color=discord.Color.green())
-            embed.description = f"You have linked to a package, you can use the above link to open it directly in Sileo."
-            await message.reply(f'<sileo://package/{urlscheme.group(1)}>', embed=embed)
+                if len(response['data']) != 0:
+                    color = response['data'][0]['tintColor']
+                    view = discord.ui.View()
+                    if color is None:
+                        color = discord.Color.blue()
+                    else:
+                        color = discord.Color(int(color.strip('#'), 16))
+                    embed = discord.Embed(
+                        title=f"{response['data'][0]['name']} - {response['data'][0]['repository']['name']}", color=color)
+                    embed.description = f"You have linked to a package, you can use the button below to open it directly in Sileo."
+                    icon = response['data'][0]['packageIcon']
+                    depiction = response['data'][0]['depiction']
+                    view.add_item(discord.ui.Button(label='View Package in Sileo', emoji="<:Search2:947525874297757706>",
+                                url=f"https://sharerepo.stkc.win/v3/?pkgid={urlscheme.group(1)}", style=discord.ButtonStyle.url))
+                    if depiction is not None:
+                        view.add_item(discord.ui.Button(label='View Depiction', emoji="<:Depiction:947358756033949786>", url=response[
+                                    'data'][0]['depiction'], style=discord.ButtonStyle.url))
+                    if icon is not None:
+                        embed.set_thumbnail(url=response['data'][0]['packageIcon'])
+                    view.add_item(discord.ui.Button(label='Add Repo to Sileo', emoji="<:sileo:679466569407004684>",
+                                url=f"https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={response['data'][0]['repository']['uri']}", style=discord.ButtonStyle.url))
+                    await message.reply(embed=embed, view=view, mention_author=False)
+                else:
+                    view = discord.ui.View()
+                    embed = discord.Embed(
+                        title=":(\nI couldn't find that package", color=discord.Color.orange())
+                    embed.description = f"You have linked to a package, you can use the button below to open it directly in Sileo."
+                    view.add_item(discord.ui.Button(label='View Package in Sileo', emoji="<:Search2:947525874297757706>",
+                                url=f"https://sharerepo.stkc.win/v3/?pkgid={urlscheme.group(1)}", style=discord.ButtonStyle.url))
+                    await message.reply(embed=embed, view=view, mention_author=False)
+
+
 
 
 def setup(bot):

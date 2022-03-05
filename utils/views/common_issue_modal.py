@@ -4,11 +4,11 @@ import discord
 class CommonIssueModal(discord.ui.Modal):
     def __init__(self, bot, title, author: discord.Member) -> None:
         self.bot = bot
-        self.title = title[:25] + "..." if len(title) >= 25 else title
+        self.title = title[:20] + "..." if len(title) >= 20 else title
         self.author = author
         self.description = None
         self.buttons = None
-
+        print(len(f"Add common issue — {self.title}"))
         super().__init__(title=f"Add common issue — {self.title}")
 
         self.add_item(
@@ -91,7 +91,7 @@ class EditCommonIssue(discord.ui.Modal):
         self.bot = bot
         self.author = author
         self.edited = False
-        self.title = title[:25] + "..." if len(title) >= 25 else title
+        self.title = title[:20] + "..." if len(title) >= 20 else title
         self.description = issue_message.embeds[0].description
 
         components = issue_message.components

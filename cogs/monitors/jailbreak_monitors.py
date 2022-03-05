@@ -21,7 +21,7 @@ class RepoWatcher(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.guild.id == None:
+        if message.guild.id is None:
             return
         if message.guild.id != cfg.guild_id:
             return
@@ -98,7 +98,7 @@ class Sileo(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.guild.id == None:
+        if message.guild.id is None:
             return
         if message.guild.id != cfg.guild_id:
             return
@@ -117,7 +117,7 @@ class Sileo(commands.Cog):
                 if resp.status == 200:
                     response = json.loads(await resp.text())
 
-                if len(response['data']) != 0:
+                if response['data']:
                     canister = response['data'][0]
                     color = canister['tintColor']
                     view = discord.ui.View()

@@ -116,38 +116,45 @@ class Sileo(commands.Cog):
             async with client.get(f'https://api.canister.me/v1/community/packages/search?query={urlscheme.group(1)}&searchFields=identifier&responseFields=name,repository.uri,repository.name,depiction,packageIcon,tintColor') as resp:
                 if resp.status == 200:
                     response = json.loads(await resp.text())
+                data = response.get('data')
 
-                if response['data']:
-                    canister = response['data'][0]
-                    color = canister['tintColor']
-                    view = discord.ui.View()
-                    if color is None:
-                        color = discord.Color.blue()
-                    else:
-                        color = discord.Color(int(color.strip('#'), 16))
-                    embed = discord.Embed(
-                        title=f"{canister['name']} - {canister['repository']['name']}", color=color)
-                    embed.description = f"You have linked to a package, you can use the button below to open it directly in Sileo."
-                    icon = canister['packageIcon']
-                    depiction = canister['depiction']
-                    view.add_item(discord.ui.Button(label='View Package in Sileo', emoji="<:Search2:947525874297757706>",
-                                url=f"https://sharerepo.stkc.win/v3/?pkgid={urlscheme.group(1)}", style=discord.ButtonStyle.url))
-                    if depiction is not None:
-                        view.add_item(discord.ui.Button(label='View Depiction', emoji="<:Depiction:947358756033949786>", url=response[
-                                    'data'][0]['depiction'], style=discord.ButtonStyle.url))
-                    if icon is not None:
-                        embed.set_thumbnail(url=canister['packageIcon'])
-                    view.add_item(discord.ui.Button(label='Add Repo to Sileo', emoji="<:sileo:679466569407004684>",
-                                url=f"https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={canister['repository']['uri']}", style=discord.ButtonStyle.url))
-                    await message.reply(embed=embed, view=view, mention_author=False)
-                else:
+                if not data:
                     view = discord.ui.View()
                     embed = discord.Embed(
                         title=":(\nI couldn't find that package", color=discord.Color.orange())
-                    embed.description = f"You have linked to a package, you can use the button below to open it directly in Sileo."
+                    embed.description = f"You have sent a link to a package, you can use the button below to open it directly in Sileo."
                     view.add_item(discord.ui.Button(label='View Package in Sileo', emoji="<:Search2:947525874297757706>",
                                 url=f"https://sharerepo.stkc.win/v3/?pkgid={urlscheme.group(1)}", style=discord.ButtonStyle.url))
                     await message.reply(embed=embed, view=view, mention_author=False)
+                    return
+
+                canister = response['data'][0]
+                color = canister.get('tintColor')
+                view = discord.ui.View()
+
+                if color is None:
+                    color = discord.Color.blue()
+
+                else:
+                    color = discord.Color(int(color.strip('#'), 16))
+                embed = discord.Embed(
+                    title=f"{canister.get('name')} - {canister.get('repository')['name']}", color=color)
+                embed.description = f"You have sent a link to a package, you can use the button below to open it directly in Sileo."
+                icon = canister.get('packageIcon')
+                depiction = canister.get('depiction')
+                view.add_item(discord.ui.Button(label='View Package in Sileo', emoji="<:Search2:947525874297757706>",
+                            url=f"https://sharerepo.stkc.win/v3/?pkgid={urlscheme.group(1)}", style=discord.ButtonStyle.url))
+
+                if depiction is not None:
+                    view.add_item(discord.ui.Button(label='View Depiction', emoji="<:Depiction:947358756033949786>", url=canister.get(
+                        'depiction'), style=discord.ButtonStyle.url))
+
+                if icon is not None:
+                    embed.set_thumbnail(url=canister.get('packageIcon'))
+
+                view.add_item(discord.ui.Button(label='Add Repo to Sileo', emoji="<:sileo:679466569407004684>",
+                            url=f"https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={canister.get('repository')['uri']}", style=discord.ButtonStyle.url))
+                await message.reply(embed=embed, view=view, mention_author=False)
 
 
 

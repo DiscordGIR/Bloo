@@ -354,7 +354,10 @@ class Filter(commands.Cog):
         subject_and_word_in_message = any(
             v in text for v in verb) and any(s in text for s in subject)
 
-        if (any(intent in text for intent in intent_news) and subject_and_word_in_message or any(intent in text for intent in intent_cij) and subject_and_word_in_message) and message.channel.id == guild_service.get_guild().channel_general:
+        intent_news_triggered = any(intent in text for intent in intent_news)
+        intent_cij_triggered = any(intent in text for intent in intent_cij)
+        
+        if (intent_news_triggered or intent_cij_triggered) and subject_and_word_in_message and message.channel.id == guild_service.get_guild().channel_general:
             view = discord.ui.View()
             embed = discord.Embed(color=discord.Color.orange())
             embed.description = f"Please keep support or jailbreak related messages in the appropriate channels. Thanks!"
@@ -365,7 +368,7 @@ class Filter(commands.Cog):
             view.add_item(discord.ui.Button(label='Jailbreak Channel', emoji="<:Channel2:947546361715388417>",
                                             url=f"https://discord.com/channels/349243932447604736/688122301975363591", style=discord.ButtonStyle.url))
             res = await message.reply(embed=embed, view=view, delete_after=20)
-        elif any(intent in text for intent in intent_news) and subject_and_word_in_message:
+        elif intent_news_triggered and subject_and_word_in_message:
             embed = discord.Embed(color=discord.Color.orange())
             embed.description = f"It appears you are asking about future jailbreaks. Nobody knows when a jailbreak will be released, but you can subscribe to notifications about releases by going to <#{db_guild.channel_reaction_roles}>."
             embed.set_footer(
@@ -373,7 +376,7 @@ class Filter(commands.Cog):
             #view = DissmissableMessage(message.author)
             res = await message.reply(embed=embed, delete_after=20)
             #view.start(res)
-        elif any(intent in text for intent in intent_cij) and subject_and_word_in_message:
+        elif intent_cij_triggered and subject_and_word_in_message:
             embed = discord.Embed(color=discord.Color.orange())
             embed.description = "It appears you are asking if you can jailbreak your device, you can find out that information by using `/canijailbreak` or in the \"Get Started\" section of ios.cfw.guide."
             embed.set_footer(

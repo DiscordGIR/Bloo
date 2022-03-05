@@ -4,7 +4,7 @@ import discord
 class CommonIssueModal(discord.ui.Modal):
     def __init__(self, bot, title, author: discord.Member) -> None:
         self.bot = bot
-        self.title = title
+        self.title = title[:25] + "..." if len(title) >= 25 else title
         self.author = author
         self.description = None
         self.buttons = None
@@ -91,7 +91,7 @@ class EditCommonIssue(discord.ui.Modal):
         self.bot = bot
         self.author = author
         self.edited = False
-        self.title = title
+        self.title = title[:25] + "..." if len(title) >= 25 else title
         self.description = issue_message.embeds[0].description
 
         components = issue_message.components

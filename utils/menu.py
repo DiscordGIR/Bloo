@@ -30,12 +30,12 @@ class TweakMenu(Menu):
                                   url=f'https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={self.ctx.repo}', disabled=True, style=discord.ButtonStyle.url, row=1),
                 discord.ui.Button(label='Cannot add default repo', emoji="<:zebra:911433583032422420>",
                                   url=f'https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={self.ctx.repo}', disabled=True, style=discord.ButtonStyle.url, row=1),
-                discord.ui.Button(label='Cannot add default repo', emoji="<:cydiasileosplit:932650041099825232>",
+                discord.ui.Button(label='Cannot add default repo', emoji="<:Add:947354227171262534>",
                                   url=f'https://sharerepo.stkc.win/?repo={self.ctx.repo}', style=discord.ButtonStyle.url, disabled=True, row=1)
             ]
         if self.ctx.depiction:
             extra_buttons.insert(0,
-                                 discord.ui.Button(label='View Depiction', emoji="🔎",
+                                 discord.ui.Button(label='View Depiction', emoji="<:Depiction:947358756033949786>",
                                                    url=self.ctx.depiction, style=discord.ButtonStyle.url, row=1),
                                  )
 

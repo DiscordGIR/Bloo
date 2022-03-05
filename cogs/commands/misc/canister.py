@@ -56,7 +56,7 @@ async def search(query):
 
     """
     async with aiohttp.ClientSession() as client:
-        async with client.get(f'https://api.canister.me/v1/community/packages/search?query={urllib.parse.quote(query)}&searchFields=name,author,maintainer&responseFields=identifier,header,tintColor,name,price,description,packageIcon,repository.uri,repository.name,author,maintainer,latestVersion,nativeDepiction,depiction') as resp:
+        async with client.get(f'https://api.canister.me/v1/community/packages/search?query={urllib.parse.quote(query)}&searchFields=identifier,name&responseFields=identifier,header,tintColor,name,price,description,packageIcon,repository.uri,repository.name,author,maintainer,latestVersion,nativeDepiction,depiction') as resp:
             if resp.status == 200:
                 response = json.loads(await resp.text())
                 if response.get('status') == "Successful":
@@ -137,7 +137,10 @@ class Canister(commands.Cog):
             result = list(await search(search_term))
 
         if not result:
-            await ctx.send_error("That package wasn't found in Canister's database.")
+            embed = discord.Embed(
+                title=":(\nI couldn't find that package", color=discord.Color.red())
+            embed.description = f"Try broadening your search query."
+            await ctx.send(embed=embed, delete_after=8)
             return
 
         view = discord.ui.View(timeout=30)
@@ -175,8 +178,11 @@ class Canister(commands.Cog):
         result = list(await search(query))
 
         if not result:
-            raise commands.BadArgument(
-                "That package wasn't found in Canister's database.")
+            embed = discord.Embed(
+                title=":(\nI couldn't find that package", color=discord.Color.red())
+            embed.description = f"Try broadening your search query."
+            await ctx.respond(embed=embed)
+            return
 
         view = discord.ui.View(timeout=30)
         td = TweakDropdown(ctx.author, result, interaction=True,

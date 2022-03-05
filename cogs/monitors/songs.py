@@ -4,6 +4,7 @@ import aiohttp
 import discord
 from discord.ext import commands
 import re
+import random
 
 from utils.config import cfg
 from utils.mod.filter import find_triggered_filters
@@ -38,6 +39,7 @@ class Songs(commands.Cog):
         # self.spotify_pattern = re.compile(r"[\bhttps://open.\b]spotify[\b.com\b]*[/:]*track[/:]*[A-Za-z0-9]+")
         # self.am_pattern = re.compile(r"[\bhttps://music.\b]apple[\b.com\b]*[/:][[a-zA-Z][a-zA-Z]]?[:/]album[/:][a-zA-Z\d%\(\)-]+[/:][\d]{1,10}")
         self.pattern = re.compile(r"(https://open.spotify.com/track/[A-Za-z0-9]+|https://music.apple.com/[[a-zA-Z][a-zA-Z]]?/album/[a-zA-Z\d%\(\)-]+/[\d]{1,10}\?i=[\d]{1,15})")
+        self.song_phrases = ["I like listening to {artist} too!\nHere's \"{title}\"...", "You listen to {artist} too? They're my favorite!\nHere's \"{title}\"..."]
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
@@ -72,7 +74,7 @@ class Songs(commands.Cog):
         title = res.get('entitiesByUniqueId').get(unique_id)
 
         if title is not None:
-            title = f"I like listening to {title.get('artistName')} too!\nHere's \"{title.get('title')}\"..."
+            title = random.choice(self.song_phrases).format(artist=title.get('artistName'), title=title.get('title'))
             title = discord.utils.escape_markdown(title)
             title = discord.utils.escape_mentions(title)
 

@@ -11,6 +11,7 @@ from utils.autocompleters import fetch_repos
 from utils.logger import logger
 from utils.permissions.permissions import permissions
 from utils.views.canister import default_repos
+from utils.config import cfg
 from yarl import URL
 
 
@@ -20,9 +21,15 @@ class RepoWatcher(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        if message.guild.id is None:
+            return
+        if message.guild.id != cfg.guild_id:
+            return
         if message.author.bot:
             return
         if message.channel.id == guild_service.get_guild().channel_general and not permissions.has(message.guild, message.author, 5):
+            return
+        if 'sileo://package/' in message.content: # Stops double messages when a package and repo URL are in the same message
             return
 
         url = re.search(r'(https?://\S+)', message.content)
@@ -45,7 +52,7 @@ class RepoWatcher(commands.Cog):
                                         url=f"https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={potential_repo}", style=discord.ButtonStyle.url))
         view.add_item(discord.ui.Button(label='Add Repo to Zebra', emoji="<:zebra:911433583032422420>",
                                         url=f"https://sharerepo.stkc.win/v2/?pkgman=zebra&repo={potential_repo}", style=discord.ButtonStyle.url))
-        view.add_item(discord.ui.Button(label='Other Package Managers', emoji=":cydiasileosplit:932650041099825232",
+        view.add_item(discord.ui.Button(label='Other Package Managers', emoji="<:Add:947354227171262534>",
                                         url=f"https://sharerepo.stkc.win/?repo={potential_repo}", style=discord.ButtonStyle.url))
 
         await message.reply(file=discord.File("data/images/transparent1x1.png"), view=view, mention_author=False)
@@ -91,6 +98,10 @@ class Sileo(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
+        if message.guild.id is None:
+            return
+        if message.guild.id != cfg.guild_id:
+            return
         if message.author.bot:
             return
         if message.channel.id == guild_service.get_guild().channel_general and not permissions.has(message.guild, message.author, 5):
@@ -101,31 +112,51 @@ class Sileo(commands.Cog):
         if urlscheme is None:
             return
 
-        try:
-            async with aiohttp.ClientSession() as client:
-                async with client.get(URL(f'https://api.parcility.co/db/package/{urlscheme.group(1)}', encoded=True)) as resp:
-                    if resp.status == 200:
-                        response = json.loads(await resp.text())
+        async with aiohttp.ClientSession() as client:
+            async with client.get(f'https://api.canister.me/v1/community/packages/search?query={urlscheme.group(1)}&searchFields=identifier&responseFields=name,repository.uri,repository.name,depiction,packageIcon,tintColor') as resp:
+                if resp.status == 200:
+                    response = json.loads(await resp.text())
+                data = response.get('data')
 
+                if not data:
+                    view = discord.ui.View()
+                    embed = discord.Embed(
+                        title=":(\nI couldn't find that package", color=discord.Color.orange())
+                    embed.description = f"You have sent a link to a package, you can use the button below to open it directly in Sileo."
+                    view.add_item(discord.ui.Button(label='View Package in Sileo', emoji="<:Search2:947525874297757706>",
+                                url=f"https://sharerepo.stkc.win/v3/?pkgid={urlscheme.group(1)}", style=discord.ButtonStyle.url))
+                    await message.reply(embed=embed, view=view, mention_author=False)
+                    return
+
+                canister = response['data'][0]
+                color = canister.get('tintColor')
                 view = discord.ui.View()
+
+                if color is None:
+                    color = discord.Color.blue()
+
+                else:
+                    color = discord.Color(int(color.strip('#'), 16))
                 embed = discord.Embed(
-                    title=f"{response.get('data')['Name']} - {response.get('data')['repo']['label']}", color=discord.Color.green())
-                embed.description = f"You have linked to a package, you can use the above link to open it directly in Sileo."
-                embed.set_thumbnail(url=response.get('data')['Icon'])
+                    title=f"{canister.get('name')} - {canister.get('repository')['name']}", color=color)
+                embed.description = f"You have sent a link to a package, you can use the button below to open it directly in Sileo."
+                icon = canister.get('packageIcon')
+                depiction = canister.get('depiction')
+                view.add_item(discord.ui.Button(label='View Package in Sileo', emoji="<:Search2:947525874297757706>",
+                            url=f"https://sharerepo.stkc.win/v3/?pkgid={urlscheme.group(1)}", style=discord.ButtonStyle.url))
+
+                if depiction is not None:
+                    view.add_item(discord.ui.Button(label='View Depiction', emoji="<:Depiction:947358756033949786>", url=canister.get(
+                        'depiction'), style=discord.ButtonStyle.url))
+
+                if icon is not None:
+                    embed.set_thumbnail(url=canister.get('packageIcon'))
+
                 view.add_item(discord.ui.Button(label='Add Repo to Sileo', emoji="<:sileo:679466569407004684>",
-                              url=f"https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={response.get('data')['repo']['url']}", style=discord.ButtonStyle.url))
-                try:
-                    view.add_item(discord.ui.Button(label='View Depiction', emoji="🔎", url=response.get(
-                        'data')['Depiction'], style=discord.ButtonStyle.url))
-                except:
-                    view.add_item(discord.ui.Button(
-                        label='View on Parcility', url=f"https://parcility.co/package/{urlscheme.group(1)}", style=discord.ButtonStyle.url))
-                await message.reply(f'<sileo://package/{urlscheme.group(1)}>', embed=embed, view=view, allowed_mentions=discord.AllowedMentions(users=True))
-        except:
-            embed = discord.Embed(title=f"Unknown Package",
-                                  color=discord.Color.green())
-            embed.description = f"You have linked to a package, you can use the above link to open it directly in Sileo."
-            await message.reply(f'<sileo://package/{urlscheme.group(1)}>', embed=embed)
+                            url=f"https://sharerepo.stkc.win/v2/?pkgman=sileo&repo={canister.get('repository')['uri']}", style=discord.ButtonStyle.url))
+                await message.reply(embed=embed, view=view, mention_author=False)
+
+
 
 
 def setup(bot):

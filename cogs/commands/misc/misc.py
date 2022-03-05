@@ -375,7 +375,7 @@ class Misc(commands.Cog):
             channel = ctx.channel
 
         embed=discord.Embed(description=question, color=discord.Color.random())
-        #embed.set_author(name=f"Poll")
+        embed.timestamp = datetime.datetime.now()
         embed.set_footer(text=f"Poll started by {ctx.author}")
         message = await channel.send(embed=embed)
 
@@ -387,32 +387,10 @@ class Misc(commands.Cog):
         ctx.whisper = True
         await ctx.send_success("Done!")
 
-    polls = discord.SlashCommandGroup("polls", "Interact with polls", guild_ids=[cfg.guild_id], permissions=slash_perms.mod_and_up())
-
-    @mod_and_up()
-    @polls.command(guild_ids=[cfg.guild_id], description="End a poll")
-    async def end(self, ctx: BlooContext, channel: Option(discord.TextChannel), message_id: str):
-        message = await channel.fetch_message(message_id)
-        new_embed = message.embeds[0].to_dict()
-
-        if new_embed.get('color') == 0x555555:
-            await ctx.send_error("This poll has already been ended.")
-            return
-
-        embed=discord.Embed(description=new_embed.get('description'), color=0x555555)
-        #embed.set_author(name=new_embed.get('author')['name'])
-        embed.set_footer(text=f"Poll ended by {ctx.author} | {message.reactions[0].count-1} people voted yes, {message.reactions[1].count-1} people voted no")
-        await message.edit(embed=embed)
-        await message.clear_reaction('⬆️')
-        await message.clear_reaction('⬇️')
-
-        ctx.whisper = True
-        await ctx.send_success("Poll ended!")
 
     @topic.error
     @rule.error
     @poll.error
-    @end.error
     @bypass.error
     @cve.error
     @remindme.error

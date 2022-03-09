@@ -8,6 +8,7 @@ import discord
 # from colorthief import ColorThief
 from utils.context import BlooContext, BlooOldContext
 from utils.menu import TweakMenu
+from utils.permissions.permissions import permissions
 
 pattern = re.compile(
     r"((http|https)\:\/\/)[a-zA-Z0-9\.\/\?\:@\-_=#]+\.([a-zA-Z]){2,6}([a-zA-Z0-9\.\&\/\?\:@\-_=#])*")
@@ -123,7 +124,7 @@ class TweakDropdown(discord.ui.Select):
         self.ctx = ctx
 
     async def callback(self, interaction):
-        if interaction.user != self.author:
+        if interaction.user != self.author and not permissions.has(interaction.guild, interaction.user, 4):
             return
 
         if self.values[0] == "view_more":

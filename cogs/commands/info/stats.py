@@ -109,7 +109,8 @@ class Stats(commands.Cog):
         embed.set_thumbnail(url=guild.icon)
 
         if guild.banner is not None:
-            embed.set_image(url=guild.banner.url)
+            resized_banner = guild.banner.with_size(256)
+            embed.set_image(url=resized_banner.url)
 
         embed.add_field(name="Emojis", value=len(guild.emojis), inline=True)
         embed.add_field(name="Boost Tier",

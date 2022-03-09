@@ -208,8 +208,7 @@ class UserInfo(commands.Cog):
 
         member = await self.bot.fetch_user(user.id)
         if member.banner is not None:
-            resized_banner = member.banner.with_size(256)
-            embed.set_image(url=resized_banner.url)
+            embed.set_image(url=member.banner.url)
 
         embed.add_field(name="Username",
                         value=f'{user} ({user.mention})', inline=True)

@@ -370,13 +370,21 @@ class Misc(commands.Cog):
 
     @mod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Start a poll", permissions=slash_perms.mod_and_up())
-    async def poll(self, ctx: BlooContext, question: str, channel: Option(discord.TextChannel, required=False, description="Where to post the message") = None):
+    async def poll(self, ctx: BlooContext, question: str, image: Option(discord.Attachment, required=False, description="Image to show in tag") = None, channel: Option(discord.TextChannel, required=False, description="Where to post the message") = None,):
+        f = None
+
         if channel is None:
             channel = ctx.channel
 
         embed=discord.Embed(description=question, color=discord.Color.random())
         embed.timestamp = datetime.datetime.now()
         embed.set_footer(text=f"Poll started by {ctx.author}")
+
+        # did the user want to attach an image to this tag?
+        if image is not None:
+            f = await image.to_file()
+            embed.set_image(url=f"attachment://{f.filename}")
+
         message = await channel.send(embed=embed)
 
         emojis = ['⬆️', '⬇️']

@@ -93,29 +93,32 @@ class Menu(ui.View):
 
     @ui.button(emoji='⏮️', style=discord.ButtonStyle.blurple, row=2, disabled=True)
     async def first(self, button: ui.Button, interaction: discord.Interaction):
-        if interaction.user == self.ctx.author:
+        if self.on_interaction_check(interaction):
             self.current_page = 1
             await self.refresh_response_message()
 
     @ui.button(emoji='⬅️', style=discord.ButtonStyle.blurple, row=2, disabled=True)
     async def previous(self, button: ui.Button, interaction: discord.Interaction):
-        if interaction.user == self.ctx.author:
+        if self.on_interaction_check(interaction):
             self.current_page -= 1
             await self.refresh_response_message()
 
     @ui.button(emoji='⏹️', style=discord.ButtonStyle.blurple, row=2)
     async def pause(self, button: ui.Button, interaction: discord.Interaction):
-        if interaction.user == self.ctx.author:
+        if self.on_interaction_check(interaction):
             await self.on_timeout()
 
     @ui.button(emoji='➡️', style=discord.ButtonStyle.blurple, row=2, disabled=True)
     async def next(self, button: ui.Button, interaction: discord.Interaction):
-        if interaction.user == self.ctx.author:
+        if self.on_interaction_check(interaction):
             self.current_page += 1
             await self.refresh_response_message()
 
     @ui.button(emoji='⏭️', style=discord.ButtonStyle.blurple, row=2, disabled=True)
     async def last(self, button: ui.Button, interaction: discord.Interaction):
-        if interaction.user == self.ctx.author:
+        if self.on_interaction_check(interaction):
             self.current_page = len(self.pages)
             await self.refresh_response_message()
+
+    def on_interaction_check(self, interaction: discord.Interaction):
+        return interaction.user == self.ctx.author

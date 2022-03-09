@@ -5,6 +5,7 @@ import discord
 from aiocache.decorators import cached
 
 from utils.context import BlooContext, PromptData
+from utils.permissions.permissions import permissions
 from utils.views.menu import Menu
 
 
@@ -57,6 +58,9 @@ class TweakMenu(Menu):
         self.stopped = True
         await self.refresh_response_message()
         self.stop()
+
+    def on_interaction_check(self, interaction: discord.Interaction):
+        return interaction.user == self.ctx.author or permissions.has(interaction.guild, interaction.user, 4)
 
 class BypassMenu(Menu):
     def __init__(self, *args, **kwargs):

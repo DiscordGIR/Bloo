@@ -21,7 +21,7 @@ class RepoWatcher(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.guild.id is None:
+        if message.guild is None:
             return
         if message.guild.id != cfg.guild_id:
             return
@@ -98,7 +98,7 @@ class Sileo(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message):
-        if message.guild.id is None:
+        if message.guild is None:
             return
         if message.guild.id != cfg.guild_id:
             return

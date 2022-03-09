@@ -18,9 +18,10 @@ from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
 from utils.menu import BypassMenu
-from utils.permissions.checks import (PermissionsFailure, whisper,
-                                      whisper_in_general)
+from utils.permissions.checks import (PermissionsFailure, mod_and_up,
+                                    whisper, whisper_in_general)
 from utils.permissions.permissions import permissions
+from utils.permissions.slash_perms import slash_perms
 from yarl import URL
 
 
@@ -367,8 +368,29 @@ class Misc(commands.Cog):
                               description=channel.topic, color=discord.Color.blue())
         await ctx.respond_or_edit(content=title, embed=embed)
 
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="Start a poll", permissions=slash_perms.mod_and_up())
+    async def poll(self, ctx: BlooContext, question: str, channel: Option(discord.TextChannel, required=False, description="Where to post the message") = None):
+        if channel is None:
+            channel = ctx.channel
+
+        embed=discord.Embed(description=question, color=discord.Color.random())
+        embed.timestamp = datetime.datetime.now()
+        embed.set_footer(text=f"Poll started by {ctx.author}")
+        message = await channel.send(embed=embed)
+
+        emojis = ['⬆️', '⬇️']
+
+        for emoji in emojis:
+            await message.add_reaction(emoji)
+
+        ctx.whisper = True
+        await ctx.send_success("Done!")
+
+
     @topic.error
     @rule.error
+    @poll.error
     @bypass.error
     @cve.error
     @remindme.error

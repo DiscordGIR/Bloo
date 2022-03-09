@@ -107,6 +107,10 @@ class Stats(commands.Cog):
         embed = discord.Embed(title="Server Information",
                               color=discord.Color.blurple())
         embed.set_thumbnail(url=guild.icon)
+
+        if guild.banner is not None:
+            embed.set_image(url=guild.banner.url)
+
         embed.add_field(name="Emojis", value=len(guild.emojis), inline=True)
         embed.add_field(name="Boost Tier",
                         value=guild.premium_tier, inline=True)

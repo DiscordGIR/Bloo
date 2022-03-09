@@ -247,7 +247,7 @@ async def rule_autocomplete(ctx: AutocompleteContext):
 @cached(ttl=3600)
 async def fetch_repos():
     async with aiohttp.ClientSession() as client:
-        async with client.get('https://api.canister.me/v1/community/repositories/search?query=') as resp:
+        async with client.get('https://api.canister.me/v1/community/repositories/search?ranking=1,2,3,4,5') as resp:
             if resp.status == 200:
                 response = await resp.json(content_type=None)
                 return response.get("data")

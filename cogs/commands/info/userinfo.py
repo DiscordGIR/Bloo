@@ -205,6 +205,11 @@ class UserInfo(commands.Cog):
         embed = discord.Embed(title=f"User Information", color=user.color)
         embed.set_author(name=user)
         embed.set_thumbnail(url=user.display_avatar)
+
+        member = await self.bot.fetch_user(user.id)
+        if member.banner is not None:
+            embed.set_image(url=member.banner.url)
+
         embed.add_field(name="Username",
                         value=f'{user} ({user.mention})', inline=True)
         embed.add_field(

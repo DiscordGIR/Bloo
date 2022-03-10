@@ -65,7 +65,7 @@ async def format_jailbreak_page(ctx, entries, current_page, all_pages):
                 name="Notes", value=info.get('notes'), inline=False)
 
         embed.set_footer(
-            text=f"Powered by https://ios.cfw.guide • Page {current_page} of {len(all_pages)}")
+            text=f"Powered by https://appledb.dev • Page {current_page} of {len(all_pages)}")
     else:
         embed.description = "No info available."
 
@@ -208,7 +208,7 @@ class iOSCFW(commands.Cog):
                     view.add_item(discord.ui.Button(label='Install with Jailbreaks.app',
                                                     url=f"https://api.jailbreaks.app/install/{jba.get('name').replace(' ', '')}", style=discord.ButtonStyle.url))
 
-            embed.set_footer(text="Powered by https://ios.cfw.guide")
+            embed.set_footer(text="Powered by https://appledb.dev")
         else:
             embed.description = "No info available."
 
@@ -300,11 +300,11 @@ class iOSCFW(commands.Cog):
                 embed.add_field(name="Release date",
                                 value=release, inline=False)
 
-        embed.set_footer(text="Powered by https://ios.cfw.guide")
+        embed.set_footer(text="Powered by https://appledb.dev")
 
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label="View more on ios.cfw.guide",
-                      url=f"https://ios.cfw.guide/chart/firmware/{matching_ios.get('uniqueBuild')}"))
+        view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label="View more on AppleDB",
+                      url=f"https://appledb.dev/firmware/{matching_ios.get('uniqueBuild')}"))
 
         embed.color = discord.Color.greyple()
 
@@ -417,11 +417,11 @@ class iOSCFW(commands.Cog):
         embed.add_field(
             name="SoC", value=f"{models[0].get('soc')} chip ({models[0].get('arch')})", inline=True)
 
-        embed.set_footer(text="Powered by https://ios.cfw.guide")
+        embed.set_footer(text="Powered by https://appledb.dev")
 
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label="View more on ios.cfw.guide",
-                      url=f"https://ios.cfw.guide/chart/device/{matching_device_group.get('name').replace(' ', '-')}"))
+        view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label="View more on AppleDB",
+                      url=f"https://appledb.dev/device/{matching_device_group.get('name').replace(' ', '-')}"))
 
         await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
 

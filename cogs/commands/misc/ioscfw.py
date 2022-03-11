@@ -235,10 +235,11 @@ class iOSCFW(commands.Cog):
         """
 
         response = await get_ios_cfw()
-        for os_version in ["iOS", "tvOS", "watchOS"]:
+        for os_version in ["iOS", "tvOS", "watchOS", "audioOS"]:
             version = version.replace(os_version + " ", "")
         ios = response.get("ios")
         ios = [i for _, i in ios.items()]
+
         ios = [ios for ios in ios if f"{ios.get('version')} ({ios.get('uniqueBuild')})" == version or ios.get(
             'uniqueBuild').lower() == version.lower() or ios.get('version').lower() == version.lower()]
 
@@ -265,7 +266,7 @@ class iOSCFW(commands.Cog):
         """
 
         response = await get_ios_cfw()
-        for os_version in ["iOS", "tvOS", "watchOS"]:
+        for os_version in ["iOS", "tvOS", "watchOS", "audioOS"]:
             version = version.replace(os_version + " ", "")
         ios = response.get("ios")
         ios = [i for _, i in ios.items()]
@@ -301,9 +302,7 @@ class iOSCFW(commands.Cog):
         embed.set_footer(text="Powered by https://appledb.dev")
 
         view = discord.ui.View()
-        print(matching_ios)
         view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label="View more on AppleDB",
-                    #   url=f"https://ios.cfw.guide/chart/firmware/{matching_ios.get('uniqueBuild')}"))
                       url=matching_ios.get('appledburl')))
 
         embed.color = discord.Color.greyple()

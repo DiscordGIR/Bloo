@@ -81,7 +81,7 @@ async def ios_version_autocomplete(ctx: AutocompleteContext):
     versions = [v for _, v in versions.items()]
     versions.sort(key=lambda x: x.get("released")
                   or "1970-01-01", reverse=True)
-    return [f"{v['osStr']} {v['version']} ({v['uniqueBuild']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and not v['beta']][:25]
+    return [f"{v['osStr']} {v['version']} ({v['build']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and not v['beta']][:25]
 
 
 async def ios_beta_version_autocomplete(ctx: AutocompleteContext):
@@ -93,7 +93,7 @@ async def ios_beta_version_autocomplete(ctx: AutocompleteContext):
     versions = [v for _, v in versions.items()]
     versions.sort(key=lambda x: x.get("released")
                   or "1970-01-01", reverse=True)
-    return [f"{v['osStr']} {v['version']} ({v['uniqueBuild']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and v['beta']][:25]
+    return [f"{v['osStr']} {v['version']} ({v['build']})" for v in versions if (ctx.value.lower() in v['version'].lower() or ctx.value.lower() in v['build'].lower()) and v['beta']][:25]
 
 
 async def ios_on_device_autocomplete(ctx: AutocompleteContext):

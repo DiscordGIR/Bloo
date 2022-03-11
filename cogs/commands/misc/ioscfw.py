@@ -235,12 +235,13 @@ class iOSCFW(commands.Cog):
         """
 
         response = await get_ios_cfw()
+        og_version = version
         for os_version in ["iOS", "tvOS", "watchOS", "audioOS"]:
             version = version.replace(os_version + " ", "")
         ios = response.get("ios")
         ios = [i for _, i in ios.items()]
 
-        ios = [ios for ios in ios if f"{ios.get('version')} ({ios.get('uniqueBuild')})" == version or ios.get(
+        ios = [ios for ios in ios if f"{ios.get('osStr')} {ios.get('version')} ({ios.get('build')})" == og_version or ios.get(
             'uniqueBuild').lower() == version.lower() or ios.get('version').lower() == version.lower()]
 
         if not ios:
@@ -266,11 +267,12 @@ class iOSCFW(commands.Cog):
         """
 
         response = await get_ios_cfw()
+        og_version = version
         for os_version in ["iOS", "tvOS", "watchOS", "audioOS"]:
             version = version.replace(os_version + " ", "")
         ios = response.get("ios")
         ios = [i for _, i in ios.items()]
-        ios = [ios for ios in ios if (f"{ios.get('version')} ({ios.get('uniqueBuild')})" == version or ios.get(
+        ios = [ios for ios in ios if (f"{ios.get('osStr')} {ios.get('version')} ({ios.get('build')})" == og_version or ios.get(
             'uniqueBuild').lower() == version.lower() or ios.get('version').lower() == version.lower()) and ios.get('beta')]
 
         if not ios:

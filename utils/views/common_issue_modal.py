@@ -42,8 +42,8 @@ class CommonIssueModal(discord.ui.Modal):
         if interaction.user != self.author:
             return
 
-        button_names = [child.value.strip() for child in self.children[1::2] if child.value is not None]
-        links = [child.value.strip() for child in self.children[2::2] if child.value is not None]
+        button_names = [child.value.strip() for child in self.children[1::2] if child.value is not None and len(child.value.strip()) > 0]
+        links = [child.value.strip() for child in self.children[2::2] if child.value is not None and len(child.value.strip()) > 0]
 
         # make sure all links are valid URLs with regex
         if not all(re.match(r'^(https|http)://.*', link) for link in links):
@@ -139,8 +139,8 @@ class EditCommonIssue(discord.ui.Modal):
         if interaction.user != self.author:
             return
 
-        button_names = [child.value.strip() for child in self.children[1::2] if child.value is not None]
-        links = [child.value.strip() for child in self.children[2::2] if child.value is not None]
+        button_names = [child.value.strip() for child in self.children[1::2] if child.value is not None and len(child.value.strip()) > 0]
+        links = [child.value.strip() for child in self.children[2::2] if child.value is not None and len(child.value.strip()) > 0]
 
         # make sure all links are valid URLs with regex
         if not all(re.match(r'^(https|http)://.*', link) for link in links):

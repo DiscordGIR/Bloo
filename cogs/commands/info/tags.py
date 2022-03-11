@@ -165,6 +165,7 @@ class Tags(commands.Cog):
 
         await reaction.message.remove_reaction(reaction.emoji, reacter)
         ctx = await self.bot.get_context(reaction.message, cls=BlooOldContext)
+        ctx.author = reacter
         await self.handle_support_tag(ctx, reaction.message.author, requester=reacter)
 
     async def handle_support_tag(self, ctx: BlooContext, member: discord.Member, requester=None) -> None:
@@ -182,7 +183,10 @@ class Tags(commands.Cog):
         current = datetime.now().timestamp()
         # ratelimit only if the invoker is not a moderator
         if bucket.update_rate_limit(current) and not (permissions.has(ctx.guild, ctx.author, 5) or ctx.guild.get_role(guild_service.get_guild().role_sub_mod) in ctx.author.roles):
-            raise commands.BadArgument("That tag is on cooldown.")
+            if isinstance(ctx, BlooContext):
+                raise commands.BadArgument("That tag is on cooldown.")
+            else:
+                return
 
         # if the Tag has an image, add it to the embed
         file = tag.image.read()

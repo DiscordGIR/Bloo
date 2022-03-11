@@ -13,7 +13,7 @@ from discord.ext import commands
 from discord.ext.commands.cooldowns import CooldownMapping
 from utils.autocompleters import tags_autocomplete
 from utils.config import cfg
-from utils.context import BlooContext, PromptData
+from utils.context import BlooContext, BlooOldContext, PromptData
 from utils.logger import logger
 from utils.views.menu import Menu
 from utils.message_cooldown import MessageTextBucket
@@ -139,7 +139,35 @@ class Tags(commands.Cog):
     async def support_tag_msg(self, ctx: BlooContext, message: discord.Message) -> None:
         await self.handle_support_tag(ctx, message.author)
 
-    async def handle_support_tag(self, ctx: BlooContext, member: discord.Member) -> None:
+    @commands.Cog.listener()
+    async def on_reaction_add(self, reaction: discord.Reaction, reacter: discord.Member):
+        """Generate a report when a moderator reacts the stop sign emoji on a message
+
+        Parameters
+        ----------
+        reaction : discord.Reaction
+            [description]
+        reacter : discord.Member
+            [description]
+        """
+        if reaction.message.guild is None:
+            return
+        if reaction.message.guild.id != cfg.guild_id:
+            return
+        if reaction.message.author.bot:
+            return
+        if reaction.emoji not in ['💁‍♀️', '💁‍♂️', '💁']:
+            return
+        if not permissions.has(reacter.guild, reacter, 1):
+            return
+        if reaction.message.channel.id != guild_service.get_guild().channel_general:
+            return
+
+        await reaction.message.remove_reaction(reaction.emoji, reacter)
+        ctx = await self.bot.get_context(reaction.message, cls=BlooOldContext)
+        await self.handle_support_tag(ctx, reaction.message.author, requester=reacter)
+
+    async def handle_support_tag(self, ctx: BlooContext, member: discord.Member, requester=None) -> None:
         if not self.support_tags:
             raise commands.BadArgument("No support tags found.")
 
@@ -162,8 +190,12 @@ class Tags(commands.Cog):
             file = discord.File(BytesIO(
                 file), filename="image.gif" if tag.image.content_type == "image/gif" else "image.png")
 
-        title = f"Hey {member.mention}, have a look at this!"
-        await ctx.respond(content=title, embed=prepare_tag_embed(tag), file=file)
+        if isinstance(ctx, BlooContext):
+            title = f"Hey {member.mention}, have a look at this!"
+            await ctx.respond(content=title, embed=prepare_tag_embed(tag), view=prepare_tag_view(tag), file=file)
+        else:
+            title = f"Hey {member.mention}, {requester.mention} wants you to have a look at this!"
+            await ctx.reply(content=title, embed=prepare_tag_embed(tag), view=prepare_tag_view(tag), file=file)
 
     @genius_or_submod_and_up()
     @slash_command(guild_ids=[cfg.guild_id], description="Display a tag", permissions=slash_perms.genius_or_submod_and_up())

@@ -10,7 +10,7 @@ from discord.ext import commands
 from utils.autocompleters import (device_autocomplete, device_autocomplete_jb,
                                   get_ios_cfw, ios_beta_version_autocomplete,
                                   ios_on_device_autocomplete,
-                                  ios_version_autocomplete, jb_autocomplete, resolve_os_version, transform_groups)
+                                  ios_version_autocomplete, jb_autocomplete, transform_groups)
 from utils.config import cfg
 from utils.context import BlooContext
 from utils.logger import logger
@@ -280,10 +280,8 @@ class iOSCFW(commands.Cog):
         await ctx.respond(embed=embed, view=view, ephemeral=ctx.whisper)
 
     async def do_firmware_response(self, ctx, matching_ios):
-        os_version = resolve_os_version(matching_ios)
-
         embed = discord.Embed(
-            title=f"{os_version} {matching_ios.get('version')}")
+            title=f"{matching_ios.get('osStr')} {matching_ios.get('version')}")
         embed.add_field(name="Build number",
                         value=matching_ios.get("uniqueBuild"), inline=True)
 
@@ -303,8 +301,10 @@ class iOSCFW(commands.Cog):
         embed.set_footer(text="Powered by https://appledb.dev")
 
         view = discord.ui.View()
+        print(matching_ios)
         view.add_item(discord.ui.Button(style=discord.ButtonStyle.link, label="View more on AppleDB",
-                      url=f"https://appledb.dev/firmware/{matching_ios.get('uniqueBuild')}"))
+                    #   url=f"https://ios.cfw.guide/chart/firmware/{matching_ios.get('uniqueBuild')}"))
+                      url=matching_ios.get('appledburl')))
 
         embed.color = discord.Color.greyple()
 
@@ -492,12 +492,12 @@ class iOSCFW(commands.Cog):
 
         if not found_jbs:
             embed = discord.Embed(
-                description=f"Sorry, **{matching_device.get('name')}** is not jailbreakable on **{resolve_os_version(matching_ios)} {matching_ios.get('version')}**.", color=discord.Color.red())
+                description=f"Sorry, **{matching_device.get('name')}** is not jailbreakable on **{matching_ios.get('osStr')} {matching_ios.get('version')}**.", color=discord.Color.red())
             await ctx.respond_or_edit(embed=embed, ephemeral=ctx.whisper)
         else:
             ctx.device = device_name
             ctx.device_id = matching_device.get("identifier")
-            ctx.version = f'{resolve_os_version(matching_ios)} {matching_ios.get("version")}'
+            ctx.version = f'{matching_ios.get("osStr")} {matching_ios.get("version")}'
             ctx.build = matching_ios.get("uniqueBuild")
 
             if len(found_jbs) > 0:

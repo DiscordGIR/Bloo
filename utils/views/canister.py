@@ -157,12 +157,12 @@ class TweakDropdown(discord.ui.Select):
 
     async def format_tweak_page(self, entry):
         titleKey = entry.get('name')
+        description = discord.utils.escape_markdown(entry.get('description'))
 
         if entry.get('name') is None:
             titleKey = entry.get('identifier')
         embed = discord.Embed(title=titleKey, color=discord.Color.blue())
-        embed.description = discord.utils.escape_markdown(
-            entry.get('description')) or "No description"
+        embed.description = description[:200]+"..." if len(description) > 200 else description
 
         if entry.get('author') is not None:
             embed.add_field(name="Author", value=discord.utils.escape_markdown(

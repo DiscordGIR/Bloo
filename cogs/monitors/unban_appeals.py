@@ -95,6 +95,7 @@ class UnbanAppeals(commands.Cog):
         await m.add_reaction("🔺")
         await m.add_reaction("🔻")
         await m.add_reaction("❌")
+        await m.pin()
 
         await thread.send(unban_id)
 

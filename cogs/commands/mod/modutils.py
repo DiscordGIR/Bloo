@@ -301,9 +301,9 @@ class ModUtils(commands.Cog):
             return
 
         new_line = "\n"
-        muted_list = new_line.join([f'{user} `{user.id}` '+'(Unmuted '+format_dt(user.communication_disabled_until, style='R')+')' for user in sorted(muted_members[:8], key=lambda member: member.communication_disabled_until)])
-        
-        embed = discord.Embed(color=discord.Color.red(), title=f"Timed out users ({len(muted_members)})", description=muted_list)
+        muted_list = new_line.join([f'{user} {user.mention} '+'(Unmuted '+format_dt(user.communication_disabled_until, style='R')+')' for user in sorted(muted_members[:8], key=lambda member: member.communication_disabled_until)])
+        embed = discord.Embed(color=discord.Color.red(), description=muted_list)
+        embed.set_footer(text=f"{len(muted_members)} users muted")
         await ctx.respond(content=None, embed=embed)
 
     @say.error

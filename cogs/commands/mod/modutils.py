@@ -291,9 +291,25 @@ class ModUtils(commands.Cog):
 
         return embed
 
+    @mod_and_up()
+    @slash_command(guild_ids=[cfg.guild_id], description="List all timed out users", permissions=slash_perms.mod_and_up())
+    async def viewmuted(self, ctx: BlooContext):
+        muted_members = [user for user in ctx.guild.members if user.timed_out]
+
+        if muted_members == []:
+            await ctx.send_warning("No one is muted.")
+            return
+
+        new_line = "\n"
+        muted_list = new_line.join([f'{user} `{user.id}` '+'(Unmuted '+format_dt(user.communication_disabled_until, style='R')+')' for user in sorted(muted_members[:8], key=lambda member: member.communication_disabled_until)])
+        
+        embed = discord.Embed(color=discord.Color.red(), title=f"Timed out users ({len(muted_members)})", description=muted_list)
+        await ctx.respond(content=None, embed=embed)
+
     @say.error
     @rundown.error
     @command_ban.error
+    @viewmuted.error
     @transferprofile.error
     @clem.error
     @freezexp.error

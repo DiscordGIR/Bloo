@@ -103,7 +103,7 @@ class EditCommonIssue(discord.ui.Modal):
                         buttons.append((f"{str(child.emoji) + ' ' if child.emoji else ''}{child.label}", child.url))
 
         self.buttons = buttons
-        super().__init__(title=f"Edit tag {self.title}")
+        super().__init__(title=f"Edit common issue {self.title}")
 
         self.add_item(
             discord.ui.InputText(

@@ -11,6 +11,7 @@ import pytimeparse
 from data.services.guild_service import guild_service
 from discord.commands import Option, slash_command, message_command, user_command
 from discord.ext import commands
+from discord.utils import format_dt
 from PIL import Image
 from utils.autocompleters import (bypass_autocomplete, get_ios_cfw,
                                   rule_autocomplete)
@@ -412,10 +413,18 @@ class Misc(commands.Cog):
 
         last_incident = incidents.get('incidents')[0].get('name')
         last_status = incidents.get('incidents')[0].get('status').title()
-        last_being_monitored = True if incidents.get('incidents')[0].get('monitoring_at') is not None else False
+        last_created = datetime.datetime.strptime(incidents.get('incidents')[0].get('created_at'), "%Y-%m-%dT%H:%M:%S.%f%z")
+        last_update = datetime.datetime.strptime(incidents.get('incidents')[0].get('updated_at'), "%Y-%m-%dT%H:%M:%S.%f%z")
+        last_impact = incidents.get('incidents')[0].get('impact')
 
         online = '<:status_online:942288772551278623>'
         offline = '<:status_dnd:942288811818352652>'
+
+        incident_icons = {'none': '<:status_offline:942288832051679302>',
+        'maintenance': '<:status_total:942290485916073995>',
+        'minor': '<:status_idle:942288787000680499>',
+        'major': '<:status_dnd:942288811818352652>',
+        'critical': '<:status_dnd:942288811818352652>'}
 
         embed = discord.Embed(title=title, description=f"""
 {online if api_status == 'Operational' else offline} **API:** {api_status}
@@ -426,10 +435,12 @@ class Misc(commands.Cog):
 {online if cf_status == 'Operational' else offline} **Cloudflare:** {cf_status}
 
 __**Last outage information**__
-**Incident:** {last_incident}
-**Status:** {last_status}
-{'**Being monitored:** Yes' if last_being_monitored else ''}
+**Incident:** {incident_icons.get(last_impact)} {last_incident}
+**Status:** {online if last_status == 'Resolved' else offline} {last_status}
+**Identified at:** {format_dt(last_created, style='F')}
+**{'Resolved at' if last_status == 'Resolved' else 'Last updated'}:** {format_dt(last_update, style='F')}
         """, color=color)
+        embed.set_footer(text="Powered by discordstatus.com")
         await ctx.respond(embed=embed)
 
 

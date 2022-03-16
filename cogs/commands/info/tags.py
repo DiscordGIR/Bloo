@@ -89,7 +89,7 @@ class Tags(commands.Cog):
             1, 5, MessageTextBucket.custom)
 
         self.support_tags = [tag.name for tag in guild_service.get_guild(
-        ).tags if tag.name in ["support", "support2", "support3"]]
+        ).tags if tag.name in ["support"]]
 
     @slash_command(guild_ids=[cfg.guild_id], description="Display a tag")
     async def tag(self, ctx: BlooContext, name: Option(str, description="Tag name", autocomplete=tags_autocomplete), user_to_mention: Option(discord.Member, description="User to mention in the response", required=False)):

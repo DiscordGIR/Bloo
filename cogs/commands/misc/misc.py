@@ -11,6 +11,7 @@ import pytimeparse
 from data.services.guild_service import guild_service
 from discord.commands import Option, slash_command, message_command, user_command
 from discord.ext import commands
+from discord.utils import format_dt
 from PIL import Image
 from utils.autocompleters import (bypass_autocomplete, get_ios_cfw,
                                   rule_autocomplete)
@@ -387,12 +388,68 @@ class Misc(commands.Cog):
         ctx.whisper = True
         await ctx.send_success("Done!")
 
+    @slash_command(guild_ids=[cfg.guild_id], description="View the status of various Discord features")
+    @commands.guild_only()
+    async def dstatus(self, ctx):
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://discordstatus.com/api/v2/components.json") as resp:
+                if resp.status == 200:
+                    components = await resp.json()
+
+        async with aiohttp.ClientSession() as session:
+            async with session.get("https://discordstatus.com/api/v2/incidents.json") as resp:
+                if resp.status == 200:
+                    incidents = await resp.json()
+
+        api_status = components.get('components')[0].get('status').title() # API
+        mp_status = components.get('components')[4].get('status').title() # Media Proxy
+        pn_status = components.get('components')[6].get('status').title() # Push Notifications
+        s_status = components.get('components')[8].get('status').title() # Search
+        v_status = components.get('components')[11].get('status').title() # Voice
+        cf_status = components.get('components')[2].get('status').title() # Cloudflare
+
+        title = "All Systems Operational" if api_status == "Operational" and mp_status == "Operational" and pn_status == "Operational" and s_status == "Operational" and v_status == "Operational" and cf_status == "Operational" else "Known Incident"
+        color = discord.Color.green() if title == "All Systems Operational" else discord.Color.orange()
+
+        last_incident = incidents.get('incidents')[0].get('name')
+        last_status = incidents.get('incidents')[0].get('status').title()
+        last_created = datetime.datetime.strptime(incidents.get('incidents')[0].get('created_at'), "%Y-%m-%dT%H:%M:%S.%f%z")
+        last_update = datetime.datetime.strptime(incidents.get('incidents')[0].get('updated_at'), "%Y-%m-%dT%H:%M:%S.%f%z")
+        last_impact = incidents.get('incidents')[0].get('impact')
+
+        online = '<:status_online:942288772551278623>'
+        offline = '<:status_dnd:942288811818352652>'
+
+        incident_icons = {'none': '<:status_offline:942288832051679302>',
+        'maintenance': '<:status_total:942290485916073995>',
+        'minor': '<:status_idle:942288787000680499>',
+        'major': '<:status_dnd:942288811818352652>',
+        'critical': '<:status_dnd:942288811818352652>'}
+
+        embed = discord.Embed(title=title, description=f"""
+{online if api_status == 'Operational' else offline} **API:** {api_status}
+{online if mp_status == 'Operational' else offline} **Media Proxy:** {mp_status}
+{online if pn_status == 'Operational' else offline} **Push Notifications:** {pn_status}
+{online if s_status == 'Operational' else offline} **Search:** {s_status}
+{online if v_status == 'Operational' else offline} **Voice:** {v_status}
+{online if cf_status == 'Operational' else offline} **Cloudflare:** {cf_status}
+
+__**Last outage information**__
+**Incident:** {incident_icons.get(last_impact)} {last_incident}
+**Status:** {online if last_status == 'Resolved' else offline} {last_status}
+**Identified at:** {format_dt(last_created, style='F')}
+**{'Resolved at' if last_status == 'Resolved' else 'Last updated'}:** {format_dt(last_update, style='F')}
+        """, color=color)
+        embed.set_footer(text="Powered by discordstatus.com")
+        await ctx.respond(embed=embed)
+
 
     @topic.error
     @rule.error
     @poll.error
     @bypass.error
     @cve.error
+    @dstatus.error
     @remindme.error
     @jumbo.error
     @avatar.error

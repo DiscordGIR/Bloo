@@ -222,6 +222,7 @@ class BlooContext(discord.ApplicationContext):
 class BlooOldContext(commands.Context):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        self.tasks: Tasks = self.bot.tasks
     
     async def prompt(self, info: PromptData):
         def wait_check(m):

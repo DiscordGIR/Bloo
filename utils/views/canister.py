@@ -112,7 +112,7 @@ class TweakDropdown(discord.ui.Select):
         self.current_entry = entries[0]
         self.entries = {entry.get("identifier"): entry for entry in entries}
         options = [discord.SelectOption(label=(option.get("name") or option.get('identifier'))[:100] or "No title", description=f"{option.get('author').split('<')[0] if option.get('author') is not None else option.get('maintainer').split('<')[0]} • {option.get('repository').get('name')}"[:100], value=option.get(
-            "identifier"), emoji="<:sileo_tweak_icon:922017793677869056>") for option in entries]
+            "identifier"), emoji="<:sileo_tweak_icon:957456295898779678>") for option in entries]
 
         if len(self.raw_entries) > 24:
             options.append(discord.SelectOption(
